@@ -1,0 +1,81 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity 0.8.26;
+
+import {Vm} from "forge-std/Vm.sol";
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
+import {AethirBaseTest} from "./Base.t.sol";
+
+import {AethirYieldAdapter, IERC4907} from "src/yieldAdapters/aethir/AethirYieldAdapter.sol";
+import {IYieldPass} from "src/interfaces/IYieldPass.sol";
+
+import "forge-std/console.sol";
+
+contract RedeemTest is AethirBaseTest {
+    address internal yp;
+    address internal dp;
+
+    function setUp() public override {
+        /* Set up Nft */
+        AethirBaseTest.setUp();
+
+        (yp, dp) = AethirBaseTest.deployYieldPass(address(checkerNodeLicense), startTime, expiry, address(yieldAdapter));
+    }
+
+    function test__Redeem() external {
+        /* Mint */
+        vm.startPrank(cnlOwner);
+        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, abi.encode(operator));
+        vm.stopPrank();
+
+        /* Fast-forward to 1 seconds after expiry */
+        vm.warp(expiry + 1);
+
+        /* Redeem */
+        vm.startPrank(cnlOwner);
+        yieldPass.redeem(yp, 91521);
+        vm.stopPrank();
+
+        /* Check that the discount pass is burned */
+        vm.expectRevert();
+        IERC721(dp).ownerOf(91521);
+
+        /* Check that the checker license nft is not delegated */
+        assertEq(IERC4907(checkerNodeLicense).userOf(91521), address(0), "Invalid user");
+    }
+
+    function test__Redeem_RevertWhen_TokenNotOwned() external {
+        /* Mint */
+        vm.startPrank(cnlOwner);
+        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, abi.encode(operator));
+        IERC721(dp).transferFrom(cnlOwner, address(1), 91521);
+        vm.stopPrank();
+
+        /* Fast-forward to 1 seconds after expiry */
+        vm.warp(expiry + 1);
+
+        /* Redeem */
+        vm.startPrank(cnlOwner);
+        vm.expectRevert(IYieldPass.InvalidRedemption.selector);
+        yieldPass.redeem(yp, 91521);
+        vm.stopPrank();
+    }
+
+    function test__Redeem_RevertWhen_InvalidWindow() external {
+        /* Mint */
+        vm.startPrank(cnlOwner);
+        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, abi.encode(operator));
+        vm.stopPrank();
+
+        /* Fast-forward to expiry */
+        vm.warp(expiry);
+
+        /* Redeem */
+        vm.startPrank(cnlOwner);
+        vm.expectRevert(abi.encodeWithSelector(AethirYieldAdapter.InvalidWindow.selector));
+        yieldPass.redeem(yp, 91521);
+        vm.stopPrank();
+    }
+}
