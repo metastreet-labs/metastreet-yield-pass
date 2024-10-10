@@ -17,12 +17,6 @@ interface IYieldAdapter is IERC721Receiver {
     function token() external view returns (address);
 
     /**
-     * @notice Get token delegatee
-     * @return Delegatee
-     */
-    function tokenDelegatee(uint256 tokenId) external view returns (address);
-
-    /**
      * @notice Get cumulative yield
      * @return Yield amount
      */
@@ -35,6 +29,7 @@ interface IYieldAdapter is IERC721Receiver {
      * @param minter Minter
      * @param discountPassRecipient Discount pass recipient
      * @param setupData Setup data
+     * @return Operator
      */
     function setup(
         uint256 tokenId,
@@ -42,7 +37,7 @@ interface IYieldAdapter is IERC721Receiver {
         address minter,
         address discountPassRecipient,
         bytes calldata setupData
-    ) external;
+    ) external returns (address);
 
     /**
      * @notice Harvest yield

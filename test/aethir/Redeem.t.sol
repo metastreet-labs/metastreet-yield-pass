@@ -11,6 +11,8 @@ import {AethirBaseTest} from "./Base.t.sol";
 import {AethirYieldAdapter, IERC4907} from "src/yieldAdapters/aethir/AethirYieldAdapter.sol";
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
 
+import {DiscountPassToken} from "src/DiscountPassToken.sol";
+
 import "forge-std/console.sol";
 
 contract RedeemTest is AethirBaseTest {
@@ -27,7 +29,7 @@ contract RedeemTest is AethirBaseTest {
     function test__Redeem() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, abi.encode(operator));
+        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
         vm.stopPrank();
 
         /* Fast-forward to 1 seconds after expiry */
@@ -41,15 +43,12 @@ contract RedeemTest is AethirBaseTest {
         /* Check that the discount pass is burned */
         vm.expectRevert();
         IERC721(dp).ownerOf(91521);
-
-        /* Check that the checker license nft is not delegated */
-        assertEq(IERC4907(checkerNodeLicense).userOf(91521), address(0), "Invalid user");
     }
 
     function test__Redeem_RevertWhen_TokenNotOwned() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, abi.encode(operator));
+        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
         IERC721(dp).transferFrom(cnlOwner, address(1), 91521);
         vm.stopPrank();
 
@@ -66,7 +65,7 @@ contract RedeemTest is AethirBaseTest {
     function test__Redeem_RevertWhen_InvalidWindow() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, abi.encode(operator));
+        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
         vm.stopPrank();
 
         /* Fast-forward to expiry */

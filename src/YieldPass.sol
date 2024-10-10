@@ -274,7 +274,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         );
 
         /* Call yield adapter setup hook */
-        _yieldPassStates[yieldPass].yieldAdapter.setup(
+        address operator = _yieldPassStates[yieldPass].yieldAdapter.setup(
             tokenId, yieldPassInfo_.expiry, msg.sender, discountPassRecipient, setupData
         );
 
@@ -285,7 +285,9 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         DiscountPassToken(yieldPassInfo_.discountPass).mint(discountPassRecipient, tokenId);
 
         /* Emit Minted */
-        emit Minted(msg.sender, yieldPass, yieldPassInfo_.token, yieldPassAmount, yieldPassInfo_.discountPass, tokenId);
+        emit Minted(
+            msg.sender, yieldPass, yieldPassInfo_.token, yieldPassAmount, yieldPassInfo_.discountPass, tokenId, operator
+        );
 
         return yieldPassAmount;
     }

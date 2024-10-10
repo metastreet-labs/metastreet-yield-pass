@@ -7,8 +7,11 @@ import {AethirBaseTest} from "./Base.t.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
+
+import {AethirYieldAdapter} from "src/yieldAdapters/aethir/AethirYieldAdapter.sol";
 
 import "forge-std/console.sol";
 
@@ -75,7 +78,7 @@ contract ClaimTest is AethirBaseTest {
 
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, abi.encode(operator));
+        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
         vm.stopPrank();
 
         /* Harvest */
@@ -105,7 +108,7 @@ contract ClaimTest is AethirBaseTest {
     function test__Claim_RevertWhen_InvalidAmount() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, abi.encode(operator));
+        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
         vm.stopPrank();
 
         /* Harvest */
@@ -127,7 +130,7 @@ contract ClaimTest is AethirBaseTest {
     function test__Claim_RevertWhen_InvalidClaimWindow() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, abi.encode(operator));
+        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
         vm.stopPrank();
 
         /* Claim early */

@@ -7,6 +7,7 @@ import {XaiBaseTest} from "./Base.t.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 import {DiscountPassToken} from "src/DiscountPassToken.sol";
 import {XaiYieldAdapter} from "src/yieldAdapters/xai/XaiYieldAdapter.sol";
@@ -98,6 +99,19 @@ contract XaiMintTest is XaiBaseTest {
             expectedAmount1 + expectedAmount2 + expectedAmount3,
             "Invalid claim state shares"
         );
+    }
+
+    function test__Mint_RevertWhen_Paused() external {
+        /* Pause yield adapter */
+        vm.prank(users.deployer);
+        XaiYieldAdapter(address(yieldAdapter)).pause();
+
+        vm.startPrank(snlOwner);
+
+        /* Claim when paused */
+        vm.expectRevert(Pausable.EnforcedPause.selector);
+        yieldPass.mint(yp, 19727, snlOwner, snlOwner, abi.encode(stakingPool));
+        vm.stopPrank();
     }
 
     function test__Mint_RevertWhen_UndeployedYieldPass() external {

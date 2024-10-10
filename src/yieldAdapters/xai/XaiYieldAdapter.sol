@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 
@@ -50,7 +51,7 @@ interface IReferee {
  * @title XAI Yield Adapter
  * @author MetaStreet Foundation
  */
-contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl {
+contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -229,13 +230,6 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl {
     /**
      * @inheritdoc IYieldAdapter
      */
-    function tokenDelegatee(uint256 tokenId) public view returns (address) {
-        return _pools[tokenId];
-    }
-
-    /**
-     * @inheritdoc IYieldAdapter
-     */
     function cumulativeYield() public view returns (uint256) {
         /* Get pools */
         address[] memory pools = _interactedPools.values();
@@ -301,7 +295,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl {
         address minter,
         address discountPassRecipient,
         bytes calldata setupData
-    ) external onlyRole(YIELD_PASS_ROLE) {
+    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address) {
         /* Validate this contract owns token ID */
         if (_sentryNodeLicense.ownerOf(tokenId) != address(this)) revert InvalidOwner();
 
@@ -326,19 +320,21 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl {
 
         /* Store pool */
         _pools[tokenId] = pool;
+
+        return pool;
     }
 
     /**
      * @inheritdoc IYieldAdapter
      */
-    function validateClaim(address) external pure returns (bool) {
+    function validateClaim(address) external view whenNotPaused returns (bool) {
         return true;
     }
 
     /**
      * @inheritdoc IYieldAdapter
      */
-    function harvest(uint64, bytes calldata) external onlyRole(YIELD_PASS_ROLE) returns (uint256) {
+    function harvest(uint64, bytes calldata) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (uint256) {
         /* Snapshot balance before */
         uint256 balanceBefore = _esXaiToken.balanceOf(address(this));
 
@@ -363,7 +359,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl {
     function initiateTeardown(
         uint256 tokenId,
         uint64 expiry
-    ) external onlyRole(YIELD_PASS_ROLE) returns (bytes memory) {
+    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (bytes memory) {
         /* Validate prepare teardown is within window */
         if (block.timestamp <= expiry - _poolFactory.unstakeKeysDelayPeriod()) revert InvalidWindow();
 
@@ -386,7 +382,11 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl {
     /**
      * @inheritdoc IYieldAdapter
      */
-    function teardown(uint256 tokenId, address receiver, bytes calldata) external onlyRole(YIELD_PASS_ROLE) {
+    function teardown(
+        uint256 tokenId,
+        address receiver,
+        bytes calldata
+    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
         uint256[] memory licenses = new uint256[](1);
         licenses[0] = tokenId;
 
@@ -428,5 +428,19 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl {
 
             emit PoolAdded(pool);
         }
+    }
+
+    /**
+     * @notice Pause the contract
+     */
+    function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _pause();
+    }
+
+    /**
+     * @notice Unpause the contract
+     */
+    function unpause() public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _unpause();
     }
 }

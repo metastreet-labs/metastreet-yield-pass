@@ -59,6 +59,13 @@ abstract contract AethirBaseTest is BaseTest {
     /* Whitelist admin */
     address internal whitelistAdminAddress = 0xF6A9359488C583Be23e2Fd18D782075E3070196A;
 
+    /* Yield adapter name */
+    string internal yieldAdapterName = "Aethir Yield Adapter";
+
+    /* Node signer */
+    address internal nodeSigner;
+    uint256 internal nodeSignerPk;
+
     uint64 internal startTime;
     uint64 internal expiry;
 
@@ -75,6 +82,8 @@ abstract contract AethirBaseTest is BaseTest {
 
         BaseTest.setUp();
 
+        (nodeSigner, nodeSignerPk) = makeAddrAndKey("Node Signer");
+
         /* Exclude 91526 from undelegation */
         uint256[] memory licenses = new uint256[](5);
         licenses[0] = 91521;
@@ -90,13 +99,21 @@ abstract contract AethirBaseTest is BaseTest {
         }
         vm.stopPrank();
 
-        /* Approve license */
-        vm.startPrank(cnlOwner);
-        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPass), true);
-        vm.stopPrank();
-
         startTime = uint64(block.timestamp);
         expiry = startTime + 10 days;
+
+        vm.startPrank(cnlOwner);
+
+        /* Approve license */
+        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPass), true);
+
+        /* Delegate to operator */
+        IERC4907(checkerNodeLicense).setUser(91521, operator, expiry + 1);
+        IERC4907(checkerNodeLicense).setUser(91522, operator, expiry + 1);
+        IERC4907(checkerNodeLicense).setUser(91523, operator, expiry + 1);
+        IERC4907(checkerNodeLicense).setUser(91524, operator, expiry + 1);
+        IERC4907(checkerNodeLicense).setUser(91525, operator, expiry);
+        vm.stopPrank();
 
         upgradeNodeLicense();
         deployYieldAdapter(false);
@@ -132,6 +149,7 @@ abstract contract AethirBaseTest is BaseTest {
 
         /* Deploy yield adapters */
         yieldAdapterImpl = new AethirYieldAdapter(
+            yieldAdapterName,
             address(yieldPass),
             address(checkerNodeLicense),
             isMock ? address(mockCheckerClaimAndWithdraw) : address(checkerClaimAndWithdraw),
@@ -139,13 +157,11 @@ abstract contract AethirBaseTest is BaseTest {
         );
 
         /* Deploy yield adapter proxy */
-        address[] memory operators = new address[](1);
-        operators[0] = operator;
         yieldAdapter = AethirYieldAdapter(
             address(
                 new ERC1967Proxy(
                     address(yieldAdapterImpl),
-                    abi.encodeWithSignature("initialize(uint48,address[])", 180 days, operators)
+                    abi.encodeWithSignature("initialize(uint48,address)", 180 days, nodeSigner)
                 )
             )
         );
@@ -186,6 +202,51 @@ abstract contract AethirBaseTest is BaseTest {
         );
 
         vm.stopPrank();
+    }
+
+    function generateSignedNode(
+        address operator_,
+        uint256 tokenId,
+        uint64 timestamp,
+        uint64 duration
+    ) internal view returns (bytes memory) {
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(bytes(yieldAdapterName)),
+                keccak256(bytes("1.0")),
+                block.chainid,
+                address(yieldAdapter)
+            )
+        );
+
+        bytes32 structHash = keccak256(
+            abi.encode(
+                AethirYieldAdapter(address(yieldAdapter)).NODE_TYPEHASH(),
+                cnlOwner,
+                tokenId,
+                operator_,
+                timestamp,
+                duration
+            )
+        );
+
+        bytes32 hash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(nodeSignerPk, hash);
+
+        AethirYieldAdapter.SignedNode memory signedNode = AethirYieldAdapter.SignedNode({
+            node: AethirYieldAdapter.ValidatedNode({
+                user: cnlOwner,
+                tokenId: tokenId,
+                burnerWallet: operator_,
+                timestamp: timestamp,
+                duration: duration
+            }),
+            signature: abi.encodePacked(r, s, v)
+        });
+
+        return abi.encode(signedNode);
     }
 
     function generateHarvestData(

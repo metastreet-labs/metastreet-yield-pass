@@ -26,7 +26,7 @@ contract WithdrawTest is AethirBaseTest {
     function test__Withdraw() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, abi.encode(operator));
+        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
         vm.stopPrank();
 
         /* Fast-forward to 1 seconds after expiry */
@@ -45,7 +45,7 @@ contract WithdrawTest is AethirBaseTest {
     function test__Withdraw_RevertWhen_InvalidWindow() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, abi.encode(operator));
+        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
         vm.stopPrank();
 
         /* Fast-forward to expiry */
@@ -61,7 +61,7 @@ contract WithdrawTest is AethirBaseTest {
     function test__Withdraw_RevertWhen_NotRedeemed() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, abi.encode(operator));
+        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
         vm.stopPrank();
 
         /* Fast-forward to after expiry */

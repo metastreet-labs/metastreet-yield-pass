@@ -97,6 +97,7 @@ interface IYieldPass is IERC721Receiver {
      * @param yieldPassAmount Yield pass amount
      * @param discountPass Discount pass
      * @param tokenId NFT token (and discount pass) ID
+     * @param operator Operator
      */
     event Minted(
         address indexed account,
@@ -104,7 +105,8 @@ interface IYieldPass is IERC721Receiver {
         address indexed token,
         uint256 yieldPassAmount,
         address discountPass,
-        uint256 tokenId
+        uint256 tokenId,
+        address operator
     );
 
     /**

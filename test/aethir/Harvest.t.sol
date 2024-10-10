@@ -47,7 +47,7 @@ contract HarvestTest is AethirBaseTest {
     function test__Harvest() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, abi.encode(operator));
+        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
         vm.stopPrank();
 
         /* Simulate yield distribution in checker claim and withdraw contract */
@@ -105,7 +105,7 @@ contract HarvestTest is AethirBaseTest {
     function test__Harvest_RevertWhen_InvalidCliffSeconds() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, abi.encode(operator));
+        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
         vm.stopPrank();
 
         /* Simulate yield distribution in checker claim and withdraw contract */
