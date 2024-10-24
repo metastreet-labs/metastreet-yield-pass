@@ -11,3 +11,9 @@
 [submodule "lib/metastreet-contracts-v2"]
 	path = lib/metastreet-contracts-v2
 	url = https://github.com/metastreet-labs/metastreet-contracts-v2.git
+[submodule "lib/uniswap-v2-periphery"]
+	path = lib/uniswap-v2-periphery
+	url = https://github.com/Uniswap/v2-periphery.git
+[submodule "lib/uniswap-v2-core"]
+	path = lib/uniswap-v2-core
+	url = https://github.com/Uniswap/v2-core.git
