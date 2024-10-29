@@ -104,7 +104,7 @@ contract YieldPassUtils is ReentrancyGuard, ERC721Holder, ERC165, IYieldPassUtil
         uint256 yieldPassAmount;
         for (uint256 i; i < tokenIds.length; i++) {
             /* Transfer NFT from seller to this contract */
-            IERC721(yieldPassInfo.token).transferFrom(msg.sender, address(this), tokenIds[i]);
+            IERC721(yieldPassInfo.token).safeTransferFrom(msg.sender, address(this), tokenIds[i]);
 
             /* Mint yield pass token and discount pass token */
             yieldPassAmount +=

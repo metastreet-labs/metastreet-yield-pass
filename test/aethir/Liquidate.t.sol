@@ -30,7 +30,6 @@ contract MintTest is AethirBaseTest {
     function test__Mint() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        // yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, abi.encode(operator));
         yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
         vm.stopPrank();
 
