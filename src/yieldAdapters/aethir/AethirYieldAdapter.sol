@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 
@@ -466,6 +467,30 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      */
     function signer() public view returns (address) {
         return _signer;
+    }
+
+    /**
+     * @notice Get claim order IDs
+     * @param offset Offset
+     * @param count Count
+     * @return Order IDs
+     */
+    function orderIds(uint256 offset, uint256 count) public view returns (uint256[] memory) {
+        /* Clamp on count */
+        count = Math.min(count, _orderIds.length() - offset);
+
+        /* Create arrays */
+        uint256[] memory ids = new uint256[](count);
+
+        /* Cache end index */
+        uint256 endIndex = offset + count;
+
+        /* Fill array */
+        for (uint256 i = offset; i < endIndex; i++) {
+            ids[i - offset] = _orderIds.at(i);
+        }
+
+        return ids;
     }
 
     /*------------------------------------------------------------------------*/
