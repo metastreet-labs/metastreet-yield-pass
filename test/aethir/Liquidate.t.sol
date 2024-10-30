@@ -3,146 +3,377 @@ pragma solidity 0.8.26;
 
 import {Vm} from "forge-std/Vm.sol";
 
-import {AethirBaseTest} from "./Base.t.sol";
+import {AethirSepoliaBaseTest} from "./BaseSepolia.t.sol";
+import {BaseTest} from "../pool/Base.t.sol";
+import {PoolBaseTest} from "../pool/Base.t.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
+import {IYieldPassUtils} from "src/interfaces/IYieldPassUtils.sol";
 import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 
 import {AethirYieldAdapter} from "src/yieldAdapters/aethir/AethirYieldAdapter.sol";
 
+import {Helpers} from "../pool/Helpers.sol";
+
 import "forge-std/console.sol";
 
-contract MintTest is AethirBaseTest {
+contract LiquidateTest is AethirSepoliaBaseTest {
     address internal yp;
     address internal dp;
+    uint128 internal tick;
+    address internal pair;
 
     function setUp() public override {
         /* Set up Nft */
-        AethirBaseTest.setUp();
+        AethirSepoliaBaseTest.setUp();
 
-        (yp, dp) = AethirBaseTest.deployYieldPass(address(checkerNodeLicense), startTime, expiry, address(yieldAdapter));
+        (yp, dp) =
+            AethirSepoliaBaseTest.deployYieldPass(address(checkerNodeLicense), startTime, expiry, address(yieldAdapter));
+
+        PoolBaseTest.setMetaStreetPoolFactoryAndImpl(address(metaStreetPoolFactory), metaStreetPoolImpl);
+        PoolBaseTest.deployMetaStreetPool(address(dp), address(ath), address(0));
+        BaseTest.deployYieldPassUtils(address(uniswapV2Router), bundleCollateralWrapper);
+        AethirSepoliaBaseTest.addWhitelist();
+
+        setUpUniswap();
+        setUpMSPool();
     }
 
-    function test__Mint() external {
+    function setUpUniswap() internal {
+        /* Transfer some ATH to CNL owner */
+        vm.startPrank(athOwner);
+        ath.transfer(cnlOwner, 100 ether);
+        vm.stopPrank();
+
+        vm.startPrank(cnlOwner);
+
+        /* Mint to get some yield pass tokens */
+        yieldPass.mint(yp, 776, cnlOwner, cnlOwner, generateSignedNode(operator, 776, uint64(block.timestamp), 1));
+        yieldPass.mint(yp, 777, cnlOwner, cnlOwner, generateSignedNode(operator, 777, uint64(block.timestamp), 1));
+        yieldPass.mint(yp, 778, cnlOwner, cnlOwner, generateSignedNode(operator, 778, uint64(block.timestamp), 1));
+
+        /* Create uniswap V2 pair */
+        pair = uniswapV2Factory.createPair(address(yp), address(ath));
+
+        /* Approve uniswap router */
+        IERC20(yp).approve(address(uniswapV2Router), type(uint256).max);
+        IERC20(ath).approve(address(uniswapV2Router), type(uint256).max);
+
+        /* Add liquidity */
+        uniswapV2Router.addLiquidity(
+            address(yp), address(ath), 3 ether, 3 ether, 0, 0, address(cnlOwner), block.timestamp
+        );
+
+        vm.stopPrank();
+    }
+
+    function setUpMSPool() internal {
+        /* Transfer some ATH to CNL owner */
+        vm.startPrank(athOwner);
+
+        /* Approve MS pool */
+        IERC20(ath).approve(address(metaStreetPool), type(uint256).max);
+
+        /* Get tick */
+        tick = Helpers.encodeTick(100 ether, 0, 0, 0);
+
+        /* Add deposit */
+        metaStreetPool.deposit(tick, 100 ether, 0);
+        vm.stopPrank();
+    }
+
+    function test__MintAndLP_SingleToken() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
-        vm.stopPrank();
+        uint256[] memory tokenIds = new uint256[](1);
+        tokenIds[0] = 779;
+        bytes[] memory setupData = new bytes[](1);
+        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1);
+        uint128[] memory ticks = new uint128[](1);
+        ticks[0] = Helpers.encodeTick(100 ether, 0, 0, 0);
 
-        uint256 expectedAmount1 = (1 ether * (expiry - block.timestamp)) / (expiry - startTime);
-        assertEq(IERC20(yp).balanceOf(cnlOwner), expectedAmount1, "Invalid yield token balance");
-        assertEq(IERC20(yp).totalSupply(), expectedAmount1, "Invalid total supply");
-        assertEq(IERC721(checkerNodeLicense).ownerOf(91521), address(yieldAdapter), "Invalid NFT owner");
-        assertEq(IERC721(dp).ownerOf(91521), cnlOwner, "Invalid discount token owner");
+        /* Approve NFTs */
+        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
 
-        assertEq(yieldPass.cumulativeYield(yp), 0, "Invalid cumulative yield");
-        assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
-        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid claim state balance");
-        assertEq(yieldPass.claimState(yp).shares, expectedAmount1, "Invalid claim state shares");
+        /* Quote principal */
+        (, uint256 principal) = yieldPassUtils.quoteMintAndLP(address(yp), address(metaStreetPool), 1);
+        console.log("principal1:", principal);
 
-        /* Fast-forward to half-way point */
-        uint64 halfWayPoint = startTime + ((expiry - startTime) / 2);
-        vm.warp(halfWayPoint);
+        /* Validate principal is not 0 */
+        assertNotEq(principal, 0, "Principal is 0");
 
-        /* Mint again */
-        vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91522, cnlOwner, cnlOwner, generateSignedNode(operator, 91522, halfWayPoint, 1));
-        vm.stopPrank();
+        /* Pool ATH balance */
+        uint256 poolAthBalance = IERC20(ath).balanceOf(address(metaStreetPool));
 
-        uint256 expectedAmount2 = (1 ether * (expiry - block.timestamp)) / (expiry - startTime);
-        assertEq(IERC20(yp).balanceOf(cnlOwner), expectedAmount1 + expectedAmount2, "Invalid yield token balance");
-        assertEq(IERC20(yp).totalSupply(), expectedAmount1 + expectedAmount2, "Invalid total supply");
-        assertEq(IERC721(checkerNodeLicense).ownerOf(91522), address(yieldAdapter), "Invalid NFT owner");
-        assertEq(IERC721(dp).ownerOf(91522), cnlOwner, "Invalid delegate token owner");
-
-        assertEq(yieldPass.cumulativeYield(yp, 0), 0, "Invalid cumulative yield");
-        assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
-        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid claim state balance");
-        assertEq(yieldPass.claimState(yp).shares, expectedAmount1 + expectedAmount2, "Invalid claim state shares");
-
-        /* Fast-forward to 1 second before expiry */
-        uint64 oneSecondBeforeExpiry = expiry - 1;
-        vm.warp(oneSecondBeforeExpiry);
-
-        /* Mint again */
-        vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91523, cnlOwner, cnlOwner, generateSignedNode(operator, 91523, oneSecondBeforeExpiry, 1));
-        vm.stopPrank();
-
-        uint256 expectedAmount3 = (1 ether * (expiry - block.timestamp)) / (expiry - startTime);
-        assertEq(
-            IERC20(yp).balanceOf(cnlOwner),
-            expectedAmount1 + expectedAmount2 + expectedAmount3,
-            "Invalid yield token balance"
+        /* Liquidate */
+        yieldPassUtils.mintAndLP(
+            address(yp),
+            tokenIds,
+            setupData,
+            address(metaStreetPool),
+            principal,
+            metaStreetPool.durations()[0],
+            principal,
+            ticks,
+            "",
+            uint64(block.timestamp)
         );
-        assertEq(IERC20(yp).totalSupply(), expectedAmount1 + expectedAmount2 + expectedAmount3, "Invalid total supply");
-        assertEq(IERC721(checkerNodeLicense).ownerOf(91523), address(yieldAdapter), "Invalid NFT owner");
-        assertEq(IERC721(dp).ownerOf(91523), cnlOwner, "Invalid delegate token owner");
-
-        assertEq(yieldPass.cumulativeYield(yp, 0), 0, "Invalid cumulative yield");
-        assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
-        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid claim state balance");
-        assertEq(
-            yieldPass.claimState(yp).shares,
-            expectedAmount1 + expectedAmount2 + expectedAmount3,
-            "Invalid claim state shares"
-        );
-    }
-
-    function test__Mint_RevertWhen_Paused() external {
-        /* Pause yield adapter */
-        vm.prank(users.deployer);
-        AethirYieldAdapter(address(yieldAdapter)).pause();
-
-        vm.startPrank(cnlOwner);
-
-        /* Mint when paused */
-        bytes memory setupData = generateSignedNode(operator, 91521, uint64(block.timestamp), 1);
-        vm.expectRevert(Pausable.EnforcedPause.selector);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, setupData);
-    }
-
-    function test__Mint_RevertWhen_UndeployedYieldPass() external {
-        /* Undeployed yield pass */
-        address randomAddress =
-            address(uint160(uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao)))));
-
-        bytes memory setupData = generateSignedNode(operator, 91521, uint64(block.timestamp), 1);
-        vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidYieldPass.selector));
-        yieldPass.mint(randomAddress, 91521, cnlOwner, cnlOwner, setupData);
-    }
-
-    function test__Mint_RevertWhen_InvalidMintWindow() external {
-        /* Mint at expiry */
-        vm.warp(expiry);
-        bytes memory setupData1 = generateSignedNode(operator, 91521, uint64(block.timestamp), 1);
-        vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidWindow.selector));
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, setupData1);
-
-        /* Mint before start time */
-        vm.warp(startTime - 1);
-        bytes memory setupData2 = generateSignedNode(operator, 91521, uint64(startTime - 1), 1);
-        vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidWindow.selector));
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, setupData2);
-    }
-
-    function test__Mint_RevertWhen_InvalidNodeTimestamp() external {
-        vm.startPrank(cnlOwner);
-
-        /* Mint with timestamp in the future */
-        bytes memory setupData1 = generateSignedNode(operator, 91521, uint64(block.timestamp + 1), 0);
-        vm.expectRevert(abi.encodeWithSelector(AethirYieldAdapter.InvalidTimestamp.selector));
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, setupData1);
-
-        /* Mint with expired timestamp */
-        bytes memory setupData2 = generateSignedNode(operator, 91521, uint64(block.timestamp - 2), 1);
-        vm.expectRevert(abi.encodeWithSelector(AethirYieldAdapter.InvalidTimestamp.selector));
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, setupData2);
-
         vm.stopPrank();
+
+        /* Check that pool ATH balance*/
+        assertEq(IERC20(ath).balanceOf(address(metaStreetPool)), poolAthBalance - principal, "Pool ATH balance wrong");
+
+        /* Check Uniswap liquidity tokens balances */
+        assertGt(IERC20(pair).balanceOf(cnlOwner), 0, "Liquidator has no liquidity tokens");
+        assertEq(IERC20(pair).balanceOf(address(yieldPassUtils)), 0, "Yield pass utils has no liquidity tokens");
+
+        /* Check that yield pass token and ATH balances are 0 */
+        assertEq(IERC20(yp).balanceOf(address(yieldPassUtils)), 0, "Yield pass utils still has yield pass tokens");
+        assertEq(IERC20(ath).balanceOf(address(yieldPassUtils)), 0, "Yield pass utils still has ATH");
+    }
+
+    function test__MintAndLP_MultipleTokens() external {
+        /* Mint */
+        vm.startPrank(cnlOwner);
+        uint256[] memory tokenIds = new uint256[](2);
+        tokenIds[0] = 779;
+        tokenIds[1] = 780;
+        bytes[] memory setupData = new bytes[](2);
+        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1);
+        setupData[1] = generateSignedNode(operator, 780, uint64(block.timestamp), 1);
+        uint128[] memory ticks = new uint128[](1);
+        ticks[0] = Helpers.encodeTick(100 ether, 0, 0, 0);
+
+        /* Approve NFTs */
+        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
+
+        /* Quote principal */
+        (, uint256 principal) = yieldPassUtils.quoteMintAndLP(address(yp), address(metaStreetPool), 2);
+
+        /* Validate principal is not 0 */
+        assertNotEq(principal, 0, "Principal is 0");
+
+        /* Create encoded bundle */
+        bytes memory encodedBundle = abi.encodePacked(dp);
+        for (uint256 i; i < tokenIds.length; i++) {
+            encodedBundle = abi.encodePacked(encodedBundle, tokenIds[i]);
+        }
+
+        /* Pool ATH balance */
+        uint256 poolAthBalance = IERC20(ath).balanceOf(address(metaStreetPool));
+
+        /* Liquidate */
+        yieldPassUtils.mintAndLP(
+            address(yp),
+            tokenIds,
+            setupData,
+            address(metaStreetPool),
+            principal,
+            metaStreetPool.durations()[0],
+            principal,
+            ticks,
+            abi.encodePacked(uint16(1), uint16(encodedBundle.length), encodedBundle),
+            uint64(block.timestamp)
+        );
+        vm.stopPrank();
+
+        /* Check that pool ATH balance*/
+        assertEq(IERC20(ath).balanceOf(address(metaStreetPool)), poolAthBalance - principal, "Pool ATH balance wrong");
+
+        /* Check Uniswap liquidity tokens balances */
+        assertGt(IERC20(pair).balanceOf(cnlOwner), 0, "Liquidator has no liquidity tokens");
+        assertEq(IERC20(pair).balanceOf(address(yieldPassUtils)), 0, "Yield pass utils has no liquidity tokens");
+
+        /* Check that yield pass token and ATH balances are 0 */
+        assertEq(IERC20(yp).balanceOf(address(yieldPassUtils)), 0, "Yield pass utils still has yield pass tokens");
+        assertEq(IERC20(ath).balanceOf(address(yieldPassUtils)), 0, "Yield pass utils still has ATH");
+    }
+
+    function test__MintAndLP_SingleToken_RevertWhen_DeadlinePassed() external {
+        /* Mint */
+        vm.startPrank(cnlOwner);
+        uint256[] memory tokenIds = new uint256[](1);
+        tokenIds[0] = 779;
+        bytes[] memory setupData = new bytes[](1);
+        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1);
+        uint128[] memory ticks = new uint128[](1);
+        ticks[0] = Helpers.encodeTick(100 ether, 0, 0, 0);
+
+        /* Approve NFTs */
+        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
+
+        /* Quote principal */
+        (, uint256 principal) = yieldPassUtils.quoteMintAndLP(address(yp), address(metaStreetPool), 1);
+
+        /* Get durations */
+        uint64 duration = metaStreetPool.durations()[0];
+
+        /* Liquidate */
+        vm.expectRevert(IYieldPassUtils.DeadlinePassed.selector);
+        yieldPassUtils.mintAndLP(
+            address(yp),
+            tokenIds,
+            setupData,
+            address(metaStreetPool),
+            principal,
+            duration,
+            principal,
+            ticks,
+            "",
+            uint64(block.timestamp - 1)
+        );
+        vm.stopPrank();
+    }
+
+    function test__MintAndLP_SingleToken_RevertWhen_InvalidSlippage() external {
+        /* Mint */
+        vm.startPrank(cnlOwner);
+        uint256[] memory tokenIds = new uint256[](1);
+        tokenIds[0] = 779;
+        bytes[] memory setupData = new bytes[](1);
+        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1);
+        uint128[] memory ticks = new uint128[](1);
+        ticks[0] = Helpers.encodeTick(100 ether, 0, 0, 0);
+
+        /* Approve NFTs */
+        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
+
+        /* Quote principal */
+        (, uint256 principal) = yieldPassUtils.quoteMintAndLP(address(yp), address(metaStreetPool), 1);
+
+        /* Get durations */
+        uint64 duration = metaStreetPool.durations()[0];
+
+        /* Liquidate */
+        vm.expectRevert(IYieldPassUtils.InvalidSlippage.selector);
+        yieldPassUtils.mintAndLP(
+            address(yp),
+            tokenIds,
+            setupData,
+            address(metaStreetPool),
+            principal + 1,
+            duration,
+            principal + 1,
+            ticks,
+            "",
+            uint64(block.timestamp)
+        );
+        vm.stopPrank();
+    }
+
+    function test__MintAndBorrow_SingleToken() external {
+        /* Mint */
+        vm.startPrank(cnlOwner);
+        uint256[] memory tokenIds = new uint256[](1);
+        tokenIds[0] = 779;
+        bytes[] memory setupData = new bytes[](1);
+        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1);
+        uint128[] memory ticks = new uint128[](1);
+        ticks[0] = Helpers.encodeTick(100 ether, 0, 0, 0);
+
+        /* Approve NFTs */
+        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
+
+        /* Quote principal */
+        (uint256 yieldPassTokenAmount,) = yieldPassUtils.quoteMintAndLP(address(yp), address(metaStreetPool), 1);
+
+        /* Pool ATH balance */
+        uint256 poolAthBalance = IERC20(ath).balanceOf(address(metaStreetPool));
+
+        /* Liquidator ATH balance */
+        uint256 liquidatorAthBalance = IERC20(ath).balanceOf(cnlOwner);
+
+        /* Liquidate */
+        uint256 borrowAmount = 1 ether;
+        yieldPassUtils.mintAndBorrow(
+            address(yp),
+            tokenIds,
+            setupData,
+            address(metaStreetPool),
+            borrowAmount,
+            metaStreetPool.durations()[0],
+            borrowAmount,
+            ticks,
+            "",
+            uint64(block.timestamp)
+        );
+        vm.stopPrank();
+
+        /* Check that pool ATH balance*/
+        assertEq(
+            IERC20(ath).balanceOf(address(metaStreetPool)), poolAthBalance - borrowAmount, "Pool ATH balance wrong"
+        );
+
+        /* Check that liquidator yield pass token and ATH balances are correct */
+        assertEq(IERC20(ath).balanceOf(cnlOwner), liquidatorAthBalance + borrowAmount, "Liquidator ATH balance wrong");
+        assertEq(IERC20(yp).balanceOf(cnlOwner), yieldPassTokenAmount, "Liquidator yield pass token balance wrong");
+
+        /* Check that yield pass token and ATH balances are 0 */
+        assertEq(IERC20(yp).balanceOf(address(yieldPassUtils)), 0, "Yield pass utils still has yield pass tokens");
+        assertEq(IERC20(ath).balanceOf(address(yieldPassUtils)), 0, "Yield pass utils still has ATH");
+    }
+
+    function test__MintAndBorrow_MultipleTokens() external {
+        /* Mint */
+        vm.startPrank(cnlOwner);
+        uint256[] memory tokenIds = new uint256[](2);
+        tokenIds[0] = 779;
+        tokenIds[1] = 780;
+        bytes[] memory setupData = new bytes[](2);
+        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1);
+        setupData[1] = generateSignedNode(operator, 780, uint64(block.timestamp), 1);
+        uint128[] memory ticks = new uint128[](1);
+        ticks[0] = Helpers.encodeTick(100 ether, 0, 0, 0);
+
+        /* Approve NFTs */
+        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
+
+        /* Quote principal */
+        (uint256 yieldPassTokenAmount,) = yieldPassUtils.quoteMintAndLP(address(yp), address(metaStreetPool), 2);
+
+        /* Pool ATH balance */
+        uint256 poolAthBalance = IERC20(ath).balanceOf(address(metaStreetPool));
+
+        /* Liquidator ATH balance */
+        uint256 liquidatorAthBalance = IERC20(ath).balanceOf(cnlOwner);
+
+        /* Create encoded bundle */
+        bytes memory encodedBundle = abi.encodePacked(dp);
+        for (uint256 i; i < tokenIds.length; i++) {
+            encodedBundle = abi.encodePacked(encodedBundle, tokenIds[i]);
+        }
+
+        /* Liquidate */
+        uint256 borrowAmount = 1 ether;
+        yieldPassUtils.mintAndBorrow(
+            address(yp),
+            tokenIds,
+            setupData,
+            address(metaStreetPool),
+            borrowAmount,
+            metaStreetPool.durations()[0],
+            borrowAmount,
+            ticks,
+            abi.encodePacked(uint16(1), uint16(encodedBundle.length), encodedBundle),
+            uint64(block.timestamp)
+        );
+        vm.stopPrank();
+
+        /* Check that pool ATH balance*/
+        assertEq(
+            IERC20(ath).balanceOf(address(metaStreetPool)), poolAthBalance - borrowAmount, "Pool ATH balance wrong"
+        );
+
+        /* Check that liquidator yield pass token and ATH balances are correct */
+        assertEq(IERC20(ath).balanceOf(cnlOwner), liquidatorAthBalance + borrowAmount, "Liquidator ATH balance wrong");
+        assertEq(IERC20(yp).balanceOf(cnlOwner), yieldPassTokenAmount, "Liquidator yield pass token balance wrong");
+
+        /* Check that yield pass token and ATH balances are 0 */
+        assertEq(IERC20(yp).balanceOf(address(yieldPassUtils)), 0, "Yield pass utils still has yield pass tokens");
+        assertEq(IERC20(ath).balanceOf(address(yieldPassUtils)), 0, "Yield pass utils still has ATH");
     }
 }

@@ -16,11 +16,12 @@ import {Helpers} from "./Helpers.sol";
 contract PoolBaseTest is BaseTest {
     uint64[] internal durations = [30 days, 14 days, 7 days];
     uint64[] internal rates =
-        [Helpers.normalizeRate(0.1 * 1e18), Helpers.normalizeRate(0.3 * 1e18), Helpers.normalizeRate(0.5 * 1e18)];
+        [Helpers.normalizeRate(0 * 1e18), Helpers.normalizeRate(0.3 * 1e18), Helpers.normalizeRate(0.5 * 1e18)];
 
-    IPoolFactory internal poolFactory;
-    address internal poolImpl;
-    IPool internal pool;
+    IPoolFactory internal metaStreetPoolFactory;
+    address internal metaStreetPoolImpl;
+    IPool internal metaStreetPool;
+    address internal bundleCollateralWrapper;
 
     function setUp() public virtual override {
         /* Set up Base */
@@ -31,21 +32,25 @@ contract PoolBaseTest is BaseTest {
     /* Setup Helpers                                                            */
     /*--------------------------------------------------------------------------*/
 
-    function setPoolFactoryAndPoolImpl(address poolFactory_, address poolImpl_) internal {
-        poolFactory = IPoolFactory(poolFactory_);
+    function setMetaStreetPoolFactoryAndImpl(address poolFactory_, address poolImpl_) internal {
+        metaStreetPoolFactory = IPoolFactory(poolFactory_);
 
-        poolImpl = poolImpl_;
+        metaStreetPoolImpl = poolImpl_;
     }
 
-    function deployPool(address nft, address tok, address priceOracle) internal {
+    /* Deploy WeightedRateCollection pool */
+    function deployMetaStreetPool(address nft, address tok, address priceOracle) internal {
         vm.prank(users.deployer);
 
+        address[] memory collateralTokens = new address[](1);
+        collateralTokens[0] = nft;
+
         /* Set pool parameters */
-        bytes memory poolParams = abi.encode(nft, tok, priceOracle, durations, rates);
+        bytes memory poolParams = abi.encode(collateralTokens, tok, priceOracle, durations, rates);
 
         /* Deploy pool proxy */
-        pool = IPool(poolFactory.create(address(poolImpl), poolParams));
-        vm.label({account: address(pool), newLabel: "Pool"});
+        metaStreetPool = IPool(metaStreetPoolFactory.createProxied(address(metaStreetPoolImpl), poolParams));
+        vm.label({account: address(metaStreetPool), newLabel: "Pool"});
     }
 
     function setERC20Approvals() internal {}
