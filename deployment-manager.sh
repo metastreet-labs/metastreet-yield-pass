@@ -46,8 +46,10 @@ usage() {
     echo "  upgrade-yield-pass-utils <uniswap v2 swap router> <yield pass> <bundle collateral wrapper>"
     echo ""
     echo "  yield-pass-create <nft> <startTime> <expiry> <is transferable> <yield adapter>"
-    echo "  yield-pass-set-yield-adapter <deployment hash> <yield id> <yield adapter>"
+    echo "  yield-pass-set-yield-adapter <yield pass> <yield adapter>"
     echo ""
+    echo "  deploy-aethir-yield-adapter <name> <yield pass> <checker node license> <checker claim and withdraw> <ath token> <cliff seconds> <signer>"
+    echo "  upgrade-aethir-yield-adapter <name> <yield pass> <checker node license> <checker claim and withdraw> <ath token>"
     echo ""
     echo "  show"
     echo ""
@@ -125,6 +127,26 @@ case $1 in
 
         echo "Setting Yield Pass Yield Adapter"
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/YieldPassSetYieldAdapter.s.sol:YieldPassSetYieldAdapter" "--sig run(address,address) $2 $4"
+        ;;
+
+    "deploy-aethir-yield-adapter")
+        if [ "$#" -ne 8 ]; then
+            echo "Invalid param count; Usage: $0 deploy-aethir-yield-adapter <name> <yield pass> <checker node license> <checker claim and withdraw> <ath token> <cliff seconds> <signer>"
+            exit 1
+        fi
+
+        echo "Deploying Aethir Yield Adapter"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/DeployAethirYieldAdapter.s.sol:DeployAethirYieldAdapter" "--sig run(string,address,address,address,address,uint48,address) $2 $3 $4 $5 $6 $7 $8"
+        ;;
+
+    "upgrade-aethir-yield-adapter")
+        if [ "$#" -ne 6 ]; then
+            echo "Invalid param count; Usage: $0 upgrade-aethir-yield-adapter <name> <yield pass> <checker node license> <checker claim and withdraw> <ath token>"
+            exit 1
+        fi
+
+        echo "Upgrading Aethir Yield Adapter"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/UpgradeAethirYieldAdapter.s.sol:UpgradeAethirYieldAdapter" "--sig run(string,address,address,address,address) $2 $3 $4 $5 $6"
         ;;
 
     "show")
