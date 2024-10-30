@@ -42,6 +42,8 @@ usage() {
     echo "Commands:"
     echo "  deploy-yield-pass"
     echo "  upgrade-yield-pass"
+    echo "  deploy-yield-pass-utils <uniswap v2 swap router> <yield pass> <bundle collateral wrapper>"
+    echo "  upgrade-yield-pass-utils <uniswap v2 swap router> <yield pass> <bundle collateral wrapper>"
     echo ""
     echo "  yield-pass-create <nft> <startTime> <expiry> <is transferable> <yield adapter>"
     echo "  yield-pass-set-yield-adapter <yield pass> <yield adapter>"
@@ -85,6 +87,26 @@ case $1 in
 
         echo "Upgrading Yield Pass"
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeYieldPass.s.sol:UpgradeYieldPass" "--sig run()"
+        ;;
+
+    "deploy-yield-pass-utils")
+        if [ "$#" -ne 4 ]; then
+            echo "Invalid param count; Usage: $0 deploy-yield-pass-utils <uniswap v2 swap router> <yield pass> <bundle collateral wrapper>"
+            exit 1
+        fi
+
+        echo "Deploying Yield Pass Utils"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployYieldPassUtils.s.sol:DeployYieldPassUtils" "--sig run(address,address,address) $2 $3 $4"
+        ;;
+
+    "upgrade-yield-pass-utils")
+        if [ "$#" -ne 4 ]; then
+            echo "Invalid param count; Usage: $0 upgrade-yield-pass-utils <uniswap v2 swap router> <yield pass> <bundle collateral wrapper>"
+            exit 1
+        fi
+
+        echo "Upgrading Yield Pass Utils"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeYieldPassUtils.s.sol:UpgradeYieldPassUtils" "--sig run(address,address,address) $2 $3 $4"
         ;;
 
     "yield-pass-create")

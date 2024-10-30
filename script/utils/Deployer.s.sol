@@ -21,6 +21,7 @@ contract Deployer is BaseScript {
 
     struct Deployment {
         address yieldPass;
+        address yieldPassUtils;
         address aethirYieldAdapter;
     }
 
@@ -96,6 +97,7 @@ contract Deployer is BaseScript {
         string memory json = "";
 
         json = stdJson.serialize("", "YieldPass", _deployment.yieldPass);
+        json = stdJson.serialize("", "YieldPassUtils", _deployment.yieldPassUtils);
 
         /* Adapters */
         json = stdJson.serialize("", "AethirYieldAdapter", _deployment.aethirYieldAdapter);
@@ -117,6 +119,13 @@ contract Deployer is BaseScript {
             _deployment.yieldPass = instance;
         } catch {
             console.log("Could not parse YieldPass");
+        }
+
+        /* Deserialize Yield Pass Utils */
+        try vm.parseJsonAddress(json, ".YieldPassUtils") returns (address instance) {
+            _deployment.yieldPassUtils = instance;
+        } catch {
+            console.log("Could not parse YieldPassUtils");
         }
 
         /* Deserialize Aethir Yield Adapter */
