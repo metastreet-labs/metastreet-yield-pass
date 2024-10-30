@@ -16,7 +16,11 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {TestERC721} from "./tokens/TestERC721.sol";
 import {TestERC20} from "./tokens/TestERC20.sol";
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
+import {IYieldPassUtils} from "src/interfaces/IYieldPassUtils.sol";
 import {YieldPass} from "src/YieldPass.sol";
+import {YieldPassUtils, IBundleCollateralWrapper} from "src/YieldPassUtils.sol";
+
+import {IUniswapV2Router02} from "uniswap-v2-periphery/interfaces/IUniswapV2Router02.sol";
 
 /**
  * @title Base test setup
@@ -46,6 +50,9 @@ abstract contract BaseTest is Test {
     TransparentUpgradeableProxy internal yieldPassProxy;
     IYieldPass internal yieldPassImpl;
     IYieldPass internal yieldPass;
+    TransparentUpgradeableProxy internal yieldPassUtilsProxy;
+    IYieldPassUtils internal yieldPassUtilsImpl;
+    IYieldPassUtils internal yieldPassUtils;
 
     function setUp() public virtual {
         users = Users({
@@ -84,16 +91,31 @@ abstract contract BaseTest is Test {
     function deployYieldPass() internal {
         vm.startPrank(users.deployer);
 
-        /* Deploy pool implementation */
+        /* Deploy yield pass implementation */
         yieldPassImpl = new YieldPass();
 
-        /* Deploy pool proxy */
+        /* Deploy yield pass proxy */
         yieldPassProxy = new TransparentUpgradeableProxy(
             address(yieldPassImpl), address(users.admin), abi.encodeWithSignature("initialize()")
         );
 
         /* Deploy yield pass */
         yieldPass = YieldPass(address(yieldPassProxy));
+        vm.stopPrank();
+    }
+
+    function deployYieldPassUtils(address uniswapV2Router, address bundleCollateralWrapper_) internal {
+        vm.startPrank(users.deployer);
+
+        /* Deploy yield pass utils implementation */
+        yieldPassUtilsImpl =
+            new YieldPassUtils(IUniswapV2Router02(uniswapV2Router), yieldPass, bundleCollateralWrapper_);
+
+        /* Deploy yield pass utils proxy */
+        yieldPassUtilsProxy = new TransparentUpgradeableProxy(address(yieldPassUtilsImpl), address(users.admin), "");
+
+        /* Deploy yield pass utils */
+        yieldPassUtils = YieldPassUtils(address(yieldPassUtilsProxy));
         vm.stopPrank();
     }
 

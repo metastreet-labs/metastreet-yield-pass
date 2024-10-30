@@ -14,6 +14,9 @@ import {
 } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
+import {IPoolFactory} from "metastreet-contracts-v2/interfaces/IPoolFactory.sol";
+import {IPool} from "metastreet-contracts-v2/interfaces/IPool.sol";
+
 import {CheckerLicenseNFT} from "src/yieldAdapters/aethir/CheckerLicenseNFT.sol";
 
 import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
@@ -21,8 +24,17 @@ import {AethirYieldAdapter, ICheckerClaimAndWithdraw, IERC4907} from "src/yieldA
 
 import {MockCheckerClaimAndWithdraw} from "./mocks/MockCheckerClaimAndWithdraw.sol";
 
+import "uniswap-v2-periphery/interfaces/IUniswapV2Router02.sol";
+import {IUniswapV2Factory} from "uniswap-v2-core/interfaces/IUniswapV2Factory.sol";
+
 interface IProxyAdminLegacy {
     function getProxyImplementation(ITransparentUpgradeableProxy proxy) external view returns (address);
+}
+
+interface ICheckerLicenseNFT {
+    function updateRecipientWhitelist(address[] calldata addressList, bool inWhitelist) external;
+    function updateSenderWhitelist(address[] calldata addressList, bool inWhitelist) external;
+    function updateWhitelistTransferTime(uint256 startTime, uint256 endTime) external;
 }
 
 /**
@@ -32,35 +44,38 @@ interface IProxyAdminLegacy {
  *
  * @dev Sets up contracts
  */
-abstract contract AethirBaseTest is PoolBaseTest {
-    string ARBITRUM_RPC_URL = vm.envString("ARBITRUM_RPC_URL");
+abstract contract AethirSepoliaBaseTest is PoolBaseTest {
+    string SEPOLIA_RPC_URL = vm.envString("SEPOLIA_RPC_URL");
 
     /* Uniswap V2 router */
-    address internal uniswapV2Router = 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24;
+    IUniswapV2Router02 internal uniswapV2Router = IUniswapV2Router02(0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3);
+
+    /* Uniswap V2 factory */
+    IUniswapV2Factory internal uniswapV2Factory = IUniswapV2Factory(0xF62c03E08ada871A0bEb309762E260a7a6a880E6);
 
     /* Checker node license */
-    address internal checkerNodeLicense = 0xC227e25544EdD261A9066932C71a25F4504972f1;
+    address internal checkerNodeLicense = 0xc98A16E5244B051Bc1cF146c1f95cA9452007bcD;
 
-    /* Checker node license owner of 91521, 91522, 91523, 91524, 91525, 91526 */
-    address internal cnlOwner = 0x89D07bF06674f1eAc72bAcE3E16B9567bA1197f9;
+    /* Checker node license owner of 776, 777, 778,779,780 */
+    address internal cnlOwner = 0xa81acA2e31C071e8Ce2138200d966fE76Bcf0b71;
 
     /* Operator */
     address internal operator = 0xf0B90864CF8411Db83B62F1bb509137df992D785;
 
     /* EOA holding ATH */
-    address internal athOwner = 0x0de5c1C03FdbC41b5995b4e2B0A9938b391569a8;
+    address internal athOwner = 0xdB246bc862bc88833a481339dFEb8311846E65de;
 
     /* Aethir token */
-    IERC20 internal ath = IERC20(0xc87B37a581ec3257B734886d9d3a581F5A9d056c);
+    IERC20 internal ath = IERC20(0x0Ce111bA243aeAe7976809Fc5F2feaa4eee65b2f);
 
     /* Checker claim and withdraw */
-    address internal checkerClaimAndWithdraw = 0x3EB64fc76De5D77659387E64951d78d5fCaE1111;
+    address internal checkerClaimAndWithdraw = 0x91F5F7468e053c83Aa027C36585ea44Af81BA2f5;
 
     /* Admin address */
     address internal adminAddress = 0xBA733c086816f7eBD806cfD5AC38EaA5716d398C;
 
     /* Whitelist admin */
-    address internal whitelistAdminAddress = 0xF6A9359488C583Be23e2Fd18D782075E3070196A;
+    address internal whitelistAdminAddress = 0x85BF1Dc2fA2d15AD45E8Fee07F95D7A811a9c013;
 
     /* Yield adapter name */
     string internal yieldAdapterName = "Aethir Yield Adapter";
@@ -72,28 +87,37 @@ abstract contract AethirBaseTest is PoolBaseTest {
     uint64 internal startTime;
     uint64 internal expiry;
 
-    uint256 arbitrumFork;
+    uint256 sepoliaFork;
     IYieldAdapter internal yieldAdapterImpl;
     IYieldAdapter internal yieldAdapter;
 
     address internal mockCheckerClaimAndWithdraw;
 
     function setUp() public virtual override {
-        arbitrumFork = vm.createSelectFork(ARBITRUM_RPC_URL);
-        vm.selectFork(arbitrumFork);
-        vm.rollFork(257363089);
+        sepoliaFork = vm.createSelectFork(SEPOLIA_RPC_URL);
+        vm.selectFork(sepoliaFork);
+        vm.rollFork(6984216);
 
         PoolBaseTest.setUp();
+
+        /* MetaStreet pool factory */
+        metaStreetPoolFactory = IPoolFactory(0x5FC53D3C3B108aD1c1D27399AcB8124b65229eD6);
+
+        /* MetaStreet pool impl */
+        metaStreetPoolImpl = 0xAe36Eb66D1FEad713C61A8331D14F5B0E2562E93;
+
+        /* Bundle collateral wrapper */
+        bundleCollateralWrapper = 0x83c7bc92bcFF43b9F682B7C2eE897A7130a36543;
 
         (nodeSigner, nodeSignerPk) = makeAddrAndKey("Node Signer");
 
         /* Exclude 91526 from undelegation */
         uint256[] memory licenses = new uint256[](5);
-        licenses[0] = 91521;
-        licenses[1] = 91522;
-        licenses[2] = 91523;
-        licenses[3] = 91524;
-        licenses[4] = 91525;
+        licenses[0] = 776;
+        licenses[1] = 777;
+        licenses[2] = 778;
+        licenses[3] = 779;
+        licenses[4] = 780;
 
         /* Undelegate licenses */
         vm.startPrank(cnlOwner);
@@ -109,18 +133,17 @@ abstract contract AethirBaseTest is PoolBaseTest {
 
         /* Approve license */
         IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPass), true);
+        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
 
         /* Delegate to operator */
-        IERC4907(checkerNodeLicense).setUser(91521, operator, expiry);
-        IERC4907(checkerNodeLicense).setUser(91522, operator, expiry);
-        IERC4907(checkerNodeLicense).setUser(91523, operator, expiry);
-        IERC4907(checkerNodeLicense).setUser(91524, operator, expiry);
-        IERC4907(checkerNodeLicense).setUser(91525, operator, expiry);
+        IERC4907(checkerNodeLicense).setUser(776, operator, expiry);
+        IERC4907(checkerNodeLicense).setUser(777, operator, expiry);
+        IERC4907(checkerNodeLicense).setUser(778, operator, expiry);
+        IERC4907(checkerNodeLicense).setUser(779, operator, expiry);
+        IERC4907(checkerNodeLicense).setUser(780, operator, expiry);
         vm.stopPrank();
 
-        upgradeNodeLicense();
         deployYieldAdapter(false);
-        addWhitelist();
     }
 
     function deployYieldPass(
@@ -195,14 +218,16 @@ abstract contract AethirBaseTest is PoolBaseTest {
         bool inFromWhitelist = true;
 
         /* Update to whitelist */
-        address[] memory addressToList = new address[](1);
+        address[] memory addressToList = new address[](2);
         addressToList[0] = address(yieldAdapter);
+        addressToList[1] = address(yieldPassUtils);
         bool inToWhitelist = true;
 
         /* Add whitelist for node license */
-        CheckerLicenseNFT(checkerNodeLicense).updateTransferWhiteList(
-            addressFromList, inFromWhitelist, addressToList, inToWhitelist
-        );
+        ICheckerLicenseNFT(checkerNodeLicense).updateSenderWhitelist(addressFromList, inFromWhitelist);
+        ICheckerLicenseNFT(checkerNodeLicense).updateRecipientWhitelist(addressToList, inToWhitelist);
+
+        ICheckerLicenseNFT(checkerNodeLicense).updateWhitelistTransferTime(block.timestamp, block.timestamp + 10 days);
 
         vm.stopPrank();
     }

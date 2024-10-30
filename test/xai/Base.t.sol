@@ -3,7 +3,7 @@ pragma solidity 0.8.26;
 
 import "forge-std/console.sol";
 
-import {BaseTest} from "../Base.t.sol";
+import {PoolBaseTest} from "../pool/Base.t.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -39,7 +39,7 @@ interface IEsXai {
  *
  * @dev Sets up contracts
  */
-abstract contract XaiBaseTest is BaseTest {
+abstract contract XaiBaseTest is PoolBaseTest {
     string ARBITRUM_RPC_URL = vm.envString("ARBITRUM_RPC_URL");
 
     /* Sentry node license */
@@ -86,7 +86,7 @@ abstract contract XaiBaseTest is BaseTest {
         vm.selectFork(arbitrumFork);
         vm.rollFork(257363089);
 
-        BaseTest.setUp();
+        PoolBaseTest.setUp();
 
         /* Exclude 22355 from unstaking */
         uint256[] memory licenses = new uint256[](6);

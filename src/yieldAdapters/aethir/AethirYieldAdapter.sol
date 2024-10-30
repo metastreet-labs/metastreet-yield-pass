@@ -13,6 +13,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
+import {IYieldPass} from "src/interfaces/IYieldPass.sol";
 
 interface IERC4907 {
     event UpdateUser(uint256 indexed tokenId, address indexed user, uint64 expires);
