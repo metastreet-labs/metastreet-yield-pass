@@ -3,7 +3,7 @@
 To clone the repo, please run the following command to install the required dependencies:
 
 ```shell
-$ git clone --recursive https://github.com/metastreet-labs/metastreet-airdrop-pass.git
+$ git clone --recursive https://github.com/metastreet-labs/metastreet-yield-pass.git
 ```
 
 ### Build
