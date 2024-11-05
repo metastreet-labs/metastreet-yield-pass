@@ -237,6 +237,13 @@ interface IYieldPass is IERC721Receiver {
      */
     function claimable(address yieldPass, uint256 yieldPassAmount) external view returns (uint256);
 
+    /**
+     * @notice Get yield pass token amount for mint
+     * @param yieldPass Yield pass
+     * @return Yield pass token amount
+     */
+    function quoteMint(address yieldPass) external view returns (uint256);
+
     /*------------------------------------------------------------------------*/
     /* User APIs */
     /*------------------------------------------------------------------------*/

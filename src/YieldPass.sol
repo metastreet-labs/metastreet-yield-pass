@@ -169,6 +169,26 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         );
     }
 
+    /**
+     * @inheritdoc IYieldPass
+     */
+    function quoteMint(address yieldPass) public view returns (uint256) {
+        /* Get yield pass info */
+        YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
+
+        /* Validate yield pass is deployed */
+        if (yieldPassInfo_.expiry == 0) revert InvalidYieldPass();
+
+        /* Validate mint window is open */
+        if (block.timestamp < yieldPassInfo_.startTime || block.timestamp >= yieldPassInfo_.expiry) {
+            revert InvalidWindow();
+        }
+
+        /* Comptue yield pass token amount based on this yield pass's time to expiry */
+        return
+            (1 ether * (yieldPassInfo_.expiry - block.timestamp)) / (yieldPassInfo_.expiry - yieldPassInfo_.startTime);
+    }
+
     /*------------------------------------------------------------------------*/
     /* Internal Helpers */
     /*------------------------------------------------------------------------*/
@@ -253,17 +273,8 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
 
-        /* Validate yield pass is deployed */
-        if (yieldPassInfo_.expiry == 0) revert InvalidYieldPass();
-
-        /* Validate mint window is open */
-        if (block.timestamp < yieldPassInfo_.startTime || block.timestamp >= yieldPassInfo_.expiry) {
-            revert InvalidWindow();
-        }
-
-        /* Compute yield pass token amount based on this yield pass's time to expiry */
-        uint256 yieldPassAmount =
-            (1 ether * (yieldPassInfo_.expiry - block.timestamp)) / (yieldPassInfo_.expiry - yieldPassInfo_.startTime);
+        /* Quote mint amount */
+        uint256 yieldPassAmount = quoteMint(yieldPass);
 
         /* Update claim state shares */
         _yieldPassStates[yieldPass].claimState.shares += yieldPassAmount;
