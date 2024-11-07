@@ -29,7 +29,9 @@ contract RedeemTest is AethirBaseTest {
     function test__Redeem() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
+        yieldPass.mint(
+            yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1, expiry)
+        );
         vm.stopPrank();
 
         /* Fast-forward to 1 seconds after expiry */
@@ -48,7 +50,9 @@ contract RedeemTest is AethirBaseTest {
     function test__Redeem_RevertWhen_TokenNotOwned() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
+        yieldPass.mint(
+            yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1, expiry)
+        );
         IERC721(dp).transferFrom(cnlOwner, address(1), 91521);
         vm.stopPrank();
 
@@ -65,7 +69,9 @@ contract RedeemTest is AethirBaseTest {
     function test__Redeem_RevertWhen_InvalidWindow() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
+        yieldPass.mint(
+            yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1, expiry)
+        );
         vm.stopPrank();
 
         /* Fast-forward to expiry */

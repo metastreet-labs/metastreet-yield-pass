@@ -78,7 +78,9 @@ contract ClaimTest is AethirBaseTest {
 
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
+        yieldPass.mint(
+            yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1, expiry)
+        );
         vm.stopPrank();
 
         /* Harvest */
@@ -108,7 +110,9 @@ contract ClaimTest is AethirBaseTest {
     function test__Claim_RevertWhen_InvalidAmount() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
+        yieldPass.mint(
+            yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1, expiry)
+        );
         vm.stopPrank();
 
         /* Harvest */
@@ -130,7 +134,9 @@ contract ClaimTest is AethirBaseTest {
     function test__Claim_RevertWhen_InvalidClaimWindow() external {
         /* Mint */
         vm.startPrank(cnlOwner);
-        yieldPass.mint(yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1));
+        yieldPass.mint(
+            yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1, expiry)
+        );
         vm.stopPrank();
 
         /* Claim early */
