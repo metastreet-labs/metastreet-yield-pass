@@ -222,12 +222,7 @@ abstract contract AethirBaseTest is BaseTest {
 
         bytes32 structHash = keccak256(
             abi.encode(
-                AethirYieldAdapter(address(yieldAdapter)).NODE_TYPEHASH(),
-                cnlOwner,
-                tokenId,
-                operator_,
-                timestamp,
-                duration
+                AethirYieldAdapter(address(yieldAdapter)).NODE_TYPEHASH(), tokenId, operator_, timestamp, duration
             )
         );
 
@@ -237,7 +232,6 @@ abstract contract AethirBaseTest is BaseTest {
 
         AethirYieldAdapter.SignedNode memory signedNode = AethirYieldAdapter.SignedNode({
             node: AethirYieldAdapter.ValidatedNode({
-                user: cnlOwner,
                 tokenId: tokenId,
                 burnerWallet: operator_,
                 timestamp: timestamp,
