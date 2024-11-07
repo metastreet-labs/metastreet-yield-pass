@@ -52,9 +52,15 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         vm.startPrank(cnlOwner);
 
         /* Mint to get some yield pass tokens */
-        yieldPass.mint(yp, 776, cnlOwner, cnlOwner, generateSignedNode(operator, 776, uint64(block.timestamp), 1));
-        yieldPass.mint(yp, 777, cnlOwner, cnlOwner, generateSignedNode(operator, 777, uint64(block.timestamp), 1));
-        yieldPass.mint(yp, 778, cnlOwner, cnlOwner, generateSignedNode(operator, 778, uint64(block.timestamp), 1));
+        yieldPass.mint(
+            yp, 776, cnlOwner, cnlOwner, generateSignedNode(operator, 776, uint64(block.timestamp), 1, expiry)
+        );
+        yieldPass.mint(
+            yp, 777, cnlOwner, cnlOwner, generateSignedNode(operator, 777, uint64(block.timestamp), 1, expiry)
+        );
+        yieldPass.mint(
+            yp, 778, cnlOwner, cnlOwner, generateSignedNode(operator, 778, uint64(block.timestamp), 1, expiry)
+        );
 
         /* Create uniswap V2 pair */
         pair = uniswapV2Factory.createPair(address(yp), address(ath));
@@ -92,7 +98,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         uint256[] memory tokenIds = new uint256[](1);
         tokenIds[0] = 779;
         bytes[] memory setupData = new bytes[](1);
-        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1);
+        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1, expiry);
         uint128[] memory ticks = new uint128[](1);
         ticks[0] = Helpers.encodeTick(100 ether, 0, 0, 0);
 
@@ -142,8 +148,8 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         tokenIds[0] = 779;
         tokenIds[1] = 780;
         bytes[] memory setupData = new bytes[](2);
-        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1);
-        setupData[1] = generateSignedNode(operator, 780, uint64(block.timestamp), 1);
+        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1, expiry);
+        setupData[1] = generateSignedNode(operator, 780, uint64(block.timestamp), 1, expiry);
         uint128[] memory ticks = new uint128[](1);
         ticks[0] = Helpers.encodeTick(100 ether, 0, 0, 0);
 
@@ -198,7 +204,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         uint256[] memory tokenIds = new uint256[](1);
         tokenIds[0] = 779;
         bytes[] memory setupData = new bytes[](1);
-        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1);
+        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1, expiry);
         uint128[] memory ticks = new uint128[](1);
         ticks[0] = Helpers.encodeTick(100 ether, 0, 0, 0);
 
@@ -234,7 +240,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         uint256[] memory tokenIds = new uint256[](1);
         tokenIds[0] = 779;
         bytes[] memory setupData = new bytes[](1);
-        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1);
+        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1, expiry);
         uint128[] memory ticks = new uint128[](1);
         ticks[0] = Helpers.encodeTick(100 ether, 0, 0, 0);
 
@@ -270,7 +276,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         uint256[] memory tokenIds = new uint256[](1);
         tokenIds[0] = 779;
         bytes[] memory setupData = new bytes[](1);
-        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1);
+        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1, expiry);
         uint128[] memory ticks = new uint128[](1);
         ticks[0] = Helpers.encodeTick(100 ether, 0, 0, 0);
 
@@ -323,8 +329,8 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         tokenIds[0] = 779;
         tokenIds[1] = 780;
         bytes[] memory setupData = new bytes[](2);
-        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1);
-        setupData[1] = generateSignedNode(operator, 780, uint64(block.timestamp), 1);
+        setupData[0] = generateSignedNode(operator, 779, uint64(block.timestamp), 1, expiry);
+        setupData[1] = generateSignedNode(operator, 780, uint64(block.timestamp), 1, expiry);
         uint128[] memory ticks = new uint128[](1);
         ticks[0] = Helpers.encodeTick(100 ether, 0, 0, 0);
 

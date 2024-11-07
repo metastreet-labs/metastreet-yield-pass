@@ -211,7 +211,8 @@ abstract contract AethirBaseTest is PoolBaseTest {
         address operator_,
         uint256 tokenId,
         uint64 timestamp,
-        uint64 duration
+        uint64 duration,
+        uint64 subscriptionExpiry
     ) internal view returns (bytes memory) {
         bytes32 domainSeparator = keccak256(
             abi.encode(
@@ -225,7 +226,12 @@ abstract contract AethirBaseTest is PoolBaseTest {
 
         bytes32 structHash = keccak256(
             abi.encode(
-                AethirYieldAdapter(address(yieldAdapter)).NODE_TYPEHASH(), tokenId, operator_, timestamp, duration
+                AethirYieldAdapter(address(yieldAdapter)).VALIDATED_NODE_TYPEHASH(),
+                tokenId,
+                operator_,
+                subscriptionExpiry,
+                timestamp,
+                duration
             )
         );
 
@@ -237,6 +243,7 @@ abstract contract AethirBaseTest is PoolBaseTest {
             node: AethirYieldAdapter.ValidatedNode({
                 tokenId: tokenId,
                 burnerWallet: operator_,
+                subscriptionExpiry: subscriptionExpiry,
                 timestamp: timestamp,
                 duration: duration
             }),

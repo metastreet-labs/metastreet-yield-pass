@@ -50,10 +50,11 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Node EIP-712 typehash
+     * @notice Validated Node EIP-712 typehash
      */
-    bytes32 public constant NODE_TYPEHASH =
-        keccak256("Node(uint256 tokenId,address burnerWallet,uint64 timestamp,uint64 duration)");
+    bytes32 public constant VALIDATED_NODE_TYPEHASH = keccak256(
+        "ValidatedNode(uint256 tokenId,address burnerWallet,uint64 subscriptionExpiry,uint64 timestamp,uint64 duration)"
+    );
 
     /*------------------------------------------------------------------------*/
     /* Error */
@@ -88,6 +89,11 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @notice Invalid signature
      */
     error InvalidSignature();
+
+    /**
+     * @notice Invalid expiry
+     */
+    error InvalidExpiry();
 
     /*------------------------------------------------------------------------*/
     /* Access Control Roles */
@@ -134,12 +140,14 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @notice Node
      * @param tokenId Token ID
      * @param burnerWallet Burner wallet address
+     * @param subscriptionExpiry Subscription expiry timestamp
      * @param timestamp Timestamp
      * @param duration Duration validity
      */
     struct ValidatedNode {
         uint256 tokenId;
         address burnerWallet;
+        uint64 subscriptionExpiry;
         uint64 timestamp;
         uint64 duration;
     }
@@ -343,16 +351,24 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /**
      * @notice Validate signed node
      * @param tokenId Token ID
+     * @param expiry Yield pass expiry
      * @param signedNode Signed node
      * @return Burner wallet address
      */
-    function _validateSignedNode(uint256 tokenId, SignedNode memory signedNode) internal view returns (address) {
+    function _validateSignedNode(
+        uint256 tokenId,
+        uint64 expiry,
+        SignedNode memory signedNode
+    ) internal view returns (address) {
         ValidatedNode memory node = signedNode.node;
 
         /* Validate token ID */
         if (node.tokenId != tokenId) revert InvalidTokenId();
 
-        /* Validate timestamp is in the past and expiry is in the future */
+        /* Validate expiry */
+        if (node.subscriptionExpiry < expiry) revert InvalidExpiry();
+
+        /* Validate timestamp is in the past and signature validity is in the future */
         if (node.timestamp > block.timestamp || node.timestamp + node.duration < block.timestamp) {
             revert InvalidTimestamp();
         }
@@ -360,7 +376,16 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         /* Recover node signer */
         address signerAddress = ECDSA.recover(
             _hashTypedDataV4(
-                keccak256(abi.encode(NODE_TYPEHASH, node.tokenId, node.burnerWallet, node.timestamp, node.duration))
+                keccak256(
+                    abi.encode(
+                        VALIDATED_NODE_TYPEHASH,
+                        node.tokenId,
+                        node.burnerWallet,
+                        node.subscriptionExpiry,
+                        node.timestamp,
+                        node.duration
+                    )
+                )
             ),
             signedNode.signature
         );
@@ -498,7 +523,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         SignedNode memory signedNode = abi.decode(setupData, (SignedNode));
 
         /* Validate signed node */
-        address burnerWallet = _validateSignedNode(tokenId, signedNode);
+        address burnerWallet = _validateSignedNode(tokenId, expiry, signedNode);
 
         /* Set user on license NFT */
         IERC4907(_checkerNodeLicense).setUser(tokenId, burnerWallet, expiry);
