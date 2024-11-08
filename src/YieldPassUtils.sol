@@ -83,41 +83,24 @@ contract YieldPassUtils is ReentrancyGuard, ERC721Holder, ERC165, IYieldPassUtil
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Helper function to mint yield pass tokens and borrow from pool
+     * @notice Mint yield pass tokens
      * @param yieldPassToken Yield pass token
      * @param tokenIds Token IDs
      * @param setupData Setup data
-     * @param pool Pool
-     * @param principal Principal
-     * @param duration Duration
-     * @param maxRepayment Max repayment
-     * @param ticks Ticks
-     * @param options Options
      * @param deadline Deadline
-     * @param isLP True if adding liquidity to Uniswap V2 pool
-     * @return Token, pool currency token, yield pass amount, principal
+     * @return Yield pass info and yield pass amount
      */
-    function _mintAndBorrow(
+    function _mint(
         address yieldPassToken,
         uint256[] calldata tokenIds,
         bytes[] calldata setupData,
-        address pool,
-        uint256 principal,
-        uint64 duration,
-        uint256 maxRepayment,
-        uint128[] calldata ticks,
-        bytes calldata options,
-        uint64 deadline,
-        bool isLP
-    ) internal returns (address, address, uint256, uint256) {
+        uint64 deadline
+    ) internal returns (IYieldPass.YieldPassInfo memory, uint256) {
         /* Validate deadline */
         if (block.timestamp > deadline) revert DeadlinePassed();
 
         /* Get yield pass info */
         IYieldPass.YieldPassInfo memory yieldPassInfo = yieldPass.yieldPassInfo(yieldPassToken);
-
-        /* Get pool currency token */
-        address poolCurrencyToken = IPool(pool).currencyToken();
 
         /* Approve NFT with yield pass contract */
         IERC721(yieldPassInfo.token).setApprovalForAll(address(yieldPass), true);
@@ -135,44 +118,104 @@ contract YieldPassUtils is ReentrancyGuard, ERC721Holder, ERC165, IYieldPassUtil
         /* Unset NFT approval for yield pass contract */
         IERC721(yieldPassInfo.token).setApprovalForAll(address(yieldPass), false);
 
-        /* If adding liquidity, compute borrow principal */
-        if (isLP) {
-            /* Get Uniswap V2 pair reserves */
-            (uint256 reserveA, uint256 reserveB) =
-                UniswapV2Library.getReserves(uniswapV2Factory, yieldPassToken, poolCurrencyToken);
+        return (yieldPassInfo, yieldPassAmount);
+    }
 
-            /* Compute borrow principal */
-            principal = Math.mulDiv(yieldPassAmount, reserveB, reserveA);
-        }
+    /**
+     * @notice Compute borrow principal
+     * @param yieldPassToken Yield pass token
+     * @param poolCurrencyToken Pool currency token
+     * @param yieldPassAmount Yield pass amount
+     * @return Computed borrow principal
+     */
+    function _computePrincipal(
+        address yieldPassToken,
+        address poolCurrencyToken,
+        uint256 yieldPassAmount
+    ) internal view returns (uint256) {
+        /* Get Uniswap V2 pair reserves */
+        (uint256 reserveA, uint256 reserveB) =
+            UniswapV2Library.getReserves(uniswapV2Factory, yieldPassToken, poolCurrencyToken);
 
+        /* Return computed borrow principal */
+        return Math.mulDiv(yieldPassAmount, reserveB, reserveA);
+    }
+
+    /**
+     * @notice Borrow from pool
+     * @param yieldPassInfo Yield pass info
+     * @param tokenIds Token IDs
+     * @param pool Pool
+     * @param principal Principal
+     * @param duration Duration
+     * @param maxRepayment Maximum repayment
+     * @param ticks Ticks
+     * @param options Options
+     * @return Repayment amount
+     */
+    function _borrow(
+        IYieldPass.YieldPassInfo memory yieldPassInfo,
+        uint256[] calldata tokenIds,
+        address pool,
+        uint256 principal,
+        uint64 duration,
+        uint256 maxRepayment,
+        uint128[] calldata ticks,
+        bytes calldata options
+    ) internal returns (uint256) {
         /* Borrow from pool using discount pass */
         if (tokenIds.length == 1) {
             /* Approve discount pass token for pool */
             IERC721(yieldPassInfo.discountPass).approve(pool, tokenIds[0]);
 
-            /* Borrow using discount pass */
-            IPool(pool).borrow(
+            /* Borrow using discount pass and return repayment amount */
+            return IPool(pool).borrow(
                 principal, duration, yieldPassInfo.discountPass, tokenIds[0], maxRepayment, ticks, options
             );
         } else {
-            /* Approve discount pass token for bundle collateral wrapper */
+            /* Set approval of discount pass token for bundle collateral wrapper to true */
             IERC721(yieldPassInfo.discountPass).setApprovalForAll(bundleCollateralWrapper, true);
 
             /* Mint bundle collateral wrapper */
             uint256 tokenId =
                 IBundleCollateralWrapper(bundleCollateralWrapper).mint(yieldPassInfo.discountPass, tokenIds);
 
-            /* Approve discount pass token for bundle collateral wrapper */
+            /* Set approval of discount pass token for bundle collateral wrapper to false */
             IERC721(yieldPassInfo.discountPass).setApprovalForAll(bundleCollateralWrapper, false);
 
             /* Approve bundle collateral wrapper for pool */
             IERC721(bundleCollateralWrapper).approve(pool, tokenId);
 
-            /* Borrow */
-            IPool(pool).borrow(principal, duration, bundleCollateralWrapper, tokenId, maxRepayment, ticks, options);
+            /* Borrow using bundle collateral wrapper and return repayment amount */
+            return
+                IPool(pool).borrow(principal, duration, bundleCollateralWrapper, tokenId, maxRepayment, ticks, options);
         }
+    }
 
-        return (yieldPassInfo.token, poolCurrencyToken, yieldPassAmount, principal);
+    /**
+     * @notice Add liquidity
+     * @param yieldPassToken Yield pass token
+     * @param poolCurrencyToken Pool currency token
+     * @param yieldPassAmount Yield pass amount
+     * @param principal Principal
+     * @return Liquidity tokens
+     */
+    function _addLiquidity(
+        address yieldPassToken,
+        address poolCurrencyToken,
+        uint256 yieldPassAmount,
+        uint256 principal
+    ) internal returns (uint256) {
+        /* Approve pool currency token and yield pass token for Uniswap V2 router */
+        IERC20(poolCurrencyToken).approve(address(uniswapV2SwapRouter), principal);
+        IERC20(yieldPassToken).approve(address(uniswapV2SwapRouter), yieldPassAmount);
+
+        /* Add liquidity */
+        (,, uint256 liquidityTokens) = uniswapV2SwapRouter.addLiquidity(
+            yieldPassToken, poolCurrencyToken, yieldPassAmount, principal, 1, 1, msg.sender, block.timestamp
+        );
+
+        return liquidityTokens;
     }
 
     /*------------------------------------------------------------------------*/
@@ -182,7 +225,7 @@ contract YieldPassUtils is ReentrancyGuard, ERC721Holder, ERC165, IYieldPassUtil
     /**
      * @inheritdoc IYieldPassUtils
      */
-    function quoteLiquidateToken(
+    function quoteMintAndLP(
         address yieldPassToken,
         address pool,
         uint256 tokenCount
@@ -193,12 +236,8 @@ contract YieldPassUtils is ReentrancyGuard, ERC721Holder, ERC165, IYieldPassUtil
         /* Get yield pass amount */
         uint256 yieldPassAmount = yieldPass.quoteMint(yieldPassToken) * tokenCount;
 
-        /* Get Uniswap V2 pair reserves */
-        (uint256 reserveA, uint256 reserveB) =
-            UniswapV2Library.getReserves(uniswapV2Factory, yieldPassToken, poolCurrencyToken);
-
         /* Return yield pass amount and computed borrow principal */
-        return (yieldPassAmount, Math.mulDiv(yieldPassAmount, reserveB, reserveA));
+        return (yieldPassAmount, _computePrincipal(yieldPassToken, poolCurrencyToken, yieldPassAmount));
     }
 
     /*------------------------------------------------------------------------*/
@@ -208,7 +247,7 @@ contract YieldPassUtils is ReentrancyGuard, ERC721Holder, ERC165, IYieldPassUtil
     /**
      * @inheritdoc IYieldPassUtils
      */
-    function liquidateTokenPartial(
+    function mintAndBorrow(
         address yieldPassToken,
         uint256[] calldata tokenIds,
         bytes[] calldata setupData,
@@ -219,21 +258,16 @@ contract YieldPassUtils is ReentrancyGuard, ERC721Holder, ERC165, IYieldPassUtil
         uint128[] calldata ticks,
         bytes calldata options,
         uint64 deadline
-    ) external nonReentrant {
-        /* Mint and borrow */
-        (address token, address poolCurrencyToken, uint256 yieldPassAmount,) = _mintAndBorrow(
-            yieldPassToken,
-            tokenIds,
-            setupData,
-            pool,
-            principal,
-            duration,
-            maxRepayment,
-            ticks,
-            options,
-            deadline,
-            false
-        );
+    ) external nonReentrant returns (uint256) {
+        /* Mint */
+        (IYieldPass.YieldPassInfo memory yieldPassInfo, uint256 yieldPassAmount) =
+            _mint(yieldPassToken, tokenIds, setupData, deadline);
+
+        /* Get pool currency token */
+        address poolCurrencyToken = IPool(pool).currencyToken();
+
+        /* Borrow */
+        uint256 repayment = _borrow(yieldPassInfo, tokenIds, pool, principal, duration, maxRepayment, ticks, options);
 
         /* Send principal and yield pass amount to caller */
         IERC20(poolCurrencyToken).safeTransfer(msg.sender, principal);
@@ -243,49 +277,57 @@ contract YieldPassUtils is ReentrancyGuard, ERC721Holder, ERC165, IYieldPassUtil
         uint256 avgYieldPassAmount = yieldPassAmount / tokenIds.length;
         uint256 avgPrincipal = principal / tokenIds.length;
         for (uint256 i; i < tokenIds.length; i++) {
-            emit TokenLiquidatedPartial(msg.sender, token, tokenIds[i], avgYieldPassAmount, avgPrincipal);
+            emit Liquidated(msg.sender, yieldPassInfo.token, tokenIds[i], avgYieldPassAmount, avgPrincipal);
         }
+
+        return repayment;
     }
 
     /**
      * @inheritdoc IYieldPassUtils
      */
-    function liquidateToken(
+    function mintAndLP(
         address yieldPassToken,
         uint256[] calldata tokenIds,
         bytes[] calldata setupData,
         address pool,
+        uint256 minPrincipal,
         uint64 duration,
         uint256 maxRepayment,
         uint128[] calldata ticks,
         bytes calldata options,
-        uint256 minPrincipal,
         uint64 deadline
-    ) external nonReentrant {
-        /* Mint and borrow */
-        (address token, address poolCurrencyToken, uint256 yieldPassAmount, uint256 principal) = _mintAndBorrow(
-            yieldPassToken, tokenIds, setupData, pool, 0, duration, maxRepayment, ticks, options, deadline, true
-        );
+    ) external nonReentrant returns (uint256, uint256) {
+        /* Mint */
+        (IYieldPass.YieldPassInfo memory yieldPassInfo, uint256 yieldPassAmount) =
+            _mint(yieldPassToken, tokenIds, setupData, deadline);
+
+        /* Get pool currency token */
+        address poolCurrencyToken = IPool(pool).currencyToken();
+
+        /* Compute borrow principal */
+        uint256 principal = _computePrincipal(yieldPassToken, poolCurrencyToken, yieldPassAmount);
 
         /* Validate min principal */
         if (principal < minPrincipal) revert InvalidSlippage();
 
-        /* Approve pool currency token and yield pass token for Uniswap V2 router */
-        IERC20(poolCurrencyToken).approve(address(uniswapV2SwapRouter), principal);
-        IERC20(yieldPassToken).approve(address(uniswapV2SwapRouter), yieldPassAmount);
+        /* Borrow */
+        uint256 repayment = _borrow(yieldPassInfo, tokenIds, pool, principal, duration, maxRepayment, ticks, options);
 
         /* Add liquidity */
-        (,, uint256 liquidityTokens) = uniswapV2SwapRouter.addLiquidity(
-            yieldPassToken, poolCurrencyToken, yieldPassAmount, principal, 1, 1, msg.sender, block.timestamp
-        );
+        uint256 liquidityTokens = _addLiquidity(yieldPassToken, poolCurrencyToken, yieldPassAmount, principal);
 
         /* Emit token liquidated event */
         uint256 avgYieldPassAmount = yieldPassAmount / tokenIds.length;
         uint256 avgPrincipal = principal / tokenIds.length;
         uint256 avgLiquidityTokens = liquidityTokens / tokenIds.length;
         for (uint256 i; i < tokenIds.length; i++) {
-            emit TokenLiquidated(msg.sender, token, tokenIds[i], avgYieldPassAmount, avgPrincipal, avgLiquidityTokens);
+            emit Liquidated(
+                msg.sender, yieldPassInfo.token, tokenIds[i], avgYieldPassAmount, avgPrincipal, avgLiquidityTokens
+            );
         }
+
+        return (repayment, liquidityTokens);
     }
 
     /*------------------------------------------------------------------------*/

@@ -92,7 +92,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         vm.stopPrank();
     }
 
-    function test__Liquidate_SingleToken() external {
+    function test__MintAndLP_SingleToken() external {
         /* Mint */
         vm.startPrank(cnlOwner);
         uint256[] memory tokenIds = new uint256[](1);
@@ -106,7 +106,8 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
 
         /* Quote principal */
-        (, uint256 principal) = yieldPassUtils.quoteLiquidateToken(address(yp), address(metaStreetPool), 1);
+        (, uint256 principal) = yieldPassUtils.quoteMintAndLP(address(yp), address(metaStreetPool), 1);
+        console.log("principal1:", principal);
 
         /* Validate principal is not 0 */
         assertNotEq(principal, 0, "Principal is 0");
@@ -115,16 +116,16 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         uint256 poolAthBalance = IERC20(ath).balanceOf(address(metaStreetPool));
 
         /* Liquidate */
-        yieldPassUtils.liquidateToken(
+        yieldPassUtils.mintAndLP(
             address(yp),
             tokenIds,
             setupData,
             address(metaStreetPool),
+            principal,
             metaStreetPool.durations()[0],
             principal,
             ticks,
             "",
-            principal,
             uint64(block.timestamp)
         );
         vm.stopPrank();
@@ -141,7 +142,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         assertEq(IERC20(ath).balanceOf(address(yieldPassUtils)), 0, "Yield pass utils still has ATH");
     }
 
-    function test__Liquidate_MultipleTokens() external {
+    function test__MintAndLP_MultipleTokens() external {
         /* Mint */
         vm.startPrank(cnlOwner);
         uint256[] memory tokenIds = new uint256[](2);
@@ -157,7 +158,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
 
         /* Quote principal */
-        (, uint256 principal) = yieldPassUtils.quoteLiquidateToken(address(yp), address(metaStreetPool), 2);
+        (, uint256 principal) = yieldPassUtils.quoteMintAndLP(address(yp), address(metaStreetPool), 2);
 
         /* Validate principal is not 0 */
         assertNotEq(principal, 0, "Principal is 0");
@@ -172,16 +173,16 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         uint256 poolAthBalance = IERC20(ath).balanceOf(address(metaStreetPool));
 
         /* Liquidate */
-        yieldPassUtils.liquidateToken(
+        yieldPassUtils.mintAndLP(
             address(yp),
             tokenIds,
             setupData,
             address(metaStreetPool),
+            principal,
             metaStreetPool.durations()[0],
             principal,
             ticks,
             abi.encodePacked(uint16(1), uint16(encodedBundle.length), encodedBundle),
-            principal,
             uint64(block.timestamp)
         );
         vm.stopPrank();
@@ -198,7 +199,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         assertEq(IERC20(ath).balanceOf(address(yieldPassUtils)), 0, "Yield pass utils still has ATH");
     }
 
-    function test__Liquidate_SingleToken_RevertWhen_DeadlinePassed() external {
+    function test__MintAndLP_SingleToken_RevertWhen_DeadlinePassed() external {
         /* Mint */
         vm.startPrank(cnlOwner);
         uint256[] memory tokenIds = new uint256[](1);
@@ -212,29 +213,29 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
 
         /* Quote principal */
-        (, uint256 principal) = yieldPassUtils.quoteLiquidateToken(address(yp), address(metaStreetPool), 1);
+        (, uint256 principal) = yieldPassUtils.quoteMintAndLP(address(yp), address(metaStreetPool), 1);
 
         /* Get durations */
         uint64 duration = metaStreetPool.durations()[0];
 
         /* Liquidate */
         vm.expectRevert(IYieldPassUtils.DeadlinePassed.selector);
-        yieldPassUtils.liquidateToken(
+        yieldPassUtils.mintAndLP(
             address(yp),
             tokenIds,
             setupData,
             address(metaStreetPool),
+            principal,
             duration,
             principal,
             ticks,
             "",
-            principal,
             uint64(block.timestamp - 1)
         );
         vm.stopPrank();
     }
 
-    function test__Liquidate_SingleToken_RevertWhen_InvalidSlippage() external {
+    function test__MintAndLP_SingleToken_RevertWhen_InvalidSlippage() external {
         /* Mint */
         vm.startPrank(cnlOwner);
         uint256[] memory tokenIds = new uint256[](1);
@@ -248,29 +249,29 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
 
         /* Quote principal */
-        (, uint256 principal) = yieldPassUtils.quoteLiquidateToken(address(yp), address(metaStreetPool), 1);
+        (, uint256 principal) = yieldPassUtils.quoteMintAndLP(address(yp), address(metaStreetPool), 1);
 
         /* Get durations */
         uint64 duration = metaStreetPool.durations()[0];
 
         /* Liquidate */
         vm.expectRevert(IYieldPassUtils.InvalidSlippage.selector);
-        yieldPassUtils.liquidateToken(
+        yieldPassUtils.mintAndLP(
             address(yp),
             tokenIds,
             setupData,
             address(metaStreetPool),
+            principal + 1,
             duration,
             principal + 1,
             ticks,
             "",
-            principal + 1,
             uint64(block.timestamp)
         );
         vm.stopPrank();
     }
 
-    function test__LiquidatePartial_SingleToken() external {
+    function test__MintAndBorrow_SingleToken() external {
         /* Mint */
         vm.startPrank(cnlOwner);
         uint256[] memory tokenIds = new uint256[](1);
@@ -284,7 +285,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
 
         /* Quote principal */
-        (uint256 yieldPassTokenAmount,) = yieldPassUtils.quoteLiquidateToken(address(yp), address(metaStreetPool), 1);
+        (uint256 yieldPassTokenAmount,) = yieldPassUtils.quoteMintAndLP(address(yp), address(metaStreetPool), 1);
 
         /* Pool ATH balance */
         uint256 poolAthBalance = IERC20(ath).balanceOf(address(metaStreetPool));
@@ -294,7 +295,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
 
         /* Liquidate */
         uint256 borrowAmount = 1 ether;
-        yieldPassUtils.liquidateTokenPartial(
+        yieldPassUtils.mintAndBorrow(
             address(yp),
             tokenIds,
             setupData,
@@ -322,7 +323,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         assertEq(IERC20(ath).balanceOf(address(yieldPassUtils)), 0, "Yield pass utils still has ATH");
     }
 
-    function test__LiquidatePartial_MultipleTokens() external {
+    function test__MintAndBorrow_MultipleTokens() external {
         /* Mint */
         vm.startPrank(cnlOwner);
         uint256[] memory tokenIds = new uint256[](2);
@@ -338,7 +339,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
 
         /* Quote principal */
-        (uint256 yieldPassTokenAmount,) = yieldPassUtils.quoteLiquidateToken(address(yp), address(metaStreetPool), 2);
+        (uint256 yieldPassTokenAmount,) = yieldPassUtils.quoteMintAndLP(address(yp), address(metaStreetPool), 2);
 
         /* Pool ATH balance */
         uint256 poolAthBalance = IERC20(ath).balanceOf(address(metaStreetPool));
@@ -354,7 +355,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
 
         /* Liquidate */
         uint256 borrowAmount = 1 ether;
-        yieldPassUtils.liquidateTokenPartial(
+        yieldPassUtils.mintAndBorrow(
             address(yp),
             tokenIds,
             setupData,
