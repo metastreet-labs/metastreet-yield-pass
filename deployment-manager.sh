@@ -7,12 +7,11 @@ run() {
     local network="$1"
     local rpc_url_var="$2"
     local contract="$3"
-    local args="$4"
 
     case $network in
         "local")
             echo "Running locally"
-            forge script "$contract" --fork-url http://localhost:8545 --private-key $PRIVATE_KEY --broadcast -vvvv $args
+            forge script "$contract" --fork-url http://localhost:8545 --private-key $PRIVATE_KEY --broadcast -vvvv "${@:4}"
             ;;
 
         "goerli"|"sepolia"|"mainnet"|"blast"|"base")
@@ -23,9 +22,9 @@ run() {
             fi
             echo "Running on $network"
             if [ ! -z $LEDGER_DERIVATION_PATH ]; then
-                forge script "$contract" --rpc-url "$rpc_url" --ledger --hd-paths $LEDGER_DERIVATION_PATH --sender $LEDGER_ADDRESS --broadcast -vvvv $args
+                forge script "$contract" --rpc-url "$rpc_url" --ledger --hd-paths $LEDGER_DERIVATION_PATH --sender $LEDGER_ADDRESS --broadcast -vvvv "${@:4}"
             else
-                forge script "$contract" --rpc-url "$rpc_url" --private-key $PRIVATE_KEY --broadcast -vvvv $args
+                forge script "$contract" --rpc-url "$rpc_url" --private-key $PRIVATE_KEY --broadcast -vvvv "${@:4}"
             fi
             ;;
 
@@ -76,7 +75,7 @@ case $1 in
         fi
 
         echo "Deploying Yield Pass"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployYieldPass.s.sol:DeployYieldPass" "--sig run()"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployYieldPass.s.sol:DeployYieldPass" --sig "run()"
         ;;
 
     "upgrade-yield-pass")
@@ -86,7 +85,7 @@ case $1 in
         fi
 
         echo "Upgrading Yield Pass"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeYieldPass.s.sol:UpgradeYieldPass" "--sig run()"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeYieldPass.s.sol:UpgradeYieldPass" --sig "run()"
         ;;
 
     "deploy-yield-pass-utils")
@@ -96,7 +95,7 @@ case $1 in
         fi
 
         echo "Deploying Yield Pass Utils"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployYieldPassUtils.s.sol:DeployYieldPassUtils" "--sig run(address,address,address) $2 $3 $4"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployYieldPassUtils.s.sol:DeployYieldPassUtils" --sig "run(address,address,address)" $2 $3 $4
         ;;
 
     "upgrade-yield-pass-utils")
@@ -106,7 +105,7 @@ case $1 in
         fi
 
         echo "Upgrading Yield Pass Utils"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeYieldPassUtils.s.sol:UpgradeYieldPassUtils" "--sig run(address,address,address) $2 $3 $4"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeYieldPassUtils.s.sol:UpgradeYieldPassUtils" --sig "run(address,address,address)" $2 $3 $4
         ;;
 
     "yield-pass-create")
@@ -116,7 +115,7 @@ case $1 in
         fi
 
         echo "Creating Yield Pass Token"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/YieldPassCreate.s.sol:YieldPassCreate" "--sig run(address,uint64,uint64,bool,address) $2 $3 $4 $5 $6"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/YieldPassCreate.s.sol:YieldPassCreate" --sig "run(address,uint64,uint64,bool,address)" $2 $3 $4 $5 $6
         ;;
 
     "yield-pass-set-yield-adapter")
@@ -126,7 +125,7 @@ case $1 in
         fi
 
         echo "Setting Yield Pass Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/YieldPassSetYieldAdapter.s.sol:YieldPassSetYieldAdapter" "--sig run(address,address) $2 $4"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/YieldPassSetYieldAdapter.s.sol:YieldPassSetYieldAdapter" --sig "run(address,address)" $2 $4
         ;;
 
     "deploy-aethir-yield-adapter")
@@ -136,7 +135,7 @@ case $1 in
         fi
 
         echo "Deploying Aethir Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/DeployAethirYieldAdapter.s.sol:DeployAethirYieldAdapter" "--sig run(string,address,address,address,address,uint48,address) $2 $3 $4 $5 $6 $7 $8"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/DeployAethirYieldAdapter.s.sol:DeployAethirYieldAdapter" --sig "run(string,address,address,address,address,uint48,address)" "$2" $3 $4 $5 $6 $7 $8
         ;;
 
     "upgrade-aethir-yield-adapter")
@@ -146,11 +145,11 @@ case $1 in
         fi
 
         echo "Upgrading Aethir Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/UpgradeAethirYieldAdapter.s.sol:UpgradeAethirYieldAdapter" "--sig run(string,address,address,address,address) $2 $3 $4 $5 $6"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/UpgradeAethirYieldAdapter.s.sol:UpgradeAethirYieldAdapter" --sig "run(string,address,address,address,address)" "$2" $3 $4 $5 $6
         ;;
 
     "show")
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/Show.s.sol:Show" "--sig run()"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/Show.s.sol:Show" --sig "run()"
         ;;
     *)
         usage
