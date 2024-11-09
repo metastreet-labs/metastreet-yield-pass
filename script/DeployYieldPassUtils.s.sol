@@ -29,9 +29,7 @@ contract DeployYieldPassUtils is Deployer {
         /* YieldPassUtils Upgradeable Beacon */
         console.log("Deploying YieldPassUtils proxy...");
 
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-            address(yieldPassUtilsImpl), msg.sender, abi.encodeWithSignature("initialize()")
-        );
+        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(address(yieldPassUtilsImpl), msg.sender, "");
 
         /* Log deployment */
         _deployment.yieldPassUtils = address(proxy);
