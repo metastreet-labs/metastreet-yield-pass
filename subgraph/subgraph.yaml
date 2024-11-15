@@ -1,0 +1,84 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: YieldPass
+    network: arbitrum-one
+    source:
+      abi: YieldPass
+      address: "0x24147F47B916bcF7E0a8810f859bA3bf703d436d"
+      startBlock: 285765427
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - YieldPassToken
+      abis:
+        - name: YieldPass
+          file: ../out/YieldPass.sol/YieldPass.json
+        - name: YieldAdapter
+          file: ../out/IYieldAdapter.sol/IYieldAdapter.json
+        - name: ERC20
+          file: ../out/ERC20.sol/ERC20.json
+      eventHandlers:
+        - event: Claimed(indexed address,indexed address,uint256,indexed
+            address,address,uint256)
+          handler: handleClaimed
+        - event: Harvested(indexed address,uint256)
+          handler: handleHarvested
+        - event: Minted(indexed address,address,indexed address,uint256,address,indexed
+            address,uint256[],address[])
+          handler: handleMinted
+        - event: Redeemed(indexed address,address,indexed address,indexed
+            address,uint256[])
+          handler: handleRedeemed
+        - event: Withdrawn(indexed address,address,indexed address,address,indexed
+            address,uint256[])
+          handler: handleWithdrawn
+        - event: YieldPassDeployed(indexed address,address,indexed address,uint256,indexed
+            uint256,address)
+          handler: handleYieldPassDeployed
+      file: ./src/yield-pass.ts
+  - kind: ethereum
+    name: UniswapV2Factory
+    network: arbitrum-one
+    source:
+      abi: UniswapV2Factory
+      address: "0xf1D7CC64Fb4452F05c498126312eBE29f30Fbcf9"
+      startBlock: 285765427
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - PairCreated
+      abis:
+        - name: UniswapV2Factory
+          file: ./abis/UniswapV2Factory.json
+      eventHandlers:
+        - event: PairCreated(indexed address,indexed address,address,uint256)
+          handler: handlePairCreated
+      file: ./src/uniswap-v2-factory.ts
+templates:
+  - kind: ethereum
+    name: YieldPassToken
+    network: arbitrum-one
+    source:
+      abi: YieldPassToken
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Transfer
+      abis:
+        - name: YieldPassToken
+          file: ../out/YieldPassToken.sol/YieldPassToken.json
+      eventHandlers:
+        - event: Approval(indexed address,indexed address,uint256)
+          handler: handleApproval
+      file: ./src/yield-pass-token.ts

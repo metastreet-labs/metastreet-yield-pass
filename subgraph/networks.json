@@ -1,0 +1,22 @@
+{
+  "sepolia": {
+    "YieldPass": {
+      "address": "0x32c5eAe432b09Dc4e93eFab51B93A769AFB7BC92",
+      "startBlock": 7258316
+    },
+    "UniswapV2Factory": {
+      "address": "0x63b33ca4a44330791000a21F2bD187044d815524",
+      "startBlock": 7258316
+    }
+  },
+  "arbitrum-one": {
+    "YieldPass": {
+      "address": "0x24147F47B916bcF7E0a8810f859bA3bf703d436d",
+      "startBlock": 285765427
+    },
+    "UniswapV2Factory": {
+      "address": "0xf1D7CC64Fb4452F05c498126312eBE29f30Fbcf9",
+      "startBlock": 285765427
+    }
+  }
+}

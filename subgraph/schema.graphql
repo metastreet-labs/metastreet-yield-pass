@@ -1,0 +1,30 @@
+type YieldPassToken @entity {
+  id: Bytes! # address (yield pass token)
+  startTime: BigInt! # uint64
+  expiryTime: BigInt! # uint64
+  token: Bytes! # address
+  nodePass: Bytes! # address
+  adapter: YieldAdapter!
+  pair: UniswapV2Pair
+}
+
+type YieldAdapter @entity {
+  id: Bytes! # address
+  token: ERC20!
+  name: String!
+  yieldPassToken: YieldPassToken!
+}
+
+type ERC20 @entity(immutable: true) {
+  id: Bytes! # address
+  name: String!
+  symbol: String!
+  decimals: Int!
+}
+
+type UniswapV2Pair @entity(immutable: true) {
+  id: Bytes! # pair address
+  yieldPassToken: YieldPassToken!
+  token0: Bytes! # address
+  token1: Bytes!
+}
