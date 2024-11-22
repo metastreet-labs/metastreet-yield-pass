@@ -20,7 +20,7 @@ contract DeployAethirYieldAdapter is Deployer {
     ) public broadcast useDeployment returns (address) {
         if (_deployment.aethirYieldAdapter != address(0)) revert AlreadyDeployed();
 
-        /* YieldPass Implementation */
+        /* AethirYieldAdapter Implementation */
         console.log("Deploying AethirYieldAdapter implementation...");
 
         AethirYieldAdapter yieldAdapterImpl =
@@ -28,7 +28,7 @@ contract DeployAethirYieldAdapter is Deployer {
 
         console.log("AethirYieldAdapter implementation deployed at: %s\n", address(yieldAdapterImpl));
 
-        /* AethirYieldAdapter Upgradeable Beacon */
+        /* AethirYieldAdapter Proxy */
         console.log("Deploying AethirYieldAdapter proxy...");
 
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
