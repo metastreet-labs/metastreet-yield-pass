@@ -50,6 +50,9 @@ usage() {
     echo "  deploy-aethir-yield-adapter <name> <yield pass> <checker node license> <checker claim and withdraw> <ath token> <cliff seconds> <signer>"
     echo "  upgrade-aethir-yield-adapter <name> <yield pass> <checker node license> <checker claim and withdraw> <ath token>"
     echo ""
+    echo "  deploy-xai-yield-adapter <yield pass> <xai pool factory>"
+    echo "  upgrade-xai-yield-adapter <yield pass> <xai pool factory>"
+    echo ""
     echo "  show"
     echo ""
     echo "Options:"
@@ -146,6 +149,26 @@ case $1 in
 
         echo "Upgrading Aethir Yield Adapter"
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/UpgradeAethirYieldAdapter.s.sol:UpgradeAethirYieldAdapter" --sig "run(string,address,address,address,address)" "$2" $3 $4 $5 $6
+        ;;
+
+    "deploy-xai-yield-adapter")
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid param count; Usage: $0 deploy-xai-yield-adapter <yield pass> <xai pool factory>"
+            exit 1
+        fi
+
+        echo "Deploying XAI Yield Adapter"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/DeployXaiYieldAdapter.s.sol:DeployXaiYieldAdapter" --sig "run(address,address)" $2 $3
+        ;;
+
+    "upgrade-xai-yield-adapter")
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid param count; Usage: $0 upgrade-xai-yield-adapter <yield pass> <xai pool factory>"
+            exit 1
+        fi
+
+        echo "Upgrading XAI Yield Adapter"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/UpgradeXaiYieldAdapter.s.sol:UpgradeXaiYieldAdapter" --sig "run(address,address)" $2 $3
         ;;
 
     "show")
