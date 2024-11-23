@@ -24,6 +24,7 @@ contract BaseScript is Script {
         _chainIdToNetwork[5] = "goerli";
         _chainIdToNetwork[11155111] = "sepolia";
         _chainIdToNetwork[31337] = "local";
+        _chainIdToNetwork[421614] = "arbitrum_sepolia";
     }
 
     modifier broadcast() {
