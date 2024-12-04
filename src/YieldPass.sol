@@ -8,6 +8,9 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
@@ -23,6 +26,8 @@ import {DiscountPassToken} from "./DiscountPassToken.sol";
  */
 contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC721Holder {
     using SafeERC20 for IERC20;
+    using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
 
     /*------------------------------------------------------------------------*/
     /* Constants */
@@ -73,6 +78,11 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      * @notice Map of yield pass to yield pass state
      */
     mapping(address => YieldPassState) internal _yieldPassStates;
+
+    /**
+     * @notice Map of account to nonce
+     */
+    mapping(address => uint256) internal _nonces;
 
     /*------------------------------------------------------------------------*/
     /* Constructor */
@@ -151,6 +161,15 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @inheritdoc IYieldPass
      */
+    function nonce(
+        address account
+    ) public view returns (uint256) {
+        return _nonces[account];
+    }
+
+    /**
+     * @inheritdoc IYieldPass
+     */
     function cumulativeYield(
         address yieldPass
     ) public view returns (uint256) {
@@ -180,9 +199,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @inheritdoc IYieldPass
      */
-    function quoteMint(
-        address yieldPass
-    ) public view returns (uint256) {
+    function quoteMint(address yieldPass, uint256 count) public view returns (uint256) {
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
 
@@ -194,9 +211,9 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
             revert InvalidWindow();
         }
 
-        /* Comptue yield pass token amount based on this yield pass's time to expiry */
-        return
-            (1 ether * (yieldPassInfo_.expiry - block.timestamp)) / (yieldPassInfo_.expiry - yieldPassInfo_.startTime);
+        /* Compute yield pass token amount based on this yield pass's time to expiry */
+        return (1 ether * (yieldPassInfo_.expiry - block.timestamp) * count)
+            / (yieldPassInfo_.expiry - yieldPassInfo_.startTime);
     }
 
     /*------------------------------------------------------------------------*/
@@ -266,6 +283,27 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         return amount;
     }
 
+    /**
+     * @notice Validate the transfer signature of the NFT owner and increase nonce
+     * @param account The address of the account
+     * @param smartAccount The address of the smart account
+     * @param tokenIds The token IDs of the NFTs
+     * @param signature The signature provided by the NFT owner
+     */
+    function _validateSignature(
+        address account,
+        address smartAccount,
+        uint256[] calldata tokenIds,
+        bytes calldata signature
+    ) internal {
+        bytes32 messageHash =
+            keccak256(abi.encode(block.chainid, address(this), smartAccount, _nonces[account], tokenIds));
+
+        if (messageHash.toEthSignedMessageHash().recover(signature) != account) revert InvalidSignature();
+
+        _nonces[account]++;
+    }
+
     /*------------------------------------------------------------------------*/
     /* User API */
     /*------------------------------------------------------------------------*/
@@ -275,39 +313,54 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      */
     function mint(
         address yieldPass,
-        uint256 tokenId,
+        address account,
+        uint256[] calldata tokenIds,
         address yieldPassRecipient,
         address discountPassRecipient,
-        bytes calldata setupData
+        bytes calldata setupData,
+        bytes calldata transferSignature
     ) external nonReentrant returns (uint256) {
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
 
         /* Quote mint amount */
-        uint256 yieldPassAmount = quoteMint(yieldPass);
+        uint256 yieldPassAmount = quoteMint(yieldPass, tokenIds.length);
+
+        /* Verify transfer signature if caller is smart account */
+        if (account != msg.sender) {
+            _validateSignature(account, msg.sender, tokenIds, transferSignature);
+        }
+
+        /* Transfer ERC721 from account to yield adapter */
+        for (uint256 i; i < tokenIds.length; i++) {
+            IERC721(yieldPassInfo_.token).safeTransferFrom(
+                account, address(_yieldPassStates[yieldPass].yieldAdapter), tokenIds[i]
+            );
+        }
 
         /* Update claim state shares */
         _yieldPassStates[yieldPass].claimState.shares += yieldPassAmount;
 
-        /* Transfer ERC721 from caller to yield adapter */
-        IERC721(yieldPassInfo_.token).safeTransferFrom(
-            msg.sender, address(_yieldPassStates[yieldPass].yieldAdapter), tokenId
-        );
-
         /* Call yield adapter setup hook */
-        address operator = _yieldPassStates[yieldPass].yieldAdapter.setup(
-            tokenId, yieldPassInfo_.expiry, msg.sender, discountPassRecipient, setupData
+        address[] memory operators = _yieldPassStates[yieldPass].yieldAdapter.setup(
+            tokenIds, yieldPassInfo_.expiry, account, discountPassRecipient, setupData
         );
 
         /* Mint yield pass token */
         YieldPassToken(yieldPass).mint(yieldPassRecipient, yieldPassAmount);
 
-        /* Mint discount pass token */
-        DiscountPassToken(yieldPassInfo_.discountPass).mint(discountPassRecipient, tokenId);
+        /* Mint discount pass tokens */
+        DiscountPassToken(yieldPassInfo_.discountPass).mint(discountPassRecipient, tokenIds);
 
         /* Emit Minted */
         emit Minted(
-            msg.sender, yieldPass, yieldPassInfo_.token, yieldPassAmount, yieldPassInfo_.discountPass, tokenId, operator
+            msg.sender,
+            yieldPass,
+            yieldPassInfo_.token,
+            yieldPassAmount,
+            yieldPassInfo_.discountPass,
+            tokenIds,
+            operators
         );
 
         return yieldPassAmount;
@@ -323,7 +376,11 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @inheritdoc IYieldPass
      */
-    function claim(address yieldPass, uint256 yieldPassAmount) external nonReentrant returns (uint256) {
+    function claim(
+        address yieldPass,
+        address recipient,
+        uint256 yieldPassAmount
+    ) external nonReentrant returns (uint256) {
         /* Validate yield pass amount */
         if (yieldPassAmount == 0 || YieldPassToken(yieldPass).balanceOf(msg.sender) < yieldPassAmount) {
             revert InvalidAmount();
@@ -354,7 +411,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         if (yieldAmount > 0) IERC20(yieldToken).safeTransfer(msg.sender, yieldAmount);
 
         /* Emit Claimed */
-        emit Claimed(msg.sender, yieldPass, yieldPassAmount, yieldToken, yieldAmount);
+        emit Claimed(msg.sender, yieldPass, recipient, yieldPassAmount, yieldToken, yieldAmount);
 
         return yieldAmount;
     }
@@ -362,27 +419,31 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @inheritdoc IYieldPass
      */
-    function redeem(address yieldPass, uint256 tokenId) external nonReentrant returns (bytes memory) {
+    function redeem(address yieldPass, uint256[] calldata tokenIds) external nonReentrant returns (bytes memory) {
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
-
-        /* Validate caller owns discount pass */
-        if (DiscountPassToken(yieldPassInfo_.discountPass).ownerOf(tokenId) != msg.sender) revert InvalidRedemption();
 
         /* Get yield pass state */
         YieldPassState storage yieldPassState = _yieldPassStates[yieldPass];
 
-        /* Store redemption address */
-        yieldPassState.tokenIdRedemptions[tokenId] = msg.sender;
+        for (uint256 i; i < tokenIds.length; i++) {
+            /* Validate caller owns discount pass */
+            if (DiscountPassToken(yieldPassInfo_.discountPass).ownerOf(tokenIds[i]) != msg.sender) {
+                revert InvalidRedemption();
+            }
+
+            /* Store redemption address */
+            yieldPassState.tokenIdRedemptions[tokenIds[i]] = msg.sender;
+
+            /* Burn discount pass */
+            DiscountPassToken(yieldPassInfo_.discountPass).burn(msg.sender, tokenIds[i]);
+        }
 
         /* Call yield adapter initiate teardown hook */
-        bytes memory teardownData = yieldPassState.yieldAdapter.initiateTeardown(tokenId, yieldPassInfo_.expiry);
-
-        /* Burn discount pass */
-        DiscountPassToken(yieldPassInfo_.discountPass).burn(tokenId);
+        bytes memory teardownData = yieldPassState.yieldAdapter.initiateTeardown(tokenIds, yieldPassInfo_.expiry);
 
         /* Emit Redeemed */
-        emit Redeemed(msg.sender, yieldPass, yieldPassInfo_.token, yieldPassInfo_.discountPass, tokenId, teardownData);
+        emit Redeemed(msg.sender, yieldPass, yieldPassInfo_.token, yieldPassInfo_.discountPass, tokenIds, teardownData);
 
         return teardownData;
     }
@@ -392,7 +453,8 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      */
     function withdraw(
         address yieldPass,
-        uint256 tokenId,
+        address recipient,
+        uint256[] calldata tokenIds,
         bytes calldata harvestData,
         bytes calldata teardownData
     ) external nonReentrant {
@@ -408,20 +470,33 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         /* Validate block timestamp > expiry */
         if (block.timestamp <= yieldPassInfo_.expiry) revert InvalidWindow();
 
-        /* Validate caller burned token */
-        if (yieldPassState.tokenIdRedemptions[tokenId] != msg.sender) revert InvalidWithdrawal();
+        for (uint256 i; i < tokenIds.length; i++) {
+            /* Validate caller burned token */
+            if (yieldPassState.tokenIdRedemptions[tokenIds[i]] != msg.sender) revert InvalidWithdrawal();
 
-        /* Delete redemption */
-        delete yieldPassState.tokenIdRedemptions[tokenId];
+            /* Delete redemption */
+            delete yieldPassState.tokenIdRedemptions[tokenIds[i]];
+        }
 
         /* Call yield adapter teardown hook */
-        _yieldPassStates[yieldPass].yieldAdapter.teardown(tokenId, msg.sender, teardownData);
+        _yieldPassStates[yieldPass].yieldAdapter.teardown(tokenIds, recipient, teardownData);
 
-        /* Validate caller owns token ID */
-        if (IERC721(yieldPassInfo_.token).ownerOf(tokenId) != msg.sender) revert InvalidWithdrawal();
+        /* Validate caller owns token IDs */
+        for (uint256 i; i < tokenIds.length; i++) {
+            if (IERC721(yieldPassInfo_.token).ownerOf(tokenIds[i]) != recipient) revert InvalidWithdrawal();
+        }
 
         /* Emit Withdrawn */
-        emit Withdrawn(msg.sender, yieldPass, yieldPassInfo_.token, yieldPassInfo_.discountPass, tokenId);
+        emit Withdrawn(msg.sender, yieldPass, yieldPassInfo_.token, recipient, yieldPassInfo_.discountPass, tokenIds);
+    }
+
+    /**
+     * @inheritdoc IYieldPass
+     */
+    function increaseNonce() external nonReentrant {
+        _nonces[msg.sender]++;
+
+        emit NonceIncreased(msg.sender, _nonces[msg.sender]);
     }
 
     /*------------------------------------------------------------------------*/
@@ -435,7 +510,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         address token,
         uint64 startTime,
         uint64 expiry,
-        bool isTransferable,
+        bool isUserLocked,
         address adapter
     ) external onlyRole(DEFAULT_ADMIN_ROLE) returns (address, address) {
         /* Validate expiry */
@@ -464,7 +539,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         address discountPass = Create2.deploy(
             0,
             deploymentHash,
-            abi.encodePacked(type(DiscountPassToken).creationCode, _getCtorParam(false, token, expiry, isTransferable))
+            abi.encodePacked(type(DiscountPassToken).creationCode, _getCtorParam(false, token, expiry, isUserLocked))
         );
 
         /* Store yield pass info */
@@ -498,11 +573,14 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         emit AdapterUpdated(yieldPass, adapter);
     }
 
-    function setTransferable(address yieldPass, bool isTransferable) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    /**
+     * @inheritdoc IYieldPass
+     */
+    function setUserLocked(address yieldPass, bool isUserLocked) public onlyRole(DEFAULT_ADMIN_ROLE) {
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
 
-        /* Update transferability */
-        DiscountPassToken(yieldPassInfo_.discountPass).setTransferable(isTransferable);
+        /* Update user locked */
+        DiscountPassToken(yieldPassInfo_.discountPass).setUserLocked(isUserLocked);
     }
 }

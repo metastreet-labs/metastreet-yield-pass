@@ -18,6 +18,7 @@ contract HarvestTest is AethirBaseTest {
     address internal yp;
     address internal dp;
     uint48 internal expiryTimestamp;
+    uint256[] internal tokenIds;
 
     function setUp() public override {
         /* Set up Nft */
@@ -31,6 +32,9 @@ contract HarvestTest is AethirBaseTest {
         (yp, dp) = AethirBaseTest.deployYieldPass(address(checkerNodeLicense), startTime, expiry, address(yieldAdapter));
 
         expiryTimestamp = uint48(block.timestamp) + 360 days;
+
+        tokenIds = new uint256[](1);
+        tokenIds[0] = 91521;
     }
 
     function simulateYieldDistributionToCheckerClaimAndWithdraw() internal {
@@ -48,7 +52,13 @@ contract HarvestTest is AethirBaseTest {
         /* Mint */
         vm.startPrank(cnlOwner);
         yieldPass.mint(
-            yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1, expiry)
+            yp,
+            cnlOwner,
+            tokenIds,
+            cnlOwner,
+            cnlOwner,
+            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            ""
         );
         vm.stopPrank();
 
@@ -108,7 +118,13 @@ contract HarvestTest is AethirBaseTest {
         /* Mint */
         vm.startPrank(cnlOwner);
         yieldPass.mint(
-            yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1, expiry)
+            yp,
+            cnlOwner,
+            tokenIds,
+            cnlOwner,
+            cnlOwner,
+            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            ""
         );
         vm.stopPrank();
 

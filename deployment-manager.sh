@@ -41,10 +41,10 @@ usage() {
     echo "Commands:"
     echo "  deploy-yield-pass"
     echo "  upgrade-yield-pass"
-    echo "  deploy-yield-pass-utils <uniswap v2 swap router> <yield pass> <bundle collateral wrapper>"
-    echo "  upgrade-yield-pass-utils <uniswap v2 swap router> <yield pass> <bundle collateral wrapper>"
+    echo "  deploy-yield-pass-utils <uniswap v2 factory>"
+    echo "  upgrade-yield-pass-utils <uniswap v2 factory>"
     echo ""
-    echo "  yield-pass-create <nft> <startTime> <expiry> <is transferable> <yield adapter>"
+    echo "  yield-pass-create <nft> <startTime> <expiry> <is user locked> <yield adapter>"
     echo "  yield-pass-set-yield-adapter <yield pass> <yield adapter>"
     echo ""
     echo "  deploy-aethir-yield-adapter <name> <yield pass> <checker node license> <checker claim and withdraw> <ath token> <cliff seconds> <signer>"
@@ -89,28 +89,28 @@ case $1 in
         ;;
 
     "deploy-yield-pass-utils")
-        if [ "$#" -ne 4 ]; then
-            echo "Invalid param count; Usage: $0 deploy-yield-pass-utils <uniswap v2 swap router> <yield pass> <bundle collateral wrapper>"
+        if [ "$#" -ne 2 ]; then
+            echo "Invalid param count; Usage: $0 deploy-yield-pass-utils <uniswap v2 factory>"
             exit 1
         fi
 
         echo "Deploying Yield Pass Utils"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployYieldPassUtils.s.sol:DeployYieldPassUtils" --sig "run(address,address,address)" $2 $3 $4
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployYieldPassUtils.s.sol:DeployYieldPassUtils" --sig "run(address)" $2
         ;;
 
     "upgrade-yield-pass-utils")
-        if [ "$#" -ne 4 ]; then
-            echo "Invalid param count; Usage: $0 upgrade-yield-pass-utils <uniswap v2 swap router> <yield pass> <bundle collateral wrapper>"
+        if [ "$#" -ne 2 ]; then
+            echo "Invalid param count; Usage: $0 upgrade-yield-pass-utils <uniswap v2 factory>"
             exit 1
         fi
 
         echo "Upgrading Yield Pass Utils"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeYieldPassUtils.s.sol:UpgradeYieldPassUtils" --sig "run(address,address,address)" $2 $3 $4
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeYieldPassUtils.s.sol:UpgradeYieldPassUtils" --sig "run(address)" $2
         ;;
 
     "yield-pass-create")
         if [ "$#" -ne 6 ]; then
-            echo "Invalid param count; Usage: $0 yield-pass-create <nft> <start-time> <expiry> <is-transferable> <yield-adapter>"
+            echo "Invalid param count; Usage: $0 yield-pass-create <nft> <start-time> <expiry> <is-user-locked> <yield-adapter>"
             exit 1
         fi
 

@@ -15,12 +15,16 @@ import "forge-std/console.sol";
 contract HarvestTest is XaiBaseTest {
     address internal yp;
     address internal dp;
+    uint256[] internal tokenIds;
 
     function setUp() public override {
         /* Set up Nft */
         XaiBaseTest.setUp();
 
         (yp, dp) = XaiBaseTest.deployYieldPass(address(sentryNodeLicense), startTime, expiry, address(yieldAdapter));
+
+        tokenIds = new uint256[](1);
+        tokenIds[0] = 19727;
     }
 
     function simulateYieldDistributionInStakingPool() internal {
@@ -37,7 +41,9 @@ contract HarvestTest is XaiBaseTest {
     function test_Harvest() external {
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(yp, 19727, snlOwner, snlOwner, abi.encode(stakingPool));
+        yieldPass.mint(
+            yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds.length), ""
+        );
         vm.stopPrank();
 
         /* Simulate yield distribution in staking pool */

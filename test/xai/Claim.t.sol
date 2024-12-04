@@ -15,12 +15,16 @@ import "forge-std/console.sol";
 contract ClaimTest is XaiBaseTest {
     address internal yp;
     address internal dp;
+    uint256[] internal tokenIds;
 
     function setUp() public override {
         /* Set up Nft */
         XaiBaseTest.setUp();
 
         (yp, dp) = XaiBaseTest.deployYieldPass(address(sentryNodeLicense), startTime, expiry, address(yieldAdapter));
+
+        tokenIds = new uint256[](1);
+        tokenIds[0] = 19727;
     }
 
     function simulateYieldDistributionInStakingPool() internal {
@@ -40,7 +44,9 @@ contract ClaimTest is XaiBaseTest {
 
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(yp, 19727, snlOwner, snlOwner, abi.encode(stakingPool));
+        yieldPass.mint(
+            yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds.length), ""
+        );
         vm.stopPrank();
 
         /* Simulate yield distribution in staking pool */
@@ -57,7 +63,7 @@ contract ClaimTest is XaiBaseTest {
 
         /* Claim */
         vm.startPrank(snlOwner);
-        yieldPass.claim(yp, IERC20(yp).balanceOf(snlOwner));
+        yieldPass.claim(yp, snlOwner, IERC20(yp).balanceOf(snlOwner));
         vm.stopPrank();
 
         /* Check cumulative yield */
@@ -81,7 +87,9 @@ contract ClaimTest is XaiBaseTest {
     function test__Claim_RevertWhen_InvalidAmount() external {
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(yp, 19727, snlOwner, snlOwner, abi.encode(stakingPool));
+        yieldPass.mint(
+            yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds.length), ""
+        );
         vm.stopPrank();
 
         /* Simulate yield distribution in staking pool */
@@ -100,19 +108,21 @@ contract ClaimTest is XaiBaseTest {
 
         /* Claim with 0 */
         vm.expectRevert(IYieldPass.InvalidAmount.selector);
-        yieldPass.claim(yp, 0);
+        yieldPass.claim(yp, snlOwner, 0);
 
         /* Claim with insufficient balance amount */
         uint256 userBalance = IERC20(yp).balanceOf(snlOwner);
         vm.expectRevert(IYieldPass.InvalidAmount.selector);
-        yieldPass.claim(yp, userBalance + 1);
+        yieldPass.claim(yp, snlOwner, userBalance + 1);
         vm.stopPrank();
     }
 
     function test__Claim_RevertWhen_InvalidClaimWindow() external {
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(yp, 19727, snlOwner, snlOwner, abi.encode(stakingPool));
+        yieldPass.mint(
+            yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds.length), ""
+        );
         vm.stopPrank();
 
         /* Simulate yield distribution in staking pool */
@@ -131,7 +141,7 @@ contract ClaimTest is XaiBaseTest {
         vm.startPrank(snlOwner);
         uint256 userBalance = IERC20(yp).balanceOf(snlOwner);
         vm.expectRevert(IYieldPass.InvalidWindow.selector);
-        yieldPass.claim(yp, userBalance);
+        yieldPass.claim(yp, snlOwner, userBalance);
         vm.stopPrank();
     }
 }

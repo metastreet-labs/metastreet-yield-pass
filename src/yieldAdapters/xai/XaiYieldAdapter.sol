@@ -73,6 +73,11 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     error InvalidOwner();
 
     /**
+     * @notice Invalid length
+     */
+    error InvalidLength();
+
+    /**
      * @notice Unsupported pool
      */
     error UnsupportedPool();
@@ -156,11 +161,6 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     EnumerableSet.AddressSet private _allowedPools;
 
     /**
-     * @notice Set of interacted pools
-     */
-    EnumerableSet.AddressSet private _interactedPools;
-
-    /**
      * @notice Mapping of tokenId to pool
      */
     mapping(uint256 => address) internal _pools;
@@ -242,7 +242,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      */
     function cumulativeYield() public view returns (uint256) {
         /* Get pools */
-        address[] memory pools = _interactedPools.values();
+        address[] memory pools = _allowedPools.values();
 
         /* Compute accumulative yield */
         uint256 amount;
@@ -284,14 +284,6 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         return _allowedPools.values();
     }
 
-    /**
-     * @notice Get interacted pools
-     * @return Interacted pools
-     */
-    function interactedPools() public view returns (address[] memory) {
-        return _interactedPools.values();
-    }
-
     /*------------------------------------------------------------------------*/
     /* Yield Pass API */
     /*------------------------------------------------------------------------*/
@@ -300,38 +292,50 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      * @inheritdoc IYieldAdapter
      */
     function setup(
-        uint256 tokenId,
+        uint256[] calldata tokenIds,
         uint64,
         address minter,
         address discountPassRecipient,
         bytes calldata setupData
-    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address) {
-        /* Validate this contract owns token ID */
-        if (_sentryNodeLicense.ownerOf(tokenId) != address(this)) revert InvalidOwner();
-
+    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address[] memory) {
         /* Validate KYC'd */
         if (!_referee.isKycApproved(minter) || !_referee.isKycApproved(discountPassRecipient)) revert NotKycApproved();
 
         /* Decode setup data */
-        address pool = abi.decode(setupData, (address));
+        (address[] memory pools, uint256[] memory quantities) = abi.decode(setupData, (address[], uint256[]));
 
-        /* Validate pool is allowed */
-        if (!_allowedPools.contains(pool)) revert UnsupportedPool();
+        /* Validate length */
+        if (pools.length != quantities.length) revert InvalidLength();
 
-        /* Add pool to interacted pools */
-        _interactedPools.add(pool);
+        /* Pools */
+        uint256 count;
+        for (uint256 i; i < pools.length; i++) {
+            /* Validate pool is allowed */
+            if (!_allowedPools.contains(pools[i])) revert UnsupportedPool();
 
-        /* Create licenses array */
-        uint256[] memory licenses = new uint256[](1);
-        licenses[0] = tokenId;
+            /* Keys */
+            uint256[] memory keys = new uint256[](quantities[i]);
 
-        /* Stake key */
-        _poolFactory.stakeKeys(pool, licenses);
+            /* Validate keys ownership and update token ID to pools mapping */
+            for (uint256 j; j < quantities[i]; j++) {
+                /* Validate this contract owns the keys */
+                if (_sentryNodeLicense.ownerOf(tokenIds[count]) != address(this)) revert InvalidOwner();
 
-        /* Store pool */
-        _pools[tokenId] = pool;
+                /* Store pool */
+                _pools[tokenIds[count]] = pools[i];
 
-        return pool;
+                /* Store key */
+                keys[j] = tokenIds[count++];
+            }
+
+            /* Stake key */
+            _poolFactory.stakeKeys(pools[i], keys);
+        }
+
+        /* Validate all keys are staked */
+        if (count != tokenIds.length) revert InvalidLength();
+
+        return pools;
     }
 
     /**
@@ -351,7 +355,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         uint256 balanceBefore = _esXaiToken.balanceOf(address(this));
 
         /* Claim from pools */
-        _poolFactory.claimFromPools(_interactedPools.values());
+        _poolFactory.claimFromPools(_allowedPools.values());
 
         /* Snapshot balance after */
         uint256 balanceAfter = _esXaiToken.balanceOf(address(this));
@@ -369,56 +373,64 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      * @inheritdoc IYieldAdapter
      */
     function initiateTeardown(
-        uint256 tokenId,
+        uint256[] calldata tokenIds,
         uint64 expiry
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (bytes memory) {
         /* Validate prepare teardown is within window */
         if (block.timestamp <= expiry - _poolFactory.unstakeKeysDelayPeriod()) revert InvalidWindow();
 
-        /* Get pool */
-        address pool = _pools[tokenId];
+        /* Create unstake requests */
+        uint256[] memory unstakeRequestIndexes = new uint256[](tokenIds.length);
+        for (uint256 i; i < tokenIds.length; i++) {
+            /* Get pool */
+            address pool = _pools[tokenIds[i]];
 
-        /* Create unstake request */
-        _poolFactory.createUnstakeKeyRequest(pool, 1);
+            /* Create unstake request */
+            _poolFactory.createUnstakeKeyRequest(pool, 1);
 
-        /* Unstake request ID */
-        uint256 unstakeRequestIndex = IPool(pool).getUnstakeRequestCount(address(this)) - 1;
+            /* Unstake request ID */
+            uint256 unstakeRequestIndex = IPool(pool).getUnstakeRequestCount(address(this)) - 1;
 
-        /* Store unstake request index */
-        _unstakeRequestIndexes[tokenId] = unstakeRequestIndex;
+            /* Store unstake request index */
+            _unstakeRequestIndexes[tokenIds[i]] = unstakeRequestIndex;
 
-        /* Return unstake request index */
-        return abi.encode(unstakeRequestIndex);
+            /* Store unstake request index */
+            unstakeRequestIndexes[i] = unstakeRequestIndex;
+        }
+
+        /* Return unstake request indexes */
+        return abi.encode(unstakeRequestIndexes);
     }
 
     /**
      * @inheritdoc IYieldAdapter
      */
     function teardown(
-        uint256 tokenId,
-        address receiver,
+        uint256[] calldata tokenIds,
+        address recipient,
         bytes calldata
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
-        uint256[] memory licenses = new uint256[](1);
-        licenses[0] = tokenId;
+        for (uint256 i; i < tokenIds.length; i++) {
+            /* Get pool */
+            address pool = _pools[tokenIds[i]];
 
-        /* Get pool */
-        address pool = _pools[tokenId];
+            /* Get unstake request index */
+            uint256 unstakeRequestIndex = _unstakeRequestIndexes[tokenIds[i]];
 
-        /* Get unstake request index */
-        uint256 unstakeRequestIndex = _unstakeRequestIndexes[tokenId];
+            /* Remove token ID to unstake request index mapping */
+            delete _unstakeRequestIndexes[tokenIds[i]];
 
-        /* Remove token ID to unstake request index mapping */
-        delete _unstakeRequestIndexes[tokenId];
+            /* Remove token ID to pool from mapping */
+            delete _pools[tokenIds[i]];
 
-        /* Remove token ID to pool from mapping */
-        delete _pools[tokenId];
+            /* Unstake from pool */
+            uint256[] memory licenses = new uint256[](1);
+            licenses[0] = tokenIds[i];
+            _poolFactory.unstakeKeys(pool, unstakeRequestIndex, licenses);
 
-        /* Unstake from pool */
-        _poolFactory.unstakeKeys(pool, unstakeRequestIndex, licenses);
-
-        /* Transfer key to receiver */
-        _sentryNodeLicense.transferFrom(address(this), receiver, tokenId);
+            /* Transfer key to recipient */
+            _sentryNodeLicense.transferFrom(address(this), recipient, tokenIds[i]);
+        }
     }
 
     /*------------------------------------------------------------------------*/

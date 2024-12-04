@@ -20,18 +20,36 @@ import "forge-std/console.sol";
 contract XaiMintTest is XaiBaseTest {
     address internal yp;
     address internal dp;
+    uint256[] internal tokenIds1;
+    uint256[] internal tokenIds2;
+    uint256[] internal tokenIds3;
+    uint256[] internal tokenIds4;
 
     function setUp() public override {
         /* Set up Nft */
         XaiBaseTest.setUp();
 
         (yp, dp) = XaiBaseTest.deployYieldPass(address(sentryNodeLicense), startTime, expiry, address(yieldAdapter));
+
+        tokenIds1 = new uint256[](1);
+        tokenIds1[0] = 19727;
+
+        tokenIds2 = new uint256[](1);
+        tokenIds2[0] = 19728;
+
+        tokenIds3 = new uint256[](1);
+        tokenIds3[0] = 19729;
+
+        tokenIds4 = new uint256[](1);
+        tokenIds4[0] = 22355;
     }
 
     function test__Mint() external {
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(yp, 19727, snlOwner, snlOwner, abi.encode(stakingPool));
+        yieldPass.mint(
+            yp, snlOwner, tokenIds1, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds1.length), ""
+        );
         vm.stopPrank();
 
         uint256 expectedAmount1 = (1 ether * (expiry - block.timestamp)) / (expiry - startTime);
@@ -39,9 +57,6 @@ contract XaiMintTest is XaiBaseTest {
         assertEq(IERC20(yp).totalSupply(), expectedAmount1, "Invalid total supply");
         assertEq(sentryNodeLicense.ownerOf(19727), address(yieldAdapter), "Invalid NFT owner");
         assertEq(IERC721(dp).ownerOf(19727), snlOwner, "Invalid discount token owner");
-
-        vm.expectRevert(DiscountPassToken.NotTransferable.selector);
-        IERC721(dp).transferFrom(snlOwner, address(1), 19727);
 
         assertEq(yieldPass.cumulativeYield(yp, 0), 0, "Invalid cumulative yield");
         assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
@@ -53,7 +68,9 @@ contract XaiMintTest is XaiBaseTest {
 
         /* Mint again */
         vm.startPrank(snlOwner);
-        yieldPass.mint(yp, 19728, snlOwner, snlOwner, abi.encode(stakingPool));
+        yieldPass.mint(
+            yp, snlOwner, tokenIds2, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds2.length), ""
+        );
         vm.stopPrank();
 
         uint256 expectedAmount2 = (1 ether * (expiry - block.timestamp)) / (expiry - startTime);
@@ -61,9 +78,6 @@ contract XaiMintTest is XaiBaseTest {
         assertEq(IERC20(yp).totalSupply(), expectedAmount1 + expectedAmount2, "Invalid total supply");
         assertEq(sentryNodeLicense.ownerOf(19728), address(yieldAdapter), "Invalid NFT owner");
         assertEq(IERC721(dp).ownerOf(19728), snlOwner, "Invalid delegate token owner");
-
-        vm.expectRevert(DiscountPassToken.NotTransferable.selector);
-        IERC721(dp).transferFrom(snlOwner, address(1), 19728);
 
         assertEq(yieldPass.cumulativeYield(yp, 0), 0, "Invalid cumulative yield");
         assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
@@ -75,7 +89,9 @@ contract XaiMintTest is XaiBaseTest {
 
         /* Mint again */
         vm.startPrank(snlOwner);
-        yieldPass.mint(yp, 19729, snlOwner, snlOwner, abi.encode(stakingPool));
+        yieldPass.mint(
+            yp, snlOwner, tokenIds3, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds3.length), ""
+        );
         vm.stopPrank();
 
         uint256 expectedAmount3 = (1 ether * (expiry - block.timestamp)) / (expiry - startTime);
@@ -87,9 +103,6 @@ contract XaiMintTest is XaiBaseTest {
         assertEq(IERC20(yp).totalSupply(), expectedAmount1 + expectedAmount2 + expectedAmount3, "Invalid total supply");
         assertEq(sentryNodeLicense.ownerOf(19729), address(yieldAdapter), "Invalid NFT owner");
         assertEq(IERC721(dp).ownerOf(19729), snlOwner, "Invalid delegate token owner");
-
-        vm.expectRevert(DiscountPassToken.NotTransferable.selector);
-        IERC721(dp).transferFrom(snlOwner, address(1), 19729);
 
         assertEq(yieldPass.cumulativeYield(yp, 0), 0, "Invalid cumulative yield");
         assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
@@ -108,26 +121,35 @@ contract XaiMintTest is XaiBaseTest {
 
         vm.startPrank(snlOwner);
 
+        bytes memory pools = generateStakingPools(stakingPool, tokenIds1.length);
+
         /* Claim when paused */
         vm.expectRevert(Pausable.EnforcedPause.selector);
-        yieldPass.mint(yp, 19727, snlOwner, snlOwner, abi.encode(stakingPool));
+        yieldPass.mint(yp, snlOwner, tokenIds1, snlOwner, snlOwner, pools, "");
         vm.stopPrank();
     }
 
     function test__Mint_RevertWhen_UndeployedYieldPass() external {
+        vm.startPrank(snlOwner);
+
         /* Undeployed yield pass */
         address randomAddress =
             address(uint160(uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao)))));
+        bytes memory pools = generateStakingPools(stakingPool, tokenIds1.length);
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidYieldPass.selector));
-        yieldPass.mint(randomAddress, 19727, snlOwner, snlOwner, abi.encode(stakingPool));
+        yieldPass.mint(randomAddress, snlOwner, tokenIds1, snlOwner, snlOwner, pools, "");
+
+        vm.stopPrank();
     }
 
     function test__Mint_RevertWhen_KeyIsStaked() external {
         vm.startPrank(snlOwner);
 
+        bytes memory pools = generateStakingPools(stakingPool, tokenIds4.length);
+
         /* Mint with staked key */
         vm.expectRevert();
-        yieldPass.mint(yp, 22355, snlOwner, snlOwner, abi.encode(stakingPool));
+        yieldPass.mint(yp, snlOwner, tokenIds4, snlOwner, snlOwner, pools, "");
 
         vm.stopPrank();
     }
@@ -138,8 +160,9 @@ contract XaiMintTest is XaiBaseTest {
 
         /* Mint yield pass */
         vm.startPrank(snlOwner);
+        bytes memory pools = generateStakingPools(stakingPool, tokenIds1.length);
         vm.expectRevert(abi.encodeWithSelector(XaiYieldAdapter.NotKycApproved.selector));
-        yieldPass.mint(yp, 19727, snlOwner, snlOwner, abi.encode(stakingPool));
+        yieldPass.mint(yp, snlOwner, tokenIds1, snlOwner, snlOwner, pools, "");
         vm.stopPrank();
     }
 
@@ -148,13 +171,14 @@ contract XaiMintTest is XaiBaseTest {
 
         /* Mint at expiry */
         vm.warp(expiry);
+        bytes memory pools = generateStakingPools(stakingPool, tokenIds1.length);
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidWindow.selector));
-        yieldPass.mint(yp, 19727, snlOwner, snlOwner, abi.encode(stakingPool));
+        yieldPass.mint(yp, snlOwner, tokenIds1, snlOwner, snlOwner, pools, "");
 
         /* Mint before start time */
         vm.warp(startTime - 1);
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidWindow.selector));
-        yieldPass.mint(yp, 19727, snlOwner, snlOwner, abi.encode(stakingPool));
+        yieldPass.mint(yp, snlOwner, tokenIds1, snlOwner, snlOwner, pools, "");
 
         vm.stopPrank();
     }

@@ -18,7 +18,7 @@ import {TestERC20} from "./tokens/TestERC20.sol";
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
 import {IYieldPassUtils} from "src/interfaces/IYieldPassUtils.sol";
 import {YieldPass} from "src/YieldPass.sol";
-import {YieldPassUtils, IBundleCollateralWrapper} from "src/YieldPassUtils.sol";
+import {YieldPassUtils} from "src/YieldPassUtils.sol";
 
 import {IUniswapV2Router02} from "uniswap-v2-periphery/interfaces/IUniswapV2Router02.sol";
 
@@ -104,12 +104,13 @@ abstract contract BaseTest is Test {
         vm.stopPrank();
     }
 
-    function deployYieldPassUtils(address uniswapV2Router, address bundleCollateralWrapper_) internal {
+    function deployYieldPassUtils(
+        address uniswapV2Factory
+    ) internal {
         vm.startPrank(users.deployer);
 
         /* Deploy yield pass utils implementation */
-        yieldPassUtilsImpl =
-            new YieldPassUtils(IUniswapV2Router02(uniswapV2Router), yieldPass, bundleCollateralWrapper_);
+        yieldPassUtilsImpl = new YieldPassUtils(uniswapV2Factory);
 
         /* Deploy yield pass utils proxy */
         yieldPassUtilsProxy = new TransparentUpgradeableProxy(address(yieldPassUtilsImpl), address(users.admin), "");

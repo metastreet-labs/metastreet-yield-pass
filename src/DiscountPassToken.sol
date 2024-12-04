@@ -9,13 +9,14 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
  */
 contract DiscountPassToken is ERC721 {
     /*------------------------------------------------------------------------*/
-    /* Error */
+    /* Events */
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Not transferable
+     * @notice Emitted when user locked is set
+     * @param isUserLocked True if user locked enabled
      */
-    error NotTransferable();
+    event UserLockedSet(bool isUserLocked);
 
     /*------------------------------------------------------------------------*/
     /* Immutable State */
@@ -31,18 +32,23 @@ contract DiscountPassToken is ERC721 {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice True if token is transferable
+     * @notice True if user locked enabled
      */
-    bool internal _isTransferable;
+    bool internal _isUserLocked;
+
+    /**
+     * @notice Token ID to account mapping
+     */
+    mapping(uint256 => address) internal _accounts;
 
     /*------------------------------------------------------------------------*/
     /* Contructor */
     /*------------------------------------------------------------------------*/
 
-    constructor(string memory name_, string memory symbol_, bool isTransferable_) ERC721(name_, symbol_) {
+    constructor(string memory name_, string memory symbol_, bool isUserLocked_) ERC721(name_, symbol_) {
         _owner = msg.sender;
 
-        _isTransferable = isTransferable_;
+        _isUserLocked = isUserLocked_;
     }
 
     /*------------------------------------------------------------------------*/
@@ -50,11 +56,22 @@ contract DiscountPassToken is ERC721 {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Get if token is transferable
-     * @return True if token is transferable
+     * @notice Get if token is user locked
+     * @return True if token is user locked
      */
-    function isTransferable() external view returns (bool) {
-        return _isTransferable;
+    function isUserLocked() external view returns (bool) {
+        return _isUserLocked;
+    }
+
+    /**
+     * @notice Get token ID to account mapping
+     * @param tokenId Token ID
+     * @return Account address
+     */
+    function tokenIdUser(
+        uint256 tokenId
+    ) external view returns (address) {
+        return _accounts[tokenId];
     }
 
     /*------------------------------------------------------------------------*/
@@ -62,24 +79,30 @@ contract DiscountPassToken is ERC721 {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Mint discount token
+     * @notice Mint discount tokens
      * @param to Account
-     * @param tokenId Token ID
+     * @param tokenIds Token IDs
      */
-    function mint(address to, uint256 tokenId) external {
+    function mint(address to, uint256[] calldata tokenIds) external {
         require(msg.sender == _owner, "Unauthorized caller");
 
-        _mint(to, tokenId);
+        for (uint256 i; i < tokenIds.length; i++) {
+            _accounts[tokenIds[i]] = to;
+
+            _mint(to, tokenIds[i]);
+        }
     }
 
     /**
      * @notice Burn discount token
+     * @param from Account
      * @param tokenId Token ID
      */
-    function burn(
-        uint256 tokenId
-    ) external {
+    function burn(address from, uint256 tokenId) external {
         require(msg.sender == _owner, "Unauthorized caller");
+        require(!_isUserLocked || _accounts[tokenId] == from, "Invalid burn");
+
+        delete _accounts[tokenId];
 
         _burn(tokenId);
     }
@@ -89,31 +112,16 @@ contract DiscountPassToken is ERC721 {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Set if token is transferable
-     * @param isTransferable_ True if token is transferable
+     * @notice Set user locked
+     * @param isUserLocked_ True if user locked enabled
      */
-    function setTransferable(
-        bool isTransferable_
+    function setUserLocked(
+        bool isUserLocked_
     ) external {
         require(msg.sender == _owner, "Unauthorized caller");
 
-        _isTransferable = isTransferable_;
-    }
+        _isUserLocked = isUserLocked_;
 
-    /*------------------------------------------------------------------------*/
-    /* Overrides */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @inheritdoc ERC721
-     * @dev Only added transferrability validation, remaining logic is same as in ERC721
-     */
-    function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
-        address from = _ownerOf(tokenId);
-
-        /* Allow only if transferability is set to true or token is being burned or minted */
-        if (!_isTransferable && to != address(0) && from != address(0)) revert NotTransferable();
-
-        return super._update(to, tokenId, auth);
+        emit UserLockedSet(isUserLocked_);
     }
 }

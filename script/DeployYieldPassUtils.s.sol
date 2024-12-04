@@ -12,17 +12,14 @@ import {Deployer} from "script/utils/Deployer.s.sol";
 
 contract DeployYieldPassUtils is Deployer {
     function run(
-        address uniswapV2SwapRouter,
-        address yieldPass,
-        address bundleCollateralWrapper
+        address uniswapV2Factory
     ) public broadcast useDeployment returns (address) {
         if (_deployment.yieldPassUtils != address(0)) revert AlreadyDeployed();
 
         /* YieldPassUtils Implementation */
         console.log("Deploying YieldPassUtils implementation...");
 
-        YieldPassUtils yieldPassUtilsImpl =
-            new YieldPassUtils(IUniswapV2Router02(uniswapV2SwapRouter), IYieldPass(yieldPass), bundleCollateralWrapper);
+        YieldPassUtils yieldPassUtilsImpl = new YieldPassUtils(uniswapV2Factory);
 
         console.log("YieldPassUtils implementation deployed at: %s\n", address(yieldPassUtilsImpl));
 
