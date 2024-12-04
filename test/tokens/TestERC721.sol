@@ -51,7 +51,9 @@ contract TestERC721 is ERC721, Ownable {
      * @notice Set token base URI
      * @param baseURI Token base URI
      */
-    function setBaseURI(string memory baseURI) external onlyOwner {
+    function setBaseURI(
+        string memory baseURI
+    ) external onlyOwner {
         _baseTokenURI = baseURI;
     }
 
@@ -68,7 +70,9 @@ contract TestERC721 is ERC721, Ownable {
      * @notice Burn token
      * @param tokenId Token ID
      */
-    function burn(uint256 tokenId) external {
+    function burn(
+        uint256 tokenId
+    ) external {
         _burn(tokenId);
     }
 }

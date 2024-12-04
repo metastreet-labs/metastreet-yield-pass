@@ -11,5 +11,7 @@ interface IReservoirV6_0_1 {
         uint256 value;
     }
 
-    function execute(ExecutionInfo[] calldata executionInfos) external payable;
+    function execute(
+        ExecutionInfo[] calldata executionInfos
+    ) external payable;
 }

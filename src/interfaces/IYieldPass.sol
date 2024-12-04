@@ -190,7 +190,9 @@ interface IYieldPass is IERC721Receiver {
      * @param yieldPass Yield pass
      * @return Yield pass info
      */
-    function yieldPassInfo(address yieldPass) external view returns (YieldPassInfo memory);
+    function yieldPassInfo(
+        address yieldPass
+    ) external view returns (YieldPassInfo memory);
 
     /**
      * @notice Get yield pass infos
@@ -205,21 +207,27 @@ interface IYieldPass is IERC721Receiver {
      * @param yieldPass Yield pass
      * @return YieldClaimState
      */
-    function claimState(address yieldPass) external view returns (YieldClaimState memory);
+    function claimState(
+        address yieldPass
+    ) external view returns (YieldClaimState memory);
 
     /**
      * @notice Get yield adapter
      * @param yieldPass Yield pass
      * @return Yield adapter
      */
-    function yieldAdapter(address yieldPass) external view returns (address);
+    function yieldAdapter(
+        address yieldPass
+    ) external view returns (address);
 
     /**
      * @notice Get total cumulative yield
      * @param yieldPass Yield pass
      * @return Cumulative yield
      */
-    function cumulativeYield(address yieldPass) external view returns (uint256);
+    function cumulativeYield(
+        address yieldPass
+    ) external view returns (uint256);
 
     /**
      * @notice Get cumulative yield given yield pass amount
@@ -242,7 +250,9 @@ interface IYieldPass is IERC721Receiver {
      * @param yieldPass Yield pass
      * @return Yield pass token amount
      */
-    function quoteMint(address yieldPass) external view returns (uint256);
+    function quoteMint(
+        address yieldPass
+    ) external view returns (uint256);
 
     /*------------------------------------------------------------------------*/
     /* User APIs */

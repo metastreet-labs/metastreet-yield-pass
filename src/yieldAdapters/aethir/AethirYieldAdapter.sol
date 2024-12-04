@@ -19,8 +19,12 @@ interface IERC4907 {
     event UpdateUser(uint256 indexed tokenId, address indexed user, uint64 expires);
 
     function setUser(uint256 tokenId, address user, uint64 expires) external;
-    function userOf(uint256 tokenId) external view returns (address);
-    function userExpires(uint256 tokenId) external view returns (uint256);
+    function userOf(
+        uint256 tokenId
+    ) external view returns (address);
+    function userExpires(
+        uint256 tokenId
+    ) external view returns (uint256);
 }
 
 /**
@@ -284,7 +288,9 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @param data Claim data
      * @return Yield amount
      */
-    function _claim(bytes memory data) internal returns (uint256) {
+    function _claim(
+        bytes memory data
+    ) internal returns (uint256) {
         /* Decode harvest data */
         ClaimData[] memory claimData = abi.decode(data, (ClaimData[]));
 
@@ -319,7 +325,9 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @param data Withdraw data
      * @return Yield amount
      */
-    function _withdraw(bytes memory data) internal returns (uint256) {
+    function _withdraw(
+        bytes memory data
+    ) internal returns (uint256) {
         /* Decode harvest data */
         WithdrawData memory withdrawData = abi.decode(data, (WithdrawData));
 
@@ -534,7 +542,9 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /**
      * @inheritdoc IYieldAdapter
      */
-    function validateClaim(address) external view whenNotPaused returns (bool) {
+    function validateClaim(
+        address
+    ) external view whenNotPaused returns (bool) {
         /* Validate all order IDs have been processed for withdrawal */
         return _orderIds.length() == 0;
     }
@@ -599,7 +609,9 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @notice Update cliff seconds
      * @param cliffSeconds_ Cliff seconds
      */
-    function updateCliffSeconds(uint48 cliffSeconds_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateCliffSeconds(
+        uint48 cliffSeconds_
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _cliffSeconds = cliffSeconds_;
 
         /* Emit cliff seconds updated */
@@ -610,7 +622,9 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @notice Update signer
      * @param signer_ Signer address
      */
-    function updateSigner(address signer_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateSigner(
+        address signer_
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _signer = signer_;
 
         /* Emit signer updated */

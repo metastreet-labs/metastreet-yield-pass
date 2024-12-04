@@ -106,7 +106,9 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @inheritdoc IYieldPass
      */
-    function yieldPassInfo(address yieldPass) public view returns (YieldPassInfo memory) {
+    function yieldPassInfo(
+        address yieldPass
+    ) public view returns (YieldPassInfo memory) {
         return _yieldPassInfos[yieldPass];
     }
 
@@ -131,21 +133,27 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @inheritdoc IYieldPass
      */
-    function claimState(address yieldPass) public view returns (YieldClaimState memory) {
+    function claimState(
+        address yieldPass
+    ) public view returns (YieldClaimState memory) {
         return _yieldPassStates[yieldPass].claimState;
     }
 
     /**
      * @inheritdoc IYieldPass
      */
-    function yieldAdapter(address yieldPass) public view returns (address) {
+    function yieldAdapter(
+        address yieldPass
+    ) public view returns (address) {
         return address(_yieldPassStates[yieldPass].yieldAdapter);
     }
 
     /**
      * @inheritdoc IYieldPass
      */
-    function cumulativeYield(address yieldPass) public view returns (uint256) {
+    function cumulativeYield(
+        address yieldPass
+    ) public view returns (uint256) {
         return _yieldPassStates[yieldPass].yieldAdapter.cumulativeYield();
     }
 
@@ -172,7 +180,9 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @inheritdoc IYieldPass
      */
-    function quoteMint(address yieldPass) public view returns (uint256) {
+    function quoteMint(
+        address yieldPass
+    ) public view returns (uint256) {
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
 

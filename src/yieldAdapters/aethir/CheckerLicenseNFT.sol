@@ -8,8 +8,12 @@ interface IERC4907 {
     event UpdateUser(uint256 indexed tokenId, address indexed user, uint64 expires);
 
     function setUser(uint256 tokenId, address user, uint64 expires) external;
-    function userOf(uint256 tokenId) external view returns (address);
-    function userExpires(uint256 tokenId) external view returns (uint256);
+    function userOf(
+        uint256 tokenId
+    ) external view returns (address);
+    function userExpires(
+        uint256 tokenId
+    ) external view returns (uint256);
 }
 
 contract CheckerLicenseNFT is Ownable2StepUpgradeable, ERC721EnumerableUpgradeable, IERC4907 {
@@ -50,7 +54,9 @@ contract CheckerLicenseNFT is Ownable2StepUpgradeable, ERC721EnumerableUpgradeab
         }
     }
 
-    function _mintOne(address to) internal {
+    function _mintOne(
+        address to
+    ) internal {
         _mint(to, nextTokenId);
         nextTokenId++;
     }
@@ -59,7 +65,9 @@ contract CheckerLicenseNFT is Ownable2StepUpgradeable, ERC721EnumerableUpgradeab
         return baseUrl;
     }
 
-    function setBaseUrl(string calldata url_) public onlyOwner {
+    function setBaseUrl(
+        string calldata url_
+    ) public onlyOwner {
         baseUrl = url_;
     }
 
@@ -92,7 +100,9 @@ contract CheckerLicenseNFT is Ownable2StepUpgradeable, ERC721EnumerableUpgradeab
     /// @dev The zero address indicates that there is no user or the user is expired
     /// @param tokenId The NFT to get the user address for
     /// @return The user address for this NFT
-    function userOf(uint256 tokenId) public view virtual returns (address) {
+    function userOf(
+        uint256 tokenId
+    ) public view virtual returns (address) {
         if (uint256(_users[tokenId].expires) >= block.timestamp) {
             return _users[tokenId].user;
         } else {
@@ -104,20 +114,28 @@ contract CheckerLicenseNFT is Ownable2StepUpgradeable, ERC721EnumerableUpgradeab
     /// @dev The zero value indicates that there is no user
     /// @param tokenId The NFT to get the user expires for
     /// @return The user expires for this NFT
-    function userExpires(uint256 tokenId) public view virtual returns (uint256) {
+    function userExpires(
+        uint256 tokenId
+    ) public view virtual returns (uint256) {
         return _users[tokenId].expires;
     }
 
     /// @dev See {IERC165-supportsInterface}.
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override returns (bool) {
         return interfaceId == type(IERC4907).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function getBanEndTime(uint256 tokenId) public view returns (uint64) {
+    function getBanEndTime(
+        uint256 tokenId
+    ) public view returns (uint64) {
         return _banRecords[tokenId];
     }
 
-    function isBanned(uint256 tokenId) public view returns (bool) {
+    function isBanned(
+        uint256 tokenId
+    ) public view returns (bool) {
         return _banRecords[tokenId] > block.timestamp;
     }
 
@@ -129,7 +147,9 @@ contract CheckerLicenseNFT is Ownable2StepUpgradeable, ERC721EnumerableUpgradeab
         emit EventBanUpdated(ownerOf(tokenId), tokenId, endTime);
     }
 
-    function unBan(uint256 tokenId) public {
+    function unBan(
+        uint256 tokenId
+    ) public {
         require(msg.sender == banAdminAddress, "only ban admin");
         _banRecords[tokenId] = 0;
         emit EventBanUpdated(ownerOf(tokenId), tokenId, 0);
@@ -211,26 +231,36 @@ contract CheckerLicenseNFT is Ownable2StepUpgradeable, ERC721EnumerableUpgradeab
         endTime = _whitelistTransferEndTime;
     }
 
-    function updateNftTransferable(bool transferable) public onlyOwner {
+    function updateNftTransferable(
+        bool transferable
+    ) public onlyOwner {
         nftTransferable = transferable;
         emit EventNftTransferableUpdated(transferable);
     }
 
-    function inTransferWhitelist(address addr) public view returns (bool) {
+    function inTransferWhitelist(
+        address addr
+    ) public view returns (bool) {
         return _transferFromWhitelist[addr] || _transferToWhitelist[addr];
     }
 
-    function updateMinterAdmin(address minter) public onlyOwner {
+    function updateMinterAdmin(
+        address minter
+    ) public onlyOwner {
         minterAdminAddress = minter;
         emit EventMinterAdminUpdated(minterAdminAddress);
     }
 
-    function updateWhitelistAdmin(address whitelistAdmin) public onlyOwner {
+    function updateWhitelistAdmin(
+        address whitelistAdmin
+    ) public onlyOwner {
         whitelistAdminAddress = whitelistAdmin;
         emit EventWhiteListAdminUpdated(whitelistAdminAddress);
     }
 
-    function updateBanAdmin(address banAdmin) public onlyOwner {
+    function updateBanAdmin(
+        address banAdmin
+    ) public onlyOwner {
         banAdminAddress = banAdmin;
         emit EventBanAdminUpdated(banAdminAddress);
     }

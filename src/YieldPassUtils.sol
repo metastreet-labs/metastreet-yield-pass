@@ -337,7 +337,9 @@ contract YieldPassUtils is ReentrancyGuard, ERC721Holder, ERC165, IYieldPassUtil
     /**
      * @inheritdoc IERC165
      */
-    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override returns (bool) {
         return interfaceId == type(IERC721Receiver).interfaceId || super.supportsInterface(interfaceId);
     }
 }

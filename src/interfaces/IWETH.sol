@@ -16,5 +16,7 @@ interface IWETH is IERC20 {
      * @notice Withdraw ERC20 Wrapped Ether for Ether
      * @param amount Amount to withdraw
      */
-    function withdraw(uint256 amount) external;
+    function withdraw(
+        uint256 amount
+    ) external;
 }

@@ -22,7 +22,9 @@ import {AethirYieldAdapter, ICheckerClaimAndWithdraw, IERC4907} from "src/yieldA
 import {MockCheckerClaimAndWithdraw} from "./mocks/MockCheckerClaimAndWithdraw.sol";
 
 interface IProxyAdminLegacy {
-    function getProxyImplementation(ITransparentUpgradeableProxy proxy) external view returns (address);
+    function getProxyImplementation(
+        ITransparentUpgradeableProxy proxy
+    ) external view returns (address);
 }
 
 /**
@@ -147,7 +149,9 @@ abstract contract AethirBaseTest is PoolBaseTest {
         vm.stopPrank();
     }
 
-    function deployYieldAdapter(bool isMock) internal {
+    function deployYieldAdapter(
+        bool isMock
+    ) internal {
         vm.startPrank(users.deployer);
 
         /* Deploy yield adapters */

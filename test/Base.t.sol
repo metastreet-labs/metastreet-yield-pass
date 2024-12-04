@@ -119,7 +119,9 @@ abstract contract BaseTest is Test {
         vm.stopPrank();
     }
 
-    function createUser(string memory name) internal returns (address payable addr) {
+    function createUser(
+        string memory name
+    ) internal returns (address payable addr) {
         addr = payable(makeAddr(name));
         vm.label({account: addr, newLabel: name});
         vm.deal({account: addr, newBalance: 100 ether});

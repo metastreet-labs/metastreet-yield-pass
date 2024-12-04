@@ -76,7 +76,9 @@ contract DiscountPassToken is ERC721 {
      * @notice Burn discount token
      * @param tokenId Token ID
      */
-    function burn(uint256 tokenId) external {
+    function burn(
+        uint256 tokenId
+    ) external {
         require(msg.sender == _owner, "Unauthorized caller");
 
         _burn(tokenId);
@@ -90,7 +92,9 @@ contract DiscountPassToken is ERC721 {
      * @notice Set if token is transferable
      * @param isTransferable_ True if token is transferable
      */
-    function setTransferable(bool isTransferable_) external {
+    function setTransferable(
+        bool isTransferable_
+    ) external {
         require(msg.sender == _owner, "Unauthorized caller");
 
         _isTransferable = isTransferable_;

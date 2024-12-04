@@ -26,16 +26,16 @@ contract MockCheckerClaimAndWithdraw {
     event EventWithdraw(uint256[] orderIdArray, uint256 withdrawAmount);
     event EventClaim(uint256 orderId, address wallet, uint48 cliffTimestamp, uint256 amount);
 
-    constructor(address aethirTokenAdress_) {
+    constructor(
+        address aethirTokenAdress_
+    ) {
         aethirTokenAdress = aethirTokenAdress_;
         maxCliffSeconds = 365 * 86400;
     }
 
-    function getClaimInfo(uint256 orderId)
-        external
-        view
-        returns (address wallet, uint48 cliffTimestamp, bool withdrawFinished, uint256 amount)
-    {
+    function getClaimInfo(
+        uint256 orderId
+    ) external view returns (address wallet, uint48 cliffTimestamp, bool withdrawFinished, uint256 amount) {
         ClaimInfo storage claimInfo = claimRecords[orderId];
         wallet = claimInfo.wallet;
         cliffTimestamp = claimInfo.cliffTimestamp;

@@ -28,7 +28,9 @@ import "uniswap-v2-periphery/interfaces/IUniswapV2Router02.sol";
 import {IUniswapV2Factory} from "uniswap-v2-core/interfaces/IUniswapV2Factory.sol";
 
 interface IProxyAdminLegacy {
-    function getProxyImplementation(ITransparentUpgradeableProxy proxy) external view returns (address);
+    function getProxyImplementation(
+        ITransparentUpgradeableProxy proxy
+    ) external view returns (address);
 }
 
 interface ICheckerLicenseNFT {
@@ -170,7 +172,9 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
         vm.stopPrank();
     }
 
-    function deployYieldAdapter(bool isMock) internal {
+    function deployYieldAdapter(
+        bool isMock
+    ) internal {
         vm.startPrank(users.deployer);
 
         /* Deploy yield adapters */

@@ -52,7 +52,9 @@ interface IYieldAdapter is IERC721Receiver {
      * @param claimant Claimant
      * @return True if valid, false otherwise
      */
-    function validateClaim(address claimant) external returns (bool);
+    function validateClaim(
+        address claimant
+    ) external returns (bool);
 
     /**
      * @notice Initiate teardown

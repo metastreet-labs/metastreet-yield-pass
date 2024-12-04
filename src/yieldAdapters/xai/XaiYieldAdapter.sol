@@ -20,7 +20,9 @@ interface IPoolFactory {
     function refereeAddress() external returns (address);
     function stakeKeys(address pool, uint256[] memory keyIds) external;
     function unstakeKeys(address pool, uint256 unstakeRequestIndex, uint256[] memory keyIds) external;
-    function claimFromPools(address[] memory pools) external;
+    function claimFromPools(
+        address[] memory pools
+    ) external;
     function createUnstakeKeyRequest(address pool, uint256 keyAmount) external;
     function unstakeKeysDelayPeriod() external view returns (uint256);
 }
@@ -29,7 +31,9 @@ interface IPoolFactory {
  * @title XAI Pool Interface
  */
 interface IPool {
-    function getUnstakeRequestCount(address account) external view returns (uint256);
+    function getUnstakeRequestCount(
+        address account
+    ) external view returns (uint256);
     function keyBucket() external view returns (IBucketTracker);
 }
 
@@ -37,14 +41,18 @@ interface IPool {
  * @title XAI Bucket Tracker Interface
  */
 interface IBucketTracker {
-    function accumulativeDividendOf(address account) external view returns (uint256);
+    function accumulativeDividendOf(
+        address account
+    ) external view returns (uint256);
 }
 
 /**
  * @title XAI Referee Interface
  */
 interface IReferee {
-    function isKycApproved(address wallet) external view returns (bool);
+    function isKycApproved(
+        address wallet
+    ) external view returns (bool);
 }
 
 /**
@@ -187,7 +195,9 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /**
      * @notice YieldAdapter initializer
      */
-    function initialize(address[] memory pools_) external {
+    function initialize(
+        address[] memory pools_
+    ) external {
         require(!_initialized, "Already initialized");
 
         _initialized = true;
@@ -327,7 +337,9 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /**
      * @inheritdoc IYieldAdapter
      */
-    function validateClaim(address) external view whenNotPaused returns (bool) {
+    function validateClaim(
+        address
+    ) external view whenNotPaused returns (bool) {
         return true;
     }
 
@@ -417,7 +429,9 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      * @notice Add or remove pool from whitelist
      * @param pool Pool to add or remove
      */
-    function updatePools(address pool) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updatePools(
+        address pool
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         /* Validate pool is allowed */
         if (_allowedPools.contains(pool)) {
             _allowedPools.remove(pool);
