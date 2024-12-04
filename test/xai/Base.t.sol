@@ -20,16 +20,24 @@ import {XaiYieldAdapter, IPoolFactory, IPool} from "src/yieldAdapters/xai/XaiYie
 import {NodeLicense} from "src/yieldAdapters/xai/NodeLicense.sol";
 
 interface IProxyAdminLegacy {
-    function getProxyImplementation(ITransparentUpgradeableProxy proxy) external view returns (address);
+    function getProxyImplementation(
+        ITransparentUpgradeableProxy proxy
+    ) external view returns (address);
 }
 
 interface IReferee {
-    function addKycWallet(address wallet) external;
-    function removeKycWallet(address account) external;
+    function addKycWallet(
+        address wallet
+    ) external;
+    function removeKycWallet(
+        address account
+    ) external;
 }
 
 interface IEsXai {
-    function addToWhitelist(address account) external;
+    function addToWhitelist(
+        address account
+    ) external;
 }
 
 /**
@@ -170,13 +178,27 @@ abstract contract XaiBaseTest is PoolBaseTest {
         vm.stopPrank();
     }
 
-    function addKyc(address account) internal {
+    function generateStakingPools(address pool, uint256 tokenCount) internal pure returns (bytes memory) {
+        address[] memory pools = new address[](1);
+        pools[0] = pool;
+
+        uint256[] memory quantities = new uint256[](1);
+        quantities[0] = tokenCount;
+
+        return abi.encode(pools, quantities);
+    }
+
+    function addKyc(
+        address account
+    ) internal {
         /* KYC user */
         vm.prank(kycRole);
         xaiReferee.addKycWallet(account);
     }
 
-    function removeKyc(address account) internal {
+    function removeKyc(
+        address account
+    ) internal {
         /* KYC user */
         vm.prank(kycRole);
         xaiReferee.removeKycWallet(account);

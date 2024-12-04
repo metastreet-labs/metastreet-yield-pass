@@ -19,6 +19,7 @@ contract ClaimTest is AethirBaseTest {
     address internal yp;
     address internal dp;
     uint48 internal expiryTimestamp;
+    uint256[] internal tokenIds;
 
     function setUp() public override {
         /* Set up Nft */
@@ -32,6 +33,9 @@ contract ClaimTest is AethirBaseTest {
         (yp, dp) = AethirBaseTest.deployYieldPass(address(checkerNodeLicense), startTime, expiry, address(yieldAdapter));
 
         expiryTimestamp = uint48(block.timestamp) + 360 days;
+
+        tokenIds = new uint256[](1);
+        tokenIds[0] = 91521;
     }
 
     function harvest() internal {
@@ -79,7 +83,13 @@ contract ClaimTest is AethirBaseTest {
         /* Mint */
         vm.startPrank(cnlOwner);
         yieldPass.mint(
-            yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1, expiry)
+            yp,
+            cnlOwner,
+            tokenIds,
+            cnlOwner,
+            cnlOwner,
+            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            ""
         );
         vm.stopPrank();
 
@@ -88,7 +98,7 @@ contract ClaimTest is AethirBaseTest {
 
         /* Claim */
         vm.startPrank(cnlOwner);
-        yieldPass.claim(yp, IERC20(yp).balanceOf(cnlOwner));
+        yieldPass.claim(yp, cnlOwner, IERC20(yp).balanceOf(cnlOwner));
         vm.stopPrank();
 
         /* Check cumulative yield */
@@ -107,11 +117,79 @@ contract ClaimTest is AethirBaseTest {
         assertEq(yieldPass.claimState(yp).balance, 0, "Invalid yield balance state");
     }
 
+    function test__Claim_WithSmartWallet() external {
+        vm.startPrank(cnlOwner);
+        /* Transfer NFT to alt CNL owner */
+        IERC721(checkerNodeLicense).transferFrom(cnlOwner, altCnlOwner, 91521);
+        vm.stopPrank();
+
+        /* Get user initial ath balance */
+        uint256 initialBalance = ath.balanceOf(address(smartAccount));
+
+        /* Mint */
+        vm.startPrank(altCnlOwner);
+        /* Generate transfer signature */
+        bytes memory transferSignature = generateTransferSignature(address(smartAccount), tokenIds);
+
+        /* Mint through smart account */
+        smartAccount.execute(
+            address(yieldPass),
+            0,
+            abi.encodeWithSignature(
+                "mint(address,address,uint256[],address,address,bytes,bytes)",
+                yp,
+                altCnlOwner,
+                tokenIds,
+                address(smartAccount),
+                address(smartAccount),
+                generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+                transferSignature
+            )
+        );
+        vm.stopPrank();
+
+        /* Harvest */
+        harvest();
+
+        /* Claim */
+        vm.startPrank(altCnlOwner);
+
+        smartAccount.execute(
+            address(yieldPass),
+            0,
+            abi.encodeWithSignature(
+                "claim(address,address,uint256)", yp, address(smartAccount), IERC20(yp).balanceOf(address(smartAccount))
+            )
+        );
+        vm.stopPrank();
+
+        /* Check cumulative yield */
+        assertEq(yieldPass.cumulativeYield(yp), 2_000_000, "Invalid cumulative yield");
+        assertEq(yieldPass.cumulativeYield(yp, 1 ether), 2_000_000, "Invalid cumulative yield");
+
+        /* Check claimable yield */
+        assertEq(yieldPass.claimable(yp, 1 ether), 2_000_000, "Invalid claimable yield");
+        assertEq(IERC20(yp).balanceOf(address(smartAccount)), 0, "Invalid yield token balance");
+        assertEq(IERC20(yp).totalSupply(), 0, "Invalid total supply");
+        assertEq(IERC20(ath).balanceOf(address(smartAccount)), initialBalance + 2_000_000, "Invalid ath balance");
+        assertEq(IERC721(checkerNodeLicense).ownerOf(91521), address(yieldAdapter), "Invalid NFT owner");
+        assertEq(IERC721(dp).ownerOf(91521), address(smartAccount), "Invalid delegate token owner");
+        assertEq(yieldPass.claimState(yp).total, 2_000_000, "Invalid total yield state");
+        assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");
+        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid yield balance state");
+    }
+
     function test__Claim_RevertWhen_InvalidAmount() external {
         /* Mint */
         vm.startPrank(cnlOwner);
         yieldPass.mint(
-            yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1, expiry)
+            yp,
+            cnlOwner,
+            tokenIds,
+            cnlOwner,
+            cnlOwner,
+            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            ""
         );
         vm.stopPrank();
 
@@ -122,12 +200,12 @@ contract ClaimTest is AethirBaseTest {
 
         /* Claim with 0 */
         vm.expectRevert(IYieldPass.InvalidAmount.selector);
-        yieldPass.claim(yp, 0);
+        yieldPass.claim(yp, cnlOwner, 0);
 
         /* Claim with insufficient balance amount */
         uint256 userBalance = IERC20(yp).balanceOf(cnlOwner);
         vm.expectRevert(IYieldPass.InvalidAmount.selector);
-        yieldPass.claim(yp, userBalance + 1);
+        yieldPass.claim(yp, cnlOwner, userBalance + 1);
         vm.stopPrank();
     }
 
@@ -135,7 +213,13 @@ contract ClaimTest is AethirBaseTest {
         /* Mint */
         vm.startPrank(cnlOwner);
         yieldPass.mint(
-            yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1, expiry)
+            yp,
+            cnlOwner,
+            tokenIds,
+            cnlOwner,
+            cnlOwner,
+            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            ""
         );
         vm.stopPrank();
 
@@ -143,7 +227,7 @@ contract ClaimTest is AethirBaseTest {
         vm.startPrank(cnlOwner);
         uint256 userBalance = IERC20(yp).balanceOf(cnlOwner);
         vm.expectRevert(IYieldPass.InvalidWindow.selector);
-        yieldPass.claim(yp, userBalance);
+        yieldPass.claim(yp, cnlOwner, userBalance);
         vm.stopPrank();
     }
 }

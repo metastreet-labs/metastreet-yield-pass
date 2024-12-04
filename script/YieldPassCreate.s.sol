@@ -11,7 +11,7 @@ contract YieldPassCreate is Deployer {
         address nft,
         uint64 startTime,
         uint64 expiry,
-        bool isTransferable,
+        bool isUserLocked,
         address adapter
     ) public broadcast useDeployment returns (address, address) {
         IYieldPass yieldPass = IYieldPass(_deployment.yieldPass);
@@ -19,7 +19,7 @@ contract YieldPassCreate is Deployer {
         console.log("Creating Yield Pass Token...");
 
         (address yieldToken, address discountToken) =
-            yieldPass.deployYieldPass(nft, startTime, expiry, isTransferable, adapter);
+            yieldPass.deployYieldPass(nft, startTime, expiry, isUserLocked, adapter);
 
         console.log("Yield Token: %s\n", yieldToken);
         console.log("Discount Token: %s\n", discountToken);

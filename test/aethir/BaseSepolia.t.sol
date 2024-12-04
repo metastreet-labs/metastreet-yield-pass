@@ -17,6 +17,8 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {IPoolFactory} from "metastreet-contracts-v2/interfaces/IPoolFactory.sol";
 import {IPool} from "metastreet-contracts-v2/interfaces/IPool.sol";
 
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+
 import {CheckerLicenseNFT} from "src/yieldAdapters/aethir/CheckerLicenseNFT.sol";
 
 import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
@@ -28,7 +30,9 @@ import "uniswap-v2-periphery/interfaces/IUniswapV2Router02.sol";
 import {IUniswapV2Factory} from "uniswap-v2-core/interfaces/IUniswapV2Factory.sol";
 
 interface IProxyAdminLegacy {
-    function getProxyImplementation(ITransparentUpgradeableProxy proxy) external view returns (address);
+    function getProxyImplementation(
+        ITransparentUpgradeableProxy proxy
+    ) external view returns (address);
 }
 
 interface ICheckerLicenseNFT {
@@ -37,6 +41,25 @@ interface ICheckerLicenseNFT {
     function updateWhitelistTransferTime(uint256 startTime, uint256 endTime) external;
 }
 
+interface ICoinbaseSmartWallet {
+    struct Call {
+        address target;
+        uint256 value;
+        bytes data;
+    }
+
+    function execute(address target, uint256 value, bytes calldata data) external payable;
+    function executeBatch(
+        Call[] calldata calls
+    ) external payable;
+}
+
+interface ICoinbaseSmartWalletFactory {
+    function createAccount(
+        bytes[] calldata owners,
+        uint256 nonce
+    ) external payable returns (ICoinbaseSmartWallet account);
+}
 /**
  * @title Aethir base test setup
  *
@@ -44,8 +67,13 @@ interface ICheckerLicenseNFT {
  *
  * @dev Sets up contracts
  */
+
 abstract contract AethirSepoliaBaseTest is PoolBaseTest {
     string SEPOLIA_RPC_URL = vm.envString("SEPOLIA_RPC_URL");
+
+    /* Smart wallet factory */
+    ICoinbaseSmartWalletFactory internal smartWalletFactory =
+        ICoinbaseSmartWalletFactory(0x0BA5ED0c6AA8c49038F819E587E2633c4A9F428a);
 
     /* Uniswap V2 router */
     IUniswapV2Router02 internal uniswapV2Router = IUniswapV2Router02(0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3);
@@ -84,6 +112,10 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
     address internal nodeSigner;
     uint256 internal nodeSignerPk;
 
+    /* Alternate cnl owner */
+    address internal altCnlOwner;
+    uint256 internal altCnlOwnerPk;
+
     uint64 internal startTime;
     uint64 internal expiry;
 
@@ -92,6 +124,8 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
     IYieldAdapter internal yieldAdapter;
 
     address internal mockCheckerClaimAndWithdraw;
+
+    ICoinbaseSmartWallet internal smartAccount;
 
     function setUp() public virtual override {
         sepoliaFork = vm.createSelectFork(SEPOLIA_RPC_URL);
@@ -110,6 +144,9 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
         bundleCollateralWrapper = 0x83c7bc92bcFF43b9F682B7C2eE897A7130a36543;
 
         (nodeSigner, nodeSignerPk) = makeAddrAndKey("Node Signer");
+
+        (altCnlOwner, altCnlOwnerPk) = makeAddrAndKey("Alt CNL Owner");
+        vm.deal({account: altCnlOwner, newBalance: 100 ether});
 
         /* Exclude 91526 from undelegation */
         uint256[] memory licenses = new uint256[](5);
@@ -144,6 +181,17 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
         vm.stopPrank();
 
         deployYieldAdapter(false);
+        addWhitelist();
+
+        vm.startPrank(altCnlOwner);
+
+        /* Approve license */
+        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPass), true);
+
+        /* Create smart account */
+        createAccount();
+
+        vm.stopPrank();
     }
 
     function deployYieldPass(
@@ -170,7 +218,9 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
         vm.stopPrank();
     }
 
-    function deployYieldAdapter(bool isMock) internal {
+    function deployYieldAdapter(
+        bool isMock
+    ) internal {
         vm.startPrank(users.deployer);
 
         /* Deploy yield adapters */
@@ -220,7 +270,7 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
         /* Update to whitelist */
         address[] memory addressToList = new address[](2);
         addressToList[0] = address(yieldAdapter);
-        addressToList[1] = address(yieldPassUtils);
+        addressToList[1] = address(altCnlOwner);
         bool inToWhitelist = true;
 
         /* Add whitelist for node license */
@@ -232,9 +282,9 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
         vm.stopPrank();
     }
 
-    function generateSignedNode(
+    function generateSignedNodess(
         address operator_,
-        uint256 tokenId,
+        uint256[] memory tokenIds,
         uint64 timestamp,
         uint64 duration,
         uint64 subscriptionExpiry
@@ -249,12 +299,19 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
             )
         );
 
+        address[] memory burnerWallets = new address[](tokenIds.length);
+        uint64[] memory subscriptionExpiries = new uint64[](tokenIds.length);
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            burnerWallets[i] = operator_;
+            subscriptionExpiries[i] = subscriptionExpiry;
+        }
+
         bytes32 structHash = keccak256(
             abi.encode(
-                AethirYieldAdapter(address(yieldAdapter)).VALIDATED_NODE_TYPEHASH(),
-                tokenId,
-                operator_,
-                subscriptionExpiry,
+                AethirYieldAdapter(address(yieldAdapter)).VALIDATED_NODES_TYPEHASH(),
+                tokenIds,
+                burnerWallets,
+                subscriptionExpiries,
                 timestamp,
                 duration
             )
@@ -264,18 +321,18 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(nodeSignerPk, hash);
 
-        AethirYieldAdapter.SignedNode memory signedNode = AethirYieldAdapter.SignedNode({
-            node: AethirYieldAdapter.ValidatedNode({
-                tokenId: tokenId,
-                burnerWallet: operator_,
-                subscriptionExpiry: subscriptionExpiry,
+        AethirYieldAdapter.SignedNodes memory signedNodes = AethirYieldAdapter.SignedNodes({
+            nodes: AethirYieldAdapter.ValidatedNodes({
+                tokenIds: tokenIds,
+                burnerWallets: burnerWallets,
+                subscriptionExpiries: subscriptionExpiries,
                 timestamp: timestamp,
                 duration: duration
             }),
             signature: abi.encodePacked(r, s, v)
         });
 
-        return abi.encode(signedNode);
+        return abi.encode(signedNodes);
     }
 
     function generateHarvestData(
@@ -313,5 +370,25 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
         });
 
         return abi.encode(false, abi.encode(withdrawData));
+    }
+
+    function generateTransferSignature(
+        address smartAccount_,
+        uint256[] memory tokenIds
+    ) internal view returns (bytes memory) {
+        uint256 nonce = yieldPass.nonce(altCnlOwner);
+
+        bytes32 messageHash = keccak256(abi.encode(block.chainid, address(yieldPass), smartAccount_, nonce, tokenIds));
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(altCnlOwnerPk, MessageHashUtils.toEthSignedMessageHash(messageHash));
+
+        return abi.encodePacked(r, s, v);
+    }
+
+    function createAccount() internal {
+        bytes[] memory owners = new bytes[](1);
+        owners[0] = abi.encode(altCnlOwner);
+
+        smartAccount = smartWalletFactory.createAccount(owners, 0);
     }
 }

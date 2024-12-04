@@ -24,20 +24,20 @@ interface IYieldAdapter is IERC721Receiver {
 
     /**
      * @notice Setup yield adapter
-     * @param tokenId Token ID
+     * @param tokenIds Token IDs
      * @param expiry Expiry
      * @param minter Minter
      * @param discountPassRecipient Discount pass recipient
      * @param setupData Setup data
-     * @return Operator
+     * @return Operators
      */
     function setup(
-        uint256 tokenId,
+        uint256[] calldata tokenIds,
         uint64 expiry,
         address minter,
         address discountPassRecipient,
         bytes calldata setupData
-    ) external returns (address);
+    ) external returns (address[] memory);
 
     /**
      * @notice Harvest yield
@@ -52,21 +52,23 @@ interface IYieldAdapter is IERC721Receiver {
      * @param claimant Claimant
      * @return True if valid, false otherwise
      */
-    function validateClaim(address claimant) external returns (bool);
+    function validateClaim(
+        address claimant
+    ) external returns (bool);
 
     /**
      * @notice Initiate teardown
-     * @param tokenId Token ID
+     * @param tokenIds Token IDs
      * @param expiry Expiry
      * @return Teardown data
      */
-    function initiateTeardown(uint256 tokenId, uint64 expiry) external returns (bytes memory);
+    function initiateTeardown(uint256[] calldata tokenIds, uint64 expiry) external returns (bytes memory);
 
     /**
      * @notice Withdraw yield
-     * @param tokenId Token ID
-     * @param receiver Receiver
+     * @param tokenIds Token IDs
+     * @param recipient Recipient
      * @param teardownData Teardown data
      */
-    function teardown(uint256 tokenId, address receiver, bytes calldata teardownData) external;
+    function teardown(uint256[] calldata tokenIds, address recipient, bytes calldata teardownData) external;
 }

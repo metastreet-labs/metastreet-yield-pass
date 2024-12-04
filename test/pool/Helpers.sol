@@ -57,7 +57,9 @@ library Helpers {
     /* Helper Functions                                                         */
     /*--------------------------------------------------------------------------*/
 
-    function normalizeRate(uint64 rate) internal pure returns (uint64) {
+    function normalizeRate(
+        uint64 rate
+    ) internal pure returns (uint64) {
         return rate / (365 * 86_400);
     }
 

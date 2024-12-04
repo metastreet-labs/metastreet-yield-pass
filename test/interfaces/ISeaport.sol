@@ -138,14 +138,17 @@ interface ISeaport {
         bytes metadata;
     }
 
-    function getOrderHash(OrderComponents calldata order) external view returns (bytes32 orderHash);
+    function getOrderHash(
+        OrderComponents calldata order
+    ) external view returns (bytes32 orderHash);
 
-    function getOrderStatus(bytes32 orderHash)
-        external
-        view
-        returns (bool isValidated, bool isCancelled, uint256 totalFilled, uint256 totalSize);
+    function getOrderStatus(
+        bytes32 orderHash
+    ) external view returns (bool isValidated, bool isCancelled, uint256 totalFilled, uint256 totalSize);
 
-    function getCounter(address offerer) external view returns (uint256 counter);
+    function getCounter(
+        address offerer
+    ) external view returns (uint256 counter);
 
     function fulfillAdvancedOrder(
         AdvancedOrder calldata advancedOrder,

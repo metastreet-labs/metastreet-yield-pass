@@ -10,7 +10,9 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
 interface IReferee {
-    function assignedKeyToPool(uint256 keyId) external view returns (address);
+    function assignedKeyToPool(
+        uint256 keyId
+    ) external view returns (address);
 }
 
 contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
@@ -83,7 +85,9 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
     event ClaimableChanged(address indexed admin, bool newClaimableState);
     event WhitelistUpdated(address account, bool isAdded);
 
-    function initialize(address _referee) public {
+    function initialize(
+        address _referee
+    ) public {
         require(address(referee) == address(0), "Already initialized");
         require(_referee != address(0), "Referee cannot be zero address");
         referee = IReferee(_referee);
@@ -104,7 +108,9 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
      * @notice Disables a promo code.
      * @param _promoCode The promo code to disable.
      */
-    function removePromoCode(string calldata _promoCode) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function removePromoCode(
+        string calldata _promoCode
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_promoCodes[_promoCode].recipient != address(0), "Promo code does not exist");
         _promoCodes[_promoCode].active = false; // 'active' is set to false
         emit PromoCodeRemoved(_promoCode);
@@ -115,7 +121,9 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
      * @param _promoCode The promo code to get.
      * @return The promo code details.
      */
-    function getPromoCode(string calldata _promoCode) external view returns (PromoCode memory) {
+    function getPromoCode(
+        string calldata _promoCode
+    ) external view returns (PromoCode memory) {
         return _promoCodes[_promoCode];
     }
 
@@ -245,7 +253,9 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
      * @param _claimable The new state of the claimable variable.
      * @dev Only callable by the admin.
      */
-    function setClaimable(bool _claimable) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setClaimable(
+        bool _claimable
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         claimable = _claimable;
         emit ClaimableChanged(msg.sender, _claimable);
     }
@@ -255,7 +265,9 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
      * @param _newFundsReceiver The new fundsReceiver address.
      * @dev The new fundsReceiver address cannot be the zero address.
      */
-    function setFundsReceiver(address payable _newFundsReceiver) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setFundsReceiver(
+        address payable _newFundsReceiver
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_newFundsReceiver != address(0), "New fundsReceiver cannot be the zero address");
         fundsReceiver = _newFundsReceiver;
         emit FundsReceiverChanged(msg.sender, _newFundsReceiver);
@@ -309,7 +321,9 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
      * @param _index The index of the tier.
      * @return The Tier at the given index.
      */
-    function getPricingTier(uint256 _index) public view returns (Tier memory) {
+    function getPricingTier(
+        uint256 _index
+    ) public view returns (Tier memory) {
         require(_index < pricingTiers.length, "Index out of bounds");
         return pricingTiers[_index];
     }
@@ -319,7 +333,9 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
      * @param _tokenId The ID of the token.
      * @return The token metadata.
      */
-    function tokenURI(uint256 _tokenId) public view override returns (string memory) {
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override returns (string memory) {
         require(_exists(_tokenId), "ERC721Metadata: URI query for nonexistent token");
         address ownerAddress = ownerOf(_tokenId);
         string memory svg = string(
@@ -355,7 +371,9 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
      * @param _tokenId The ID of the token to refund.
      * @dev Only callable by the admin.
      */
-    function refundNodeLicense(uint256 _tokenId) external payable onlyRole(DEFAULT_ADMIN_ROLE) {
+    function refundNodeLicense(
+        uint256 _tokenId
+    ) external payable onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_exists(_tokenId), "ERC721Metadata: Refund for nonexistent token");
         uint256 refundAmount = _averageCost[_tokenId];
         require(refundAmount > 0, "No funds to refund");
@@ -371,7 +389,9 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
      * @param _tokenId The ID of the token.
      * @return The average cost.
      */
-    function getAverageCost(uint256 _tokenId) public view returns (uint256) {
+    function getAverageCost(
+        uint256 _tokenId
+    ) public view returns (uint256) {
         require(_exists(_tokenId), "ERC721Metadata: Query for nonexistent token");
         return _averageCost[_tokenId];
     }
@@ -381,7 +401,9 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
      * @param _tokenId The ID of the token.
      * @return The minting timestamp.
      */
-    function getMintTimestamp(uint256 _tokenId) public view returns (uint256) {
+    function getMintTimestamp(
+        uint256 _tokenId
+    ) public view returns (uint256) {
         require(_exists(_tokenId), "ERC721Metadata: Query for nonexistent token");
         return _mintTimestamps[_tokenId];
     }
@@ -391,12 +413,9 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
      * @param interfaceId The interface id.
      * @return A boolean value indicating whether the contract supports the given interface.
      */
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721EnumerableUpgradeable, AccessControlUpgradeable)
-        returns (bool)
-    {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(ERC721EnumerableUpgradeable, AccessControlUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId) || ERC721EnumerableUpgradeable.supportsInterface(interfaceId)
             || AccessControlUpgradeable.supportsInterface(interfaceId);
     }
@@ -405,7 +424,9 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
      * @dev Function to add an address to the whitelist
      * @param account The address to add to the whitelist.
      */
-    function addToWhitelist(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function addToWhitelist(
+        address account
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _whitelist.add(account);
         emit WhitelistUpdated(account, true);
     }
@@ -414,7 +435,9 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
      * @dev Function to remove an address from the whitelist
      * @param account The address to remove from the whitelist.
      */
-    function removeFromWhitelist(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function removeFromWhitelist(
+        address account
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _whitelist.remove(account);
         emit WhitelistUpdated(account, false);
     }
@@ -424,7 +447,9 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
      * @param account The address to check.
      * @return A boolean indicating if the address is in the whitelist.
      */
-    function isWhitelisted(address account) public view returns (bool) {
+    function isWhitelisted(
+        address account
+    ) public view returns (bool) {
         return _whitelist.contains(account);
     }
 
@@ -433,7 +458,9 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
      * @param index The index of the address to query.
      * @return The address of the whitelisted account.
      */
-    function getWhitelistedAddressAtIndex(uint256 index) public view returns (address) {
+    function getWhitelistedAddressAtIndex(
+        uint256 index
+    ) public view returns (address) {
         require(index < getWhitelistCount(), "Index out of bounds");
         return _whitelist.at(index);
     }

@@ -19,8 +19,12 @@ interface IERC4907 {
     event UpdateUser(uint256 indexed tokenId, address indexed user, uint64 expires);
 
     function setUser(uint256 tokenId, address user, uint64 expires) external;
-    function userOf(uint256 tokenId) external view returns (address);
-    function userExpires(uint256 tokenId) external view returns (uint256);
+    function userOf(
+        uint256 tokenId
+    ) external view returns (address);
+    function userExpires(
+        uint256 tokenId
+    ) external view returns (uint256);
 }
 
 /**
@@ -50,10 +54,10 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Validated Node EIP-712 typehash
+     * @notice Validated Nodes EIP-712 typehash
      */
-    bytes32 public constant VALIDATED_NODE_TYPEHASH = keccak256(
-        "ValidatedNode(uint256 tokenId,address burnerWallet,uint64 subscriptionExpiry,uint64 timestamp,uint64 duration)"
+    bytes32 public constant VALIDATED_NODES_TYPEHASH = keccak256(
+        "ValidatedNodes(uint256[] tokenIds,address[] burnerWallets,uint64[] subscriptionExpiries,uint64 timestamp,uint64 duration)"
     );
 
     /*------------------------------------------------------------------------*/
@@ -74,6 +78,11 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @notice Invalid cliff seconds
      */
     error InvalidCliff();
+
+    /**
+     * @notice Invalid length
+     */
+    error InvalidLength();
 
     /**
      * @notice Invalid token ID
@@ -137,17 +146,17 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     }
 
     /**
-     * @notice Node
-     * @param tokenId Token ID
-     * @param burnerWallet Burner wallet address
-     * @param subscriptionExpiry Subscription expiry timestamp
+     * @notice Validated nodes
+     * @param tokenIds Token IDs
+     * @param burnerWallets Burner wallet addresses
+     * @param subscriptionExpiries Subscription expiry timestamps
      * @param timestamp Timestamp
      * @param duration Duration validity
      */
-    struct ValidatedNode {
-        uint256 tokenId;
-        address burnerWallet;
-        uint64 subscriptionExpiry;
+    struct ValidatedNodes {
+        uint256[] tokenIds;
+        address[] burnerWallets;
+        uint64[] subscriptionExpiries;
         uint64 timestamp;
         uint64 duration;
     }
@@ -157,8 +166,8 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @param node Validated node
      * @param signature ECDSA signature
      */
-    struct SignedNode {
-        ValidatedNode node;
+    struct SignedNodes {
+        ValidatedNodes nodes;
         bytes signature;
     }
 
@@ -284,7 +293,9 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @param data Claim data
      * @return Yield amount
      */
-    function _claim(bytes memory data) internal returns (uint256) {
+    function _claim(
+        bytes memory data
+    ) internal returns (uint256) {
         /* Decode harvest data */
         ClaimData[] memory claimData = abi.decode(data, (ClaimData[]));
 
@@ -319,7 +330,9 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @param data Withdraw data
      * @return Yield amount
      */
-    function _withdraw(bytes memory data) internal returns (uint256) {
+    function _withdraw(
+        bytes memory data
+    ) internal returns (uint256) {
         /* Decode harvest data */
         WithdrawData memory withdrawData = abi.decode(data, (WithdrawData));
 
@@ -350,26 +363,35 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
 
     /**
      * @notice Validate signed node
-     * @param tokenId Token ID
+     * @param tokenIds Token IDs
      * @param expiry Yield pass expiry
-     * @param signedNode Signed node
-     * @return Burner wallet address
+     * @param signedNodes Signed nodes
+     * @return Burner wallet addresses
      */
-    function _validateSignedNode(
-        uint256 tokenId,
+    function _validateSignedNodes(
+        uint256[] calldata tokenIds,
         uint64 expiry,
-        SignedNode memory signedNode
-    ) internal view returns (address) {
-        ValidatedNode memory node = signedNode.node;
+        SignedNodes memory signedNodes
+    ) internal view returns (address[] memory) {
+        ValidatedNodes memory nodes = signedNodes.nodes;
 
-        /* Validate token ID */
-        if (node.tokenId != tokenId) revert InvalidTokenId();
+        /* Validate length */
+        if (
+            nodes.tokenIds.length != tokenIds.length || nodes.subscriptionExpiries.length != tokenIds.length
+                || nodes.burnerWallets.length != tokenIds.length
+        ) revert InvalidLength();
 
-        /* Validate expiry */
-        if (node.subscriptionExpiry < expiry) revert InvalidExpiry();
+        /* Validate token IDs */
+        for (uint256 i; i < tokenIds.length; i++) {
+            /* Validate token ID */
+            if (nodes.tokenIds[i] != tokenIds[i]) revert InvalidTokenId();
+
+            /* Validate expiry */
+            if (nodes.subscriptionExpiries[i] < expiry) revert InvalidExpiry();
+        }
 
         /* Validate timestamp is in the past and signature validity is in the future */
-        if (node.timestamp > block.timestamp || node.timestamp + node.duration < block.timestamp) {
+        if (nodes.timestamp > block.timestamp || nodes.timestamp + nodes.duration < block.timestamp) {
             revert InvalidTimestamp();
         }
 
@@ -378,22 +400,22 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
             _hashTypedDataV4(
                 keccak256(
                     abi.encode(
-                        VALIDATED_NODE_TYPEHASH,
-                        node.tokenId,
-                        node.burnerWallet,
-                        node.subscriptionExpiry,
-                        node.timestamp,
-                        node.duration
+                        VALIDATED_NODES_TYPEHASH,
+                        nodes.tokenIds,
+                        nodes.burnerWallets,
+                        nodes.subscriptionExpiries,
+                        nodes.timestamp,
+                        nodes.duration
                     )
                 )
             ),
-            signedNode.signature
+            signedNodes.signature
         );
 
         /* Validate signer */
         if (signerAddress != _signer) revert InvalidSignature();
 
-        return node.burnerWallet;
+        return nodes.burnerWallets;
     }
 
     /*------------------------------------------------------------------------*/
@@ -510,31 +532,35 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @inheritdoc IYieldAdapter
      */
     function setup(
-        uint256 tokenId,
+        uint256[] calldata tokenIds,
         uint64 expiry,
         address,
         address,
         bytes calldata setupData
-    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address) {
-        /* Validate this contract owns token ID */
-        if (IERC721(_checkerNodeLicense).ownerOf(tokenId) != address(this)) revert InvalidOwner();
-
+    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address[] memory) {
         /* Decode setup data */
-        SignedNode memory signedNode = abi.decode(setupData, (SignedNode));
+        SignedNodes memory signedNodes = abi.decode(setupData, (SignedNodes));
 
         /* Validate signed node */
-        address burnerWallet = _validateSignedNode(tokenId, expiry, signedNode);
+        address[] memory burnerWallets = _validateSignedNodes(tokenIds, expiry, signedNodes);
 
-        /* Set user on license NFT */
-        IERC4907(_checkerNodeLicense).setUser(tokenId, burnerWallet, expiry);
+        for (uint256 i; i < tokenIds.length; i++) {
+            /* Validate this contract owns token ID */
+            if (IERC721(_checkerNodeLicense).ownerOf(tokenIds[i]) != address(this)) revert InvalidOwner();
 
-        return burnerWallet;
+            /* Set user on license NFT */
+            IERC4907(_checkerNodeLicense).setUser(tokenIds[i], burnerWallets[i], expiry);
+        }
+
+        return burnerWallets;
     }
 
     /**
      * @inheritdoc IYieldAdapter
      */
-    function validateClaim(address) external view whenNotPaused returns (bool) {
+    function validateClaim(
+        address
+    ) external view whenNotPaused returns (bool) {
         /* Validate all order IDs have been processed for withdrawal */
         return _orderIds.length() == 0;
     }
@@ -570,7 +596,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @inheritdoc IYieldAdapter
      */
     function initiateTeardown(
-        uint256,
+        uint256[] calldata,
         uint64 expiry
     ) external view whenNotPaused onlyRole(YIELD_PASS_ROLE) returns (bytes memory) {
         /* Validate expiry is in the past */
@@ -583,12 +609,14 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @inheritdoc IYieldAdapter
      */
     function teardown(
-        uint256 tokenId,
-        address receiver,
+        uint256[] calldata tokenIds,
+        address recipient,
         bytes calldata
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
-        /* Transfer key to receiver */
-        IERC721(_checkerNodeLicense).transferFrom(address(this), receiver, tokenId);
+        /* Transfer key to recipient */
+        for (uint256 i; i < tokenIds.length; i++) {
+            IERC721(_checkerNodeLicense).transferFrom(address(this), recipient, tokenIds[i]);
+        }
     }
 
     /*------------------------------------------------------------------------*/
@@ -599,7 +627,9 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @notice Update cliff seconds
      * @param cliffSeconds_ Cliff seconds
      */
-    function updateCliffSeconds(uint48 cliffSeconds_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateCliffSeconds(
+        uint48 cliffSeconds_
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _cliffSeconds = cliffSeconds_;
 
         /* Emit cliff seconds updated */
@@ -610,7 +640,9 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @notice Update signer
      * @param signer_ Signer address
      */
-    function updateSigner(address signer_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateSigner(
+        address signer_
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _signer = signer_;
 
         /* Emit signer updated */

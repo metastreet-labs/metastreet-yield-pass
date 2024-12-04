@@ -18,19 +18,29 @@ import "forge-std/console.sol";
 contract RedeemTest is AethirBaseTest {
     address internal yp;
     address internal dp;
+    uint256[] internal tokenIds;
 
     function setUp() public override {
         /* Set up Nft */
         AethirBaseTest.setUp();
 
         (yp, dp) = AethirBaseTest.deployYieldPass(address(checkerNodeLicense), startTime, expiry, address(yieldAdapter));
+
+        tokenIds = new uint256[](1);
+        tokenIds[0] = 91521;
     }
 
     function test__Redeem() external {
         /* Mint */
         vm.startPrank(cnlOwner);
         yieldPass.mint(
-            yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1, expiry)
+            yp,
+            cnlOwner,
+            tokenIds,
+            cnlOwner,
+            cnlOwner,
+            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            ""
         );
         vm.stopPrank();
 
@@ -39,7 +49,7 @@ contract RedeemTest is AethirBaseTest {
 
         /* Redeem */
         vm.startPrank(cnlOwner);
-        yieldPass.redeem(yp, 91521);
+        yieldPass.redeem(yp, tokenIds);
         vm.stopPrank();
 
         /* Check that the discount pass is burned */
@@ -51,7 +61,13 @@ contract RedeemTest is AethirBaseTest {
         /* Mint */
         vm.startPrank(cnlOwner);
         yieldPass.mint(
-            yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1, expiry)
+            yp,
+            cnlOwner,
+            tokenIds,
+            cnlOwner,
+            cnlOwner,
+            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            ""
         );
         IERC721(dp).transferFrom(cnlOwner, address(1), 91521);
         vm.stopPrank();
@@ -62,7 +78,7 @@ contract RedeemTest is AethirBaseTest {
         /* Redeem */
         vm.startPrank(cnlOwner);
         vm.expectRevert(IYieldPass.InvalidRedemption.selector);
-        yieldPass.redeem(yp, 91521);
+        yieldPass.redeem(yp, tokenIds);
         vm.stopPrank();
     }
 
@@ -70,7 +86,13 @@ contract RedeemTest is AethirBaseTest {
         /* Mint */
         vm.startPrank(cnlOwner);
         yieldPass.mint(
-            yp, 91521, cnlOwner, cnlOwner, generateSignedNode(operator, 91521, uint64(block.timestamp), 1, expiry)
+            yp,
+            cnlOwner,
+            tokenIds,
+            cnlOwner,
+            cnlOwner,
+            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            ""
         );
         vm.stopPrank();
 
@@ -80,7 +102,35 @@ contract RedeemTest is AethirBaseTest {
         /* Redeem */
         vm.startPrank(cnlOwner);
         vm.expectRevert(abi.encodeWithSelector(AethirYieldAdapter.InvalidWindow.selector));
-        yieldPass.redeem(yp, 91521);
+        yieldPass.redeem(yp, tokenIds);
+        vm.stopPrank();
+    }
+
+    function test__Redeem_RevertWhen_UserLocked() external {
+        /* Mint */
+        vm.startPrank(cnlOwner);
+        yieldPass.mint(
+            yp,
+            cnlOwner,
+            tokenIds,
+            cnlOwner,
+            cnlOwner,
+            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            ""
+        );
+        vm.stopPrank();
+
+        /* Fast-forward to expiry */
+        vm.warp(expiry + 1);
+
+        /* Redeem */
+        vm.startPrank(cnlOwner);
+        IERC721(dp).transferFrom(cnlOwner, altCnlOwner, 91521);
+        vm.stopPrank();
+
+        vm.startPrank(altCnlOwner);
+        vm.expectRevert("Invalid burn");
+        yieldPass.redeem(yp, tokenIds);
         vm.stopPrank();
     }
 }
