@@ -178,14 +178,10 @@ abstract contract XaiBaseTest is PoolBaseTest {
         vm.stopPrank();
     }
 
-    function generateStakingPools(address pool, uint256 tokenCount) internal pure returns (bytes memory) {
-        address[] memory pools = new address[](1);
-        pools[0] = pool;
-
-        uint256[] memory quantities = new uint256[](1);
-        quantities[0] = tokenCount;
-
-        return abi.encode(pools, quantities);
+    function generateStakingPools(
+        address pool
+    ) internal pure returns (bytes memory) {
+        return abi.encode(pool);
     }
 
     function addKyc(

@@ -44,9 +44,7 @@ contract ClaimTest is XaiBaseTest {
 
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds.length), ""
-        );
+        yieldPass.mint(yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool), "");
         vm.stopPrank();
 
         /* Simulate yield distribution in staking pool */
@@ -87,9 +85,7 @@ contract ClaimTest is XaiBaseTest {
     function test__Claim_RevertWhen_InvalidAmount() external {
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds.length), ""
-        );
+        yieldPass.mint(yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool), "");
         vm.stopPrank();
 
         /* Simulate yield distribution in staking pool */
@@ -120,9 +116,7 @@ contract ClaimTest is XaiBaseTest {
     function test__Claim_RevertWhen_InvalidClaimWindow() external {
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds.length), ""
-        );
+        yieldPass.mint(yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool), "");
         vm.stopPrank();
 
         /* Simulate yield distribution in staking pool */
