@@ -162,8 +162,8 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     }
 
     /**
-     * @notice Validated node with signature
-     * @param node Validated node
+     * @notice Validated nodes with signature
+     * @param nodes Validated nodes
      * @param signature ECDSA signature
      */
     struct SignedNodes {
@@ -362,7 +362,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     }
 
     /**
-     * @notice Validate signed node
+     * @notice Validate signed nodes
      * @param tokenIds Token IDs
      * @param expiry Yield pass expiry
      * @param signedNodes Signed nodes
@@ -541,7 +541,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         /* Decode setup data */
         SignedNodes memory signedNodes = abi.decode(setupData, (SignedNodes));
 
-        /* Validate signed node */
+        /* Validate signed nodes */
         address[] memory burnerWallets = _validateSignedNodes(tokenIds, expiry, signedNodes);
 
         for (uint256 i; i < tokenIds.length; i++) {
