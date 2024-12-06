@@ -47,9 +47,7 @@ contract XaiMintTest is XaiBaseTest {
     function test__Mint() external {
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(
-            yp, snlOwner, tokenIds1, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds1.length), ""
-        );
+        yieldPass.mint(yp, snlOwner, tokenIds1, snlOwner, snlOwner, generateStakingPools(stakingPool), "");
         vm.stopPrank();
 
         uint256 expectedAmount1 = (1 ether * (expiry - block.timestamp)) / (expiry - startTime);
@@ -68,9 +66,7 @@ contract XaiMintTest is XaiBaseTest {
 
         /* Mint again */
         vm.startPrank(snlOwner);
-        yieldPass.mint(
-            yp, snlOwner, tokenIds2, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds2.length), ""
-        );
+        yieldPass.mint(yp, snlOwner, tokenIds2, snlOwner, snlOwner, generateStakingPools(stakingPool), "");
         vm.stopPrank();
 
         uint256 expectedAmount2 = (1 ether * (expiry - block.timestamp)) / (expiry - startTime);
@@ -89,9 +85,7 @@ contract XaiMintTest is XaiBaseTest {
 
         /* Mint again */
         vm.startPrank(snlOwner);
-        yieldPass.mint(
-            yp, snlOwner, tokenIds3, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds3.length), ""
-        );
+        yieldPass.mint(yp, snlOwner, tokenIds3, snlOwner, snlOwner, generateStakingPools(stakingPool), "");
         vm.stopPrank();
 
         uint256 expectedAmount3 = (1 ether * (expiry - block.timestamp)) / (expiry - startTime);
@@ -121,7 +115,7 @@ contract XaiMintTest is XaiBaseTest {
 
         vm.startPrank(snlOwner);
 
-        bytes memory pools = generateStakingPools(stakingPool, tokenIds1.length);
+        bytes memory pools = generateStakingPools(stakingPool);
 
         /* Claim when paused */
         vm.expectRevert(Pausable.EnforcedPause.selector);
@@ -135,7 +129,7 @@ contract XaiMintTest is XaiBaseTest {
         /* Undeployed yield pass */
         address randomAddress =
             address(uint160(uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao)))));
-        bytes memory pools = generateStakingPools(stakingPool, tokenIds1.length);
+        bytes memory pools = generateStakingPools(stakingPool);
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidYieldPass.selector));
         yieldPass.mint(randomAddress, snlOwner, tokenIds1, snlOwner, snlOwner, pools, "");
 
@@ -145,7 +139,7 @@ contract XaiMintTest is XaiBaseTest {
     function test__Mint_RevertWhen_KeyIsStaked() external {
         vm.startPrank(snlOwner);
 
-        bytes memory pools = generateStakingPools(stakingPool, tokenIds4.length);
+        bytes memory pools = generateStakingPools(stakingPool);
 
         /* Mint with staked key */
         vm.expectRevert();
@@ -160,7 +154,7 @@ contract XaiMintTest is XaiBaseTest {
 
         /* Mint yield pass */
         vm.startPrank(snlOwner);
-        bytes memory pools = generateStakingPools(stakingPool, tokenIds1.length);
+        bytes memory pools = generateStakingPools(stakingPool);
         vm.expectRevert(abi.encodeWithSelector(XaiYieldAdapter.NotKycApproved.selector));
         yieldPass.mint(yp, snlOwner, tokenIds1, snlOwner, snlOwner, pools, "");
         vm.stopPrank();
@@ -171,7 +165,7 @@ contract XaiMintTest is XaiBaseTest {
 
         /* Mint at expiry */
         vm.warp(expiry);
-        bytes memory pools = generateStakingPools(stakingPool, tokenIds1.length);
+        bytes memory pools = generateStakingPools(stakingPool);
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidWindow.selector));
         yieldPass.mint(yp, snlOwner, tokenIds1, snlOwner, snlOwner, pools, "");
 

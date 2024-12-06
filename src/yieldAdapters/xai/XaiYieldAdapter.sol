@@ -156,6 +156,11 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     bool internal _initialized;
 
     /**
+     * @notice Set of all pools (superset of _allowedPools)
+     */
+    EnumerableSet.AddressSet private _allPools;
+
+    /**
      * @notice Set of allowed pools
      */
     EnumerableSet.AddressSet private _allowedPools;
@@ -205,6 +210,9 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         for (uint256 i = 0; i < pools_.length; i++) {
             /* Add pool to allowlist */
             _allowedPools.add(pools_[i]);
+
+            /* Add pool to all pools */
+            _allPools.add(pools_[i]);
         }
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -302,38 +310,25 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         if (!_referee.isKycApproved(minter) || !_referee.isKycApproved(discountPassRecipient)) revert NotKycApproved();
 
         /* Decode setup data */
-        (address[] memory pools, uint256[] memory quantities) = abi.decode(setupData, (address[], uint256[]));
+        address pool = abi.decode(setupData, (address));
 
-        /* Validate length */
-        if (pools.length != quantities.length) revert InvalidLength();
+        /* Validate pool is allowed */
+        if (!_allowedPools.contains(pool)) revert UnsupportedPool();
 
-        /* Pools */
-        uint256 count;
-        for (uint256 i; i < pools.length; i++) {
-            /* Validate pool is allowed */
-            if (!_allowedPools.contains(pools[i])) revert UnsupportedPool();
+        for (uint256 i; i < tokenIds.length; i++) {
+            /* Validate this contract owns the keys */
+            if (_sentryNodeLicense.ownerOf(tokenIds[i]) != address(this)) revert InvalidOwner();
 
-            /* Keys */
-            uint256[] memory keys = new uint256[](quantities[i]);
-
-            /* Validate keys ownership and update token ID to pools mapping */
-            for (uint256 j; j < quantities[i]; j++) {
-                /* Validate this contract owns the keys */
-                if (_sentryNodeLicense.ownerOf(tokenIds[count]) != address(this)) revert InvalidOwner();
-
-                /* Store pool */
-                _pools[tokenIds[count]] = pools[i];
-
-                /* Store key */
-                keys[j] = tokenIds[count++];
-            }
-
-            /* Stake key */
-            _poolFactory.stakeKeys(pools[i], keys);
+            /* Store pool */
+            _pools[tokenIds[i]] = pool;
         }
 
-        /* Validate all keys are staked */
-        if (count != tokenIds.length) revert InvalidLength();
+        /* Stake licenses */
+        _poolFactory.stakeKeys(pool, tokenIds);
+
+        /* Instantiate pools */
+        address[] memory pools = new address[](1);
+        pools[0] = pool;
 
         return pools;
     }
@@ -355,7 +350,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         uint256 balanceBefore = _esXaiToken.balanceOf(address(this));
 
         /* Claim from pools */
-        _poolFactory.claimFromPools(_allowedPools.values());
+        _poolFactory.claimFromPools(_allPools.values());
 
         /* Snapshot balance after */
         uint256 balanceAfter = _esXaiToken.balanceOf(address(this));
@@ -451,6 +446,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
             emit PoolRemoved(pool);
         } else {
             _allowedPools.add(pool);
+            _allPools.add(pool);
 
             emit PoolAdded(pool);
         }

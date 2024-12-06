@@ -30,9 +30,7 @@ contract WithdrawTest is XaiBaseTest {
     function test__Withdraw() external {
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds.length), ""
-        );
+        yieldPass.mint(yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool), "");
         vm.stopPrank();
 
         /* Fast-forward to 7 days before expiry */
@@ -58,9 +56,7 @@ contract WithdrawTest is XaiBaseTest {
     function test__Withdraw_RevertWhen_InvalidWindow() external {
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds.length), ""
-        );
+        yieldPass.mint(yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool), "");
         vm.stopPrank();
 
         /* Fast-forward to expiry */
@@ -76,9 +72,7 @@ contract WithdrawTest is XaiBaseTest {
     function test__Withdraw_RevertWhen_NotRedeemed() external {
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool, tokenIds.length), ""
-        );
+        yieldPass.mint(yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool), "");
         vm.stopPrank();
 
         /* Fast-forward to after expiry */
