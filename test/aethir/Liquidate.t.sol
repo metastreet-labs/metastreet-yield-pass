@@ -91,7 +91,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
             tokenIds1,
             cnlOwner,
             cnlOwner,
-            generateSignedNodess(operator, tokenIds1, uint64(block.timestamp), 1, expiry),
+            generateSignedNodes(operator, tokenIds1, uint64(block.timestamp), 1, expiry),
             ""
         );
 
@@ -134,7 +134,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
 
         vm.startPrank(altCnlOwner);
         /* Generate setup data */
-        bytes memory setupData = generateSignedNodess(operator, tokenIds2, uint64(block.timestamp), 1, expiry);
+        bytes memory setupData = generateSignedNodes(operator, tokenIds2, uint64(block.timestamp), 1, expiry);
 
         /* Get ticks */
         uint128[] memory ticks = new uint128[](1);
