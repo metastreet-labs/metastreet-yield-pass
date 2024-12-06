@@ -256,7 +256,7 @@ abstract contract AethirBaseTest is PoolBaseTest {
         vm.stopPrank();
     }
 
-    function generateSignedNodess(
+    function generateSignedNodes(
         address operator_,
         uint256[] memory tokenIds,
         uint64 timestamp,

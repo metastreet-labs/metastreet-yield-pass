@@ -57,7 +57,7 @@ contract HarvestTest is AethirBaseTest {
             tokenIds,
             cnlOwner,
             cnlOwner,
-            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
         vm.stopPrank();
@@ -123,7 +123,7 @@ contract HarvestTest is AethirBaseTest {
             tokenIds,
             cnlOwner,
             cnlOwner,
-            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
         vm.stopPrank();

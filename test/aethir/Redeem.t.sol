@@ -39,7 +39,7 @@ contract RedeemTest is AethirBaseTest {
             tokenIds,
             cnlOwner,
             cnlOwner,
-            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
         vm.stopPrank();
@@ -66,7 +66,7 @@ contract RedeemTest is AethirBaseTest {
             tokenIds,
             cnlOwner,
             cnlOwner,
-            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
         IERC721(dp).transferFrom(cnlOwner, address(1), 91521);
@@ -91,7 +91,7 @@ contract RedeemTest is AethirBaseTest {
             tokenIds,
             cnlOwner,
             cnlOwner,
-            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
         vm.stopPrank();
@@ -115,7 +115,7 @@ contract RedeemTest is AethirBaseTest {
             tokenIds,
             cnlOwner,
             cnlOwner,
-            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
         vm.stopPrank();

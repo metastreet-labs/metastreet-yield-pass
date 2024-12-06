@@ -88,7 +88,7 @@ contract ClaimTest is AethirBaseTest {
             tokenIds,
             cnlOwner,
             cnlOwner,
-            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
         vm.stopPrank();
@@ -142,7 +142,7 @@ contract ClaimTest is AethirBaseTest {
                 tokenIds,
                 address(smartAccount),
                 address(smartAccount),
-                generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+                generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
                 transferSignature
             )
         );
@@ -188,7 +188,7 @@ contract ClaimTest is AethirBaseTest {
             tokenIds,
             cnlOwner,
             cnlOwner,
-            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
         vm.stopPrank();
@@ -218,7 +218,7 @@ contract ClaimTest is AethirBaseTest {
             tokenIds,
             cnlOwner,
             cnlOwner,
-            generateSignedNodess(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
         vm.stopPrank();
