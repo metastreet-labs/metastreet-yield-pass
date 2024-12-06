@@ -162,8 +162,8 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     }
 
     /**
-     * @notice Validated nodes with signature
-     * @param nodes Validated nodes
+     * @notice Validated node with signature
+     * @param node Validated node
      * @param signature ECDSA signature
      */
     struct SignedNodes {
@@ -297,32 +297,27 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         bytes memory data
     ) internal returns (uint256) {
         /* Decode harvest data */
-        ClaimData[] memory claimData = abi.decode(data, (ClaimData[]));
+        ClaimData memory claimData = abi.decode(data, (ClaimData));
+
+        /* Validate cliff seconds */
+        if (claimData.cliffSeconds != _cliffSeconds) revert InvalidCliff();
 
         /* Claim vATH */
-        uint256 yieldAmount;
-        for (uint256 i = 0; i < claimData.length; i++) {
-            /* Validate cliff seconds */
-            if (claimData[i].cliffSeconds != _cliffSeconds) revert InvalidCliff();
+        _checkerClaimAndWithdraw.claim(
+            claimData.orderId,
+            claimData.cliffSeconds,
+            claimData.expiryTimestamp,
+            claimData.amount,
+            claimData.signatureArray
+        );
 
-            _checkerClaimAndWithdraw.claim(
-                claimData[i].orderId,
-                claimData[i].cliffSeconds,
-                claimData[i].expiryTimestamp,
-                claimData[i].amount,
-                claimData[i].signatureArray
-            );
+        /* Add yield amount */
+        _cumulativeYieldAmount += claimData.amount;
 
-            /* Add yield amount */
-            yieldAmount += claimData[i].amount;
+        /* Add order ID to set */
+        _orderIds.add(claimData.orderId);
 
-            /* Add order ID to set */
-            _orderIds.add(claimData[i].orderId);
-        }
-
-        _cumulativeYieldAmount += yieldAmount;
-
-        return yieldAmount;
+        return claimData.amount;
     }
 
     /**
@@ -362,7 +357,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     }
 
     /**
-     * @notice Validate signed nodes
+     * @notice Validate signed node
      * @param tokenIds Token IDs
      * @param expiry Yield pass expiry
      * @param signedNodes Signed nodes
@@ -541,7 +536,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         /* Decode setup data */
         SignedNodes memory signedNodes = abi.decode(setupData, (SignedNodes));
 
-        /* Validate signed nodes */
+        /* Validate signed node */
         address[] memory burnerWallets = _validateSignedNodes(tokenIds, expiry, signedNodes);
 
         for (uint256 i; i < tokenIds.length; i++) {

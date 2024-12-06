@@ -311,36 +311,29 @@ abstract contract AethirBaseTest is PoolBaseTest {
 
     function generateHarvestData(
         bool isClaim,
-        uint256 count,
         uint48 orderExpiryTimestamp,
         bool withError
     ) internal pure returns (bytes memory) {
         /* Generate claim data */
         if (isClaim) {
-            AethirYieldAdapter.ClaimData[] memory claimData = new AethirYieldAdapter.ClaimData[](count);
-            for (uint256 i = 0; i < count; i++) {
-                claimData[i] = AethirYieldAdapter.ClaimData({
-                    orderId: i + 1,
-                    cliffSeconds: withError ? 180 days - 1 : 180 days,
-                    expiryTimestamp: orderExpiryTimestamp,
-                    amount: 1_000_000,
-                    signatureArray: new bytes[](0)
-                });
-            }
-
+            AethirYieldAdapter.ClaimData memory claimData = AethirYieldAdapter.ClaimData({
+                orderId: 1,
+                cliffSeconds: withError ? 180 days - 1 : 180 days,
+                expiryTimestamp: orderExpiryTimestamp,
+                amount: 1_000_000,
+                signatureArray: new bytes[](0)
+            });
             return abi.encode(true, abi.encode(claimData));
         }
 
         /* Generate withdraw data */
-        uint256[] memory orderIdArray = new uint256[](count);
-        for (uint256 i = 0; i < count; i++) {
-            orderIdArray[i] = i + 1;
-        }
+        uint256[] memory orderIdArray = new uint256[](1);
+        orderIdArray[0] = 1;
 
         AethirYieldAdapter.WithdrawData memory withdrawData = AethirYieldAdapter.WithdrawData({
             orderIdArray: orderIdArray,
             expiryTimestamp: orderExpiryTimestamp,
-            signatureArray: new bytes[](count)
+            signatureArray: new bytes[](1)
         });
 
         return abi.encode(false, abi.encode(withdrawData));
