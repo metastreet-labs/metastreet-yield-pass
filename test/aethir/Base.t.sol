@@ -89,9 +89,6 @@ abstract contract AethirBaseTest is PoolBaseTest {
     /* Whitelist admin */
     address internal whitelistAdminAddress = 0xF6A9359488C583Be23e2Fd18D782075E3070196A;
 
-    /* Yield adapter name */
-    string internal yieldAdapterName = "Aethir Yield Adapter";
-
     /* Node signer */
     address internal nodeSigner;
     uint256 internal nodeSignerPk;
@@ -200,7 +197,6 @@ abstract contract AethirBaseTest is PoolBaseTest {
 
         /* Deploy yield adapters */
         yieldAdapterImpl = new AethirYieldAdapter(
-            yieldAdapterName,
             address(yieldPass),
             address(checkerNodeLicense),
             isMock ? address(mockCheckerClaimAndWithdraw) : address(checkerClaimAndWithdraw),
@@ -266,7 +262,7 @@ abstract contract AethirBaseTest is PoolBaseTest {
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-                keccak256(bytes(yieldAdapterName)),
+                keccak256(bytes("Aethir Yield Adapter")),
                 keccak256(bytes("1.0")),
                 block.chainid,
                 address(yieldAdapter)
