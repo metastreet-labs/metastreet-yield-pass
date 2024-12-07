@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 /**
- * @title Discount Token (ERC721)
+ * @title Discount Pass Token (ERC721)
  * @author MetaStreet Foundation
  */
 contract DiscountPassToken is ERC721 {
@@ -39,7 +39,7 @@ contract DiscountPassToken is ERC721 {
     /**
      * @notice Token ID to account mapping
      */
-    mapping(uint256 => address) internal _accounts;
+    mapping(uint256 => address) internal _tokenIdLocks;
 
     /*------------------------------------------------------------------------*/
     /* Contructor */
@@ -64,14 +64,14 @@ contract DiscountPassToken is ERC721 {
     }
 
     /**
-     * @notice Get token ID to account mapping
+     * @notice Get token ID to account lock
      * @param tokenId Token ID
-     * @return Account address
+     * @return Locked account address
      */
-    function tokenIdUser(
+    function tokenIdLocks(
         uint256 tokenId
     ) external view returns (address) {
-        return _accounts[tokenId];
+        return _isUserLocked ? _tokenIdLocks[tokenId] : address(0);
     }
 
     /*------------------------------------------------------------------------*/
@@ -87,7 +87,7 @@ contract DiscountPassToken is ERC721 {
         require(msg.sender == _owner, "Unauthorized caller");
 
         for (uint256 i; i < tokenIds.length; i++) {
-            _accounts[tokenIds[i]] = to;
+            _tokenIdLocks[tokenIds[i]] = to;
 
             _mint(to, tokenIds[i]);
         }
@@ -100,9 +100,9 @@ contract DiscountPassToken is ERC721 {
      */
     function burn(address from, uint256 tokenId) external {
         require(msg.sender == _owner, "Unauthorized caller");
-        require(!_isUserLocked || _accounts[tokenId] == from, "Invalid burn");
+        require(!_isUserLocked || _tokenIdLocks[tokenId] == from, "Invalid burn");
 
-        delete _accounts[tokenId];
+        delete _tokenIdLocks[tokenId];
 
         _burn(tokenId);
     }
