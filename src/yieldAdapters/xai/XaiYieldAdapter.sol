@@ -245,7 +245,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      */
     function cumulativeYield() public view returns (uint256) {
         /* Get pools */
-        address[] memory pools = _allowedPools.values();
+        address[] memory pools = _allPools.values();
 
         /* Compute accumulative yield */
         uint256 amount;
