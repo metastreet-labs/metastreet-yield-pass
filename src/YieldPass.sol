@@ -48,7 +48,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      * @notice Transfer approval EIP-712 typehash
      */
     bytes32 public constant TRANSFER_APPROVAL_TYPEHASH =
-        keccak256("TransferApproval(address proxyAccount,uint256 nonce,uint256[] tokenIds)");
+        keccak256("TransferApproval(address proxyAccount,uint256 deadline,uint256[] tokenIds)");
 
     /*------------------------------------------------------------------------*/
     /* Structures */
@@ -89,11 +89,6 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      * @notice Map of yield pass token to yield pass state
      */
     mapping(address => YieldPassState) internal _yieldPassStates;
-
-    /**
-     * @notice Map of account to nonce
-     */
-    mapping(address => uint256) internal _nonces;
 
     /*------------------------------------------------------------------------*/
     /* Constructor */
@@ -175,15 +170,6 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         address yieldPass
     ) public view returns (address) {
         return address(_yieldPassStates[yieldPass].yieldAdapter);
-    }
-
-    /**
-     * @inheritdoc IYieldPass
-     */
-    function nonce(
-        address account
-    ) public view returns (uint256) {
-        return _nonces[account];
     }
 
     /**
@@ -286,31 +272,28 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     }
 
     /**
-     * @notice Validate transfer signature of NFT owner and increase nonce
+     * @notice Validate transfer signature of NFT owner
      * @param account Account holding NFTs
      * @param proxyAccount Proxy account
      * @param tokenIds NFT token IDs
+     * @param deadline Deadline
      * @param signature Transfer signature
      */
     function _validateTransferSignature(
         address account,
         address proxyAccount,
         uint256[] calldata tokenIds,
+        uint256 deadline,
         bytes calldata signature
-    ) internal {
+    ) internal view {
         /* Recover transfer approval signer */
         address signer = ECDSA.recover(
-            _hashTypedDataV4(
-                keccak256(abi.encode(TRANSFER_APPROVAL_TYPEHASH, proxyAccount, _nonces[account], tokenIds))
-            ),
+            _hashTypedDataV4(keccak256(abi.encode(TRANSFER_APPROVAL_TYPEHASH, proxyAccount, deadline, tokenIds))),
             signature
         );
 
         /* Validate account */
         if (signer != account) revert InvalidSignature();
-
-        /* Increment nonce */
-        _nonces[account]++;
     }
 
     /*------------------------------------------------------------------------*/
@@ -326,13 +309,17 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         uint256[] calldata tokenIds,
         address yieldPassRecipient,
         address discountPassRecipient,
+        uint256 deadline,
         bytes calldata setupData,
         bytes calldata transferSignature
     ) external nonReentrant returns (uint256) {
         /* Verify transfer signature if caller is proxy account */
         if (account != msg.sender) {
-            _validateTransferSignature(account, msg.sender, tokenIds, transferSignature);
+            _validateTransferSignature(account, msg.sender, tokenIds, deadline, transferSignature);
         }
+
+        /* Validate deadline */
+        if (deadline < block.timestamp) revert InvalidDeadline();
 
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
@@ -486,15 +473,6 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
 
         /* Emit Withdrawn */
         emit Withdrawn(msg.sender, yieldPass, yieldPassInfo_.token, recipient, yieldPassInfo_.discountPass, tokenIds);
-    }
-
-    /**
-     * @inheritdoc IYieldPass
-     */
-    function increaseNonce() external nonReentrant {
-        _nonces[msg.sender]++;
-
-        emit NonceIncreased(msg.sender, _nonces[msg.sender]);
     }
 
     /*------------------------------------------------------------------------*/

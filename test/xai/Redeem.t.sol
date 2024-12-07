@@ -32,7 +32,9 @@ contract RedeemTest is XaiBaseTest {
     function test__Redeem() external {
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool), "");
+        yieldPass.mint(
+            yp, snlOwner, tokenIds, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+        );
         vm.stopPrank();
 
         /* Fast-forward to 7 days before expiry */
@@ -56,7 +58,9 @@ contract RedeemTest is XaiBaseTest {
 
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool), "");
+        yieldPass.mint(
+            yp, snlOwner, tokenIds, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+        );
         IERC721(dp).transferFrom(snlOwner, address(1), 19727);
         vm.stopPrank();
 
@@ -73,7 +77,9 @@ contract RedeemTest is XaiBaseTest {
     function test__Redeem_RevertWhen_InvalidWindow() external {
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool), "");
+        yieldPass.mint(
+            yp, snlOwner, tokenIds, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+        );
         vm.stopPrank();
 
         /* Fast-forward to 1 seconds before 7 days before expiry */

@@ -41,7 +41,9 @@ contract HarvestTest is XaiBaseTest {
     function test_Harvest() external {
         /* Mint */
         vm.startPrank(snlOwner);
-        yieldPass.mint(yp, snlOwner, tokenIds, snlOwner, snlOwner, generateStakingPools(stakingPool), "");
+        yieldPass.mint(
+            yp, snlOwner, tokenIds, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+        );
         vm.stopPrank();
 
         /* Simulate yield distribution in staking pool */

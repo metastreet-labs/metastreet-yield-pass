@@ -55,6 +55,11 @@ interface IYieldPass is IERC721Receiver {
     error InvalidAmount();
 
     /**
+     * @notice Invalid deadline
+     */
+    error InvalidDeadline();
+
+    /**
      * @notice Invalid adapter
      */
     error InvalidAdapter();
@@ -190,13 +195,6 @@ interface IYieldPass is IERC721Receiver {
         address yieldAdapter
     );
 
-    /**
-     * @notice Emitted when account nonce is increased
-     * @param account Account
-     * @param nonce Nonce
-     */
-    event NonceIncreased(address indexed account, uint256 nonce);
-
     /*------------------------------------------------------------------------*/
     /* Getters */
     /*------------------------------------------------------------------------*/
@@ -243,15 +241,6 @@ interface IYieldPass is IERC721Receiver {
     ) external view returns (address);
 
     /**
-     * @notice Get account nonce
-     * @param account Account
-     * @return Nonce
-     */
-    function nonce(
-        address account
-    ) external view returns (uint256);
-
-    /**
      * @notice Get total cumulative yield
      * @param yieldPass Yield pass token
      * @return Cumulative yield in yield tokens
@@ -295,6 +284,7 @@ interface IYieldPass is IERC721Receiver {
      * @param tokenIds NFT Token IDs
      * @param yieldPassRecipient Yield pass recipient
      * @param discountPassRecipient Discount pass recipient
+     * @param deadline Deadline
      * @param setupData Setup data
      * @param transferSignature Transfer signature
      * @return Yield pass amount
@@ -305,6 +295,7 @@ interface IYieldPass is IERC721Receiver {
         uint256[] calldata tokenIds,
         address yieldPassRecipient,
         address discountPassRecipient,
+        uint256 deadline,
         bytes calldata setupData,
         bytes calldata transferSignature
     ) external returns (uint256);
@@ -340,11 +331,6 @@ interface IYieldPass is IERC721Receiver {
      * @param tokenIds NFT token IDs
      */
     function withdraw(address yieldPass, address recipient, uint256[] calldata tokenIds) external;
-
-    /**
-     * @notice Increase account nonce
-     */
-    function increaseNonce() external;
 
     /*------------------------------------------------------------------------*/
     /* Admin APIs */
