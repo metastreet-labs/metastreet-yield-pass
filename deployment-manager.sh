@@ -46,11 +46,11 @@ usage() {
     echo ""
     echo "  yield-pass-create <nft> <startTime> <expiry> <is user locked> <yield adapter>"
     echo ""
-    echo "  deploy-aethir-yield-adapter <yield pass> <checker node license> <checker claim and withdraw> <ath token> <cliff seconds> <signer>"
-    echo "  upgrade-aethir-yield-adapter <yield pass> <checker node license> <checker claim and withdraw> <ath token>"
+    echo "  deploy-aethir-yield-adapter <checker node license> <checker claim and withdraw> <ath token> <cliff seconds> <signer>"
+    echo "  upgrade-aethir-yield-adapter <checker node license> <checker claim and withdraw> <ath token>"
     echo ""
-    echo "  deploy-xai-yield-adapter <yield pass> <xai pool factory>"
-    echo "  upgrade-xai-yield-adapter <yield pass> <xai pool factory>"
+    echo "  deploy-xai-yield-adapter <xai pool factory>"
+    echo "  upgrade-xai-yield-adapter <xai pool factory>"
     echo ""
     echo "  show"
     echo ""
@@ -121,43 +121,43 @@ case $1 in
         ;;
 
     "deploy-aethir-yield-adapter")
-        if [ "$#" -ne 7 ]; then
-            echo "Invalid param count; Usage: $0 deploy-aethir-yield-adapter <yield pass> <checker node license> <checker claim and withdraw> <ath token> <cliff seconds> <signer>"
+        if [ "$#" -ne 6 ]; then
+            echo "Invalid param count; Usage: $0 deploy-aethir-yield-adapter <checker node license> <checker claim and withdraw> <ath token> <cliff seconds> <signer>"
             exit 1
         fi
 
         echo "Deploying Aethir Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/DeployAethirYieldAdapter.s.sol:DeployAethirYieldAdapter" --sig "run(address,address,address,address,uint48,address)" $2 $3 $4 $5 $6 $7
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/DeployAethirYieldAdapter.s.sol:DeployAethirYieldAdapter" --sig "run(address,address,address,uint48,address)" $2 $3 $4 $5 $6
         ;;
 
     "upgrade-aethir-yield-adapter")
-        if [ "$#" -ne 5 ]; then
-            echo "Invalid param count; Usage: $0 upgrade-aethir-yield-adapter <yield pass> <checker node license> <checker claim and withdraw> <ath token>"
+        if [ "$#" -ne 4 ]; then
+            echo "Invalid param count; Usage: $0 upgrade-aethir-yield-adapter <checker node license> <checker claim and withdraw> <ath token>"
             exit 1
         fi
 
         echo "Upgrading Aethir Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/UpgradeAethirYieldAdapter.s.sol:UpgradeAethirYieldAdapter" --sig "run(address,address,address,address)" $2 $3 $4 $5
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/UpgradeAethirYieldAdapter.s.sol:UpgradeAethirYieldAdapter" --sig "run(address,address,address)" $2 $3 $4
         ;;
 
     "deploy-xai-yield-adapter")
-        if [ "$#" -ne 3 ]; then
-            echo "Invalid param count; Usage: $0 deploy-xai-yield-adapter <yield pass> <xai pool factory>"
+        if [ "$#" -ne 2 ]; then
+            echo "Invalid param count; Usage: $0 deploy-xai-yield-adapter <xai pool factory>"
             exit 1
         fi
 
         echo "Deploying XAI Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/DeployXaiYieldAdapter.s.sol:DeployXaiYieldAdapter" --sig "run(address,address)" $2 $3
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/DeployXaiYieldAdapter.s.sol:DeployXaiYieldAdapter" --sig "run(address)" $2
         ;;
 
     "upgrade-xai-yield-adapter")
-        if [ "$#" -ne 3 ]; then
-            echo "Invalid param count; Usage: $0 upgrade-xai-yield-adapter <yield pass> <xai pool factory>"
+        if [ "$#" -ne 2 ]; then
+            echo "Invalid param count; Usage: $0 upgrade-xai-yield-adapter <xai pool factory>"
             exit 1
         fi
 
         echo "Upgrading XAI Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/UpgradeXaiYieldAdapter.s.sol:UpgradeXaiYieldAdapter" --sig "run(address,address)" $2 $3
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/UpgradeXaiYieldAdapter.s.sol:UpgradeXaiYieldAdapter" --sig "run(address)" $2
         ;;
 
     "show")
