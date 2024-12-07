@@ -209,6 +209,12 @@ interface IYieldPass is IERC721Receiver {
     /*------------------------------------------------------------------------*/
 
     /**
+     * @notice Get yield pass name
+     * @return Yield pass name
+     */
+    function name() external view returns (string memory);
+
+    /**
      * @notice Get yield pass info
      * @param yieldPass Yield pass token
      * @return Yield pass info
