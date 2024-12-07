@@ -49,22 +49,22 @@ contract YieldPassUtils is IYieldPassUtils {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Get borrow principal
+     * @notice Compute balanced LP for yield pass token amount
      * @param yieldPassToken Yield pass token
-     * @param poolCurrencyToken Pool currency token
+     * @param currencyToken Currency token
      * @param yieldPassAmount Yield pass amount
-     * @return Borrow principal
+     * @return Currency token amount
      */
-    function _computeBorrowPrincipal(
+    function _computeBalancedLP(
         address yieldPassToken,
-        address poolCurrencyToken,
+        address currencyToken,
         uint256 yieldPassAmount
     ) internal view returns (uint256) {
         /* Get Uniswap V2 pair reserves */
         (uint256 reserveA, uint256 reserveB) =
-            UniswapV2Library.getReserves(uniswapV2Factory, yieldPassToken, poolCurrencyToken);
+            UniswapV2Library.getReserves(uniswapV2Factory, yieldPassToken, currencyToken);
 
-        /* Return computed borrow principal */
+        /* Return computed currency token amount */
         return Math.mulDiv(yieldPassAmount, reserveB, reserveA);
     }
 
@@ -75,29 +75,29 @@ contract YieldPassUtils is IYieldPassUtils {
     /**
      * @inheritdoc IYieldPassUtils
      */
-    function quoteBorrowPrincipal(
+    function quoteBalancedLP(
         address yieldPassToken,
-        address poolCurrencyToken,
+        address currencyToken,
         uint256 yieldPassAmount
     ) external view returns (uint256) {
-        return _computeBorrowPrincipal(yieldPassToken, poolCurrencyToken, yieldPassAmount);
+        return _computeBalancedLP(yieldPassToken, currencyToken, yieldPassAmount);
     }
 
     /**
      * @inheritdoc IYieldPassUtils
      */
-    function validateBorrow(
+    function validateBalancedLP(
         address yieldPassToken,
-        address poolCurrencyToken,
+        address currencyToken,
         uint256 yieldPassAmount,
-        uint256 minPrincipal,
+        uint256 minCurrencyAmount,
         uint64 deadline
     ) external view {
-        /* Compute borrow principal */
-        uint256 principal = _computeBorrowPrincipal(yieldPassToken, poolCurrencyToken, yieldPassAmount);
+        /* Compute balanced LP amount */
+        uint256 currencyAmount = _computeBalancedLP(yieldPassToken, currencyToken, yieldPassAmount);
 
-        /* Validate min principal */
-        if (principal < minPrincipal) revert InvalidSlippage();
+        /* Validate min currency token amount */
+        if (currencyAmount < minCurrencyAmount) revert InvalidSlippage();
 
         /* Validate deadline */
         if (block.timestamp > deadline) revert DeadlinePassed();
