@@ -45,7 +45,7 @@ contract YieldPassUtils is IYieldPassUtils {
     }
 
     /*------------------------------------------------------------------------*/
-    /* Helper */
+    /* Helpers */
     /*------------------------------------------------------------------------*/
 
     /**
@@ -69,7 +69,7 @@ contract YieldPassUtils is IYieldPassUtils {
     }
 
     /*------------------------------------------------------------------------*/
-    /* Getters */
+    /* User API */
     /*------------------------------------------------------------------------*/
 
     /**
@@ -82,10 +82,6 @@ contract YieldPassUtils is IYieldPassUtils {
     ) external view returns (uint256) {
         return _computeBorrowPrincipal(yieldPassToken, poolCurrencyToken, yieldPassAmount);
     }
-
-    /*------------------------------------------------------------------------*/
-    /* Validation API */
-    /*------------------------------------------------------------------------*/
 
     /**
      * @inheritdoc IYieldPassUtils

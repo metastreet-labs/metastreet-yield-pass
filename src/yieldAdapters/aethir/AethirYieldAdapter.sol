@@ -15,6 +15,9 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
 
+/**
+ * @title IERC4907 Interface
+ */
 interface IERC4907 {
     event UpdateUser(uint256 indexed tokenId, address indexed user, uint64 expires);
 
@@ -162,11 +165,11 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     }
 
     /**
-     * @notice Validated node with signature
-     * @param node Validated node
-     * @param signature ECDSA signature
+     * @notice Validated nodes with signature
+     * @param nodes Validated nodes
+     * @param signature Signature
      */
-    struct SignedNodes {
+    struct SignedValidatedNodes {
         ValidatedNodes nodes;
         bytes signature;
     }
@@ -177,13 +180,13 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
 
     /**
      * @notice Cliff seconds updated
-     * @param cliffSeconds Cliff seconds
+     * @param cliffSeconds New cliff seconds
      */
     event CliffSecondsUpdated(uint48 cliffSeconds);
 
     /**
      * @notice Signer updated
-     * @param signer Signer address
+     * @param signer New signer address
      */
     event SignerUpdated(address signer);
 
@@ -246,7 +249,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice YieldAdapter constructor
+     * @notice AethirYieldAdapter constructor
      */
     constructor(
         string memory name_,
@@ -265,11 +268,11 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     }
 
     /*------------------------------------------------------------------------*/
-    /* Intialized */
+    /* Intializer */
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Initialize
+     * @notice AethirYieldAdapter initializer
      */
     function initialize(uint48 cliffSeconds_, address signer_) external {
         require(!_initialized, "Already initialized");
@@ -360,15 +363,15 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @notice Validate signed node
      * @param tokenIds Token IDs
      * @param expiry Yield pass expiry
-     * @param signedNodes Signed nodes
+     * @param signedValidatedNodes Signed validated nodes
      * @return Burner wallet addresses
      */
     function _validateSignedNodes(
         uint256[] calldata tokenIds,
         uint64 expiry,
-        SignedNodes memory signedNodes
+        SignedValidatedNodes memory signedValidatedNodes
     ) internal view returns (address[] memory) {
-        ValidatedNodes memory nodes = signedNodes.nodes;
+        ValidatedNodes memory nodes = signedValidatedNodes.nodes;
 
         /* Validate length */
         if (
@@ -404,7 +407,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
                     )
                 )
             ),
-            signedNodes.signature
+            signedValidatedNodes.signature
         );
 
         /* Validate signer */
@@ -418,8 +421,8 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Get Aethir yield adapter implementation version
-     * @return Aethir yield adapter implementation version
+     * @notice Get implementation version
+     * @return Implementation version
      */
     function IMPLEMENTATION_VERSION() public pure returns (string memory) {
         return "1.0";
@@ -434,8 +437,8 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     }
 
     /**
-     * @notice Get yield pass
-     * @return Yield pass address
+     * @notice Get yield pass factory
+     * @return Yield pass factory address
      */
     function yieldPass() public view returns (address) {
         return _yieldPass;
@@ -534,10 +537,10 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         bytes calldata setupData
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address[] memory) {
         /* Decode setup data */
-        SignedNodes memory signedNodes = abi.decode(setupData, (SignedNodes));
+        SignedValidatedNodes memory signedValidatedNodes = abi.decode(setupData, (SignedValidatedNodes));
 
         /* Validate signed node */
-        address[] memory burnerWallets = _validateSignedNodes(tokenIds, expiry, signedNodes);
+        address[] memory burnerWallets = _validateSignedNodes(tokenIds, expiry, signedValidatedNodes);
 
         for (uint256 i; i < tokenIds.length; i++) {
             /* Validate this contract owns token ID */

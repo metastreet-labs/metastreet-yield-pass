@@ -45,6 +45,9 @@ contract DiscountPassToken is ERC721 {
     /* Contructor */
     /*------------------------------------------------------------------------*/
 
+    /**
+     * @notice DiscountPassToken constructor
+     */
     constructor(string memory name_, string memory symbol_, bool isUserLocked_) ERC721(name_, symbol_) {
         _owner = msg.sender;
 
