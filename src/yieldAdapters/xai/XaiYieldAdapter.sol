@@ -288,6 +288,14 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         return _allowedPools.values();
     }
 
+    /**
+     * @notice Get all pools
+     * @return All pools
+     */
+    function allPools() public view returns (address[] memory) {
+        return _allPools.values();
+    }
+
     /*------------------------------------------------------------------------*/
     /* Yield Pass API */
     /*------------------------------------------------------------------------*/
