@@ -94,6 +94,7 @@ contract ClaimTest is AethirBaseTest {
             tokenIds,
             cnlOwner,
             cnlOwner,
+            block.timestamp,
             generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
@@ -134,20 +135,23 @@ contract ClaimTest is AethirBaseTest {
 
         /* Mint */
         vm.startPrank(altCnlOwner);
+
         /* Generate transfer signature */
-        bytes memory transferSignature = generateTransferSignature(address(smartAccount), tokenIds);
+        uint256 deadline = block.timestamp + 1 days;
+        bytes memory transferSignature = generateTransferSignature(address(smartAccount), deadline, tokenIds);
 
         /* Mint through smart account */
         smartAccount.execute(
             address(yieldPass),
             0,
             abi.encodeWithSignature(
-                "mint(address,address,uint256[],address,address,bytes,bytes)",
+                "mint(address,address,uint256[],address,address,uint256,bytes,bytes)",
                 yp,
                 altCnlOwner,
                 tokenIds,
                 address(smartAccount),
                 address(smartAccount),
+                deadline,
                 generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
                 transferSignature
             )
@@ -194,6 +198,7 @@ contract ClaimTest is AethirBaseTest {
             tokenIds,
             cnlOwner,
             cnlOwner,
+            block.timestamp,
             generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
@@ -224,6 +229,7 @@ contract ClaimTest is AethirBaseTest {
             tokenIds,
             cnlOwner,
             cnlOwner,
+            block.timestamp,
             generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
