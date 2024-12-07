@@ -21,6 +21,7 @@ import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 import {CheckerLicenseNFT} from "src/yieldAdapters/aethir/CheckerLicenseNFT.sol";
 
+import {YieldPass} from "src/YieldPass.sol";
 import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 import {AethirYieldAdapter, ICheckerClaimAndWithdraw, IERC4907} from "src/yieldAdapters/aethir/AethirYieldAdapter.sol";
 
@@ -374,9 +375,23 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
     ) internal view returns (bytes memory) {
         uint256 nonce = yieldPass.nonce(altCnlOwner);
 
-        bytes32 messageHash = keccak256(abi.encode(block.chainid, address(yieldPass), smartAccount_, nonce, tokenIds));
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(bytes("MetaStreet Yield Pass")),
+                keccak256(bytes("1.0")),
+                block.chainid,
+                address(yieldPass)
+            )
+        );
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(altCnlOwnerPk, MessageHashUtils.toEthSignedMessageHash(messageHash));
+        bytes32 structHash = keccak256(
+            abi.encode(YieldPass(address(yieldPass)).TRANSFER_APPROVAL_TYPEHASH(), smartAccount_, nonce, tokenIds)
+        );
+
+        bytes32 hash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(altCnlOwnerPk, hash);
 
         return abi.encodePacked(r, s, v);
     }

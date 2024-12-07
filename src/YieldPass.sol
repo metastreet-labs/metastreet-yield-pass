@@ -14,6 +14,7 @@ import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 import {IYieldPass} from "./interfaces/IYieldPass.sol";
 import {IYieldAdapter} from "./interfaces/IYieldAdapter.sol";
@@ -24,7 +25,7 @@ import {DiscountPassToken} from "./DiscountPassToken.sol";
  * @title Yield Pass
  * @author MetaStreet Foundation
  */
-contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC721Holder {
+contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC721Holder, EIP712 {
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
@@ -37,6 +38,17 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      * @notice Implementation version
      */
     string public constant IMPLEMENTATION_VERSION = "1.0";
+
+    /**
+     * @notice Signing domain version
+     */
+    string public constant DOMAIN_VERSION = "1.0";
+
+    /**
+     * @notice Transfer approval EIP-712 typehash
+     */
+    bytes32 public constant TRANSFER_APPROVAL_TYPEHASH =
+        keccak256("TransferApproval(address proxyAccount,uint256 nonce,uint256[] tokenIds)");
 
     /*------------------------------------------------------------------------*/
     /* Structures */
@@ -90,7 +102,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @notice YieldPass constructor
      */
-    constructor() {
+    constructor() EIP712(name(), DOMAIN_VERSION) {
         /* Disable initialization of implementation contract */
         _initialized = true;
     }
@@ -112,6 +124,13 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /*------------------------------------------------------------------------*/
     /* Getters */
     /*------------------------------------------------------------------------*/
+
+    /**
+     * @inheritdoc IYieldPass
+     */
+    function name() public pure returns (string memory) {
+        return "MetaStreet Yield Pass";
+    }
 
     /**
      * @inheritdoc IYieldPass
@@ -303,11 +322,18 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         uint256[] calldata tokenIds,
         bytes calldata signature
     ) internal {
-        bytes32 messageHash =
-            keccak256(abi.encode(block.chainid, address(this), proxyAccount, _nonces[account], tokenIds));
+        /* Recover transfer approval signer */
+        address signer = ECDSA.recover(
+            _hashTypedDataV4(
+                keccak256(abi.encode(TRANSFER_APPROVAL_TYPEHASH, proxyAccount, _nonces[account], tokenIds))
+            ),
+            signature
+        );
 
-        if (messageHash.toEthSignedMessageHash().recover(signature) != account) revert InvalidSignature();
+        /* Validate account */
+        if (signer != account) revert InvalidSignature();
 
+        /* Increment nonce */
         _nonces[account]++;
     }
 
