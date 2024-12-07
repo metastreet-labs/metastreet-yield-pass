@@ -180,13 +180,6 @@ interface IYieldPass is IERC721Receiver {
     );
 
     /**
-     * @notice Emitted when yield adapter is updated
-     * @param yieldPass Yield pass token
-     * @param yieldAdapter Yield adapter
-     */
-    event AdapterUpdated(address indexed yieldPass, address indexed yieldAdapter);
-
-    /**
      * @notice Emitted when yield pass and discount pass tokens are deployed
      * @param token NFT token
      * @param expiry Expiry timestamp
@@ -383,13 +376,6 @@ interface IYieldPass is IERC721Receiver {
         bool isUserLocked,
         address adapter
     ) external returns (address, address);
-
-    /**
-     * @notice Set yield adapter for Yield pass
-     * @param yieldPass Yield pass token
-     * @param yieldAdapter Yield adapter
-     */
-    function setYieldAdapter(address yieldPass, address yieldAdapter) external;
 
     /**
      * @notice Set user locked for discount pass token
