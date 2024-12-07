@@ -232,31 +232,38 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     }
 
     /**
-     * @notice Helper to get constructor parameters for token deployment
-     * @param isYieldPass True if yield pass token, otherwise discount pass token
+     * @notice Helper to get yield pass token constructor parameters
+     * @param token NFT token
+     * @param expiry Expiry
+     * @return Encoded constructor parameters
+     */
+    function _getYieldPassCtorParams(address token, uint256 expiry) internal view returns (bytes memory) {
+        /* Construct yield pass name and symbol */
+        string memory tokenName =
+            string.concat(IERC721Metadata(token).name(), " (Yield Pass - Expiry: ", Strings.toString(expiry), ")");
+        string memory tokenSymbol = string.concat(IERC721Metadata(token).symbol(), "-YP-", Strings.toString(expiry));
+
+        return abi.encode(tokenName, tokenSymbol);
+    }
+
+    /**
+     * @notice Helper to get discount pass token constructor parameters
      * @param token NFT token
      * @param expiry Expiry
      * @param isUserLocked True if token is user locked
      * @return Encoded constructor parameters
      */
-    function _getCtorParam(
-        bool isYieldPass,
+    function _getDiscountPassCtorParams(
         address token,
         uint256 expiry,
         bool isUserLocked
     ) internal view returns (bytes memory) {
-        /* Get token metadata */
-        IERC721Metadata metadata = IERC721Metadata(token);
-        string memory name = metadata.name();
-        string memory symbol = metadata.symbol();
+        /* Construct discount pass name and symbol */
+        string memory tokenName =
+            string.concat(IERC721Metadata(token).name(), " (Discount Pass - Expiry: ", Strings.toString(expiry), ")");
+        string memory tokenSymbol = string.concat(IERC721Metadata(token).symbol(), "-DP-", Strings.toString(expiry));
 
-        /* Configure token constructor params */
-        string memory tokenName = string.concat(
-            name, " (", isYieldPass ? "Yield" : "Discount", " Pass - Expiry: ", Strings.toString(expiry), ")"
-        );
-        string memory tokenSymbol = string.concat(symbol, "-", isYieldPass ? "YP" : "DP", "-", Strings.toString(expiry));
-
-        return isYieldPass ? abi.encode(tokenName, tokenSymbol) : abi.encode(tokenName, tokenSymbol, isUserLocked);
+        return abi.encode(tokenName, tokenSymbol, isUserLocked);
     }
 
     /**
@@ -524,7 +531,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
 
         /* Compute yield pass token creation bytecode */
         bytes memory yieldPassBytecode =
-            abi.encodePacked(type(YieldPassToken).creationCode, _getCtorParam(true, token, expiry, false));
+            abi.encodePacked(type(YieldPassToken).creationCode, _getYieldPassCtorParams(token, expiry));
 
         /* Compute expected yield pass token address */
         address yieldPass = Create2.computeAddress(deploymentHash, keccak256(yieldPassBytecode));
@@ -539,7 +546,9 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         address discountPass = Create2.deploy(
             0,
             deploymentHash,
-            abi.encodePacked(type(DiscountPassToken).creationCode, _getCtorParam(false, token, expiry, isUserLocked))
+            abi.encodePacked(
+                type(DiscountPassToken).creationCode, _getDiscountPassCtorParams(token, expiry, isUserLocked)
+            )
         );
 
         /* Store yield pass info */
