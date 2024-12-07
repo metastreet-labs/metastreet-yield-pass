@@ -252,12 +252,11 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @notice AethirYieldAdapter constructor
      */
     constructor(
-        string memory name_,
         address yieldPass_,
         address checkerNodeLicense_,
         address checkerClaimAndWithdraw_,
         address athToken_
-    ) EIP712(name_, DOMAIN_VERSION()) {
+    ) EIP712(name(), DOMAIN_VERSION()) {
         /* Disable initialization of implementation contract */
         _initialized = true;
 
