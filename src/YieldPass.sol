@@ -575,16 +575,6 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @inheritdoc IYieldPass
      */
-    function setYieldAdapter(address yieldPass, address yieldAdapter_) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        /* Update adapter */
-        _yieldPassStates[yieldPass].yieldAdapter = IYieldAdapter(yieldAdapter_);
-
-        emit AdapterUpdated(yieldPass, yieldAdapter_);
-    }
-
-    /**
-     * @inheritdoc IYieldPass
-     */
     function setUserLocked(address yieldPass, bool isUserLocked) public onlyRole(DEFAULT_ADMIN_ROLE) {
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
