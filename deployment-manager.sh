@@ -45,7 +45,6 @@ usage() {
     echo "  upgrade-yield-pass-utils <uniswap v2 factory>"
     echo ""
     echo "  yield-pass-create <nft> <startTime> <expiry> <is user locked> <yield adapter>"
-    echo "  yield-pass-set-yield-adapter <yield pass> <yield adapter>"
     echo ""
     echo "  deploy-aethir-yield-adapter <name> <yield pass> <checker node license> <checker claim and withdraw> <ath token> <cliff seconds> <signer>"
     echo "  upgrade-aethir-yield-adapter <name> <yield pass> <checker node license> <checker claim and withdraw> <ath token>"
@@ -119,16 +118,6 @@ case $1 in
 
         echo "Creating Yield Pass Token"
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/YieldPassCreate.s.sol:YieldPassCreate" --sig "run(address,uint64,uint64,bool,address)" $2 $3 $4 $5 $6
-        ;;
-
-    "yield-pass-set-yield-adapter")
-        if [ "$#" -ne 3 ]; then
-            echo "Invalid param count; Usage: $0 yield-set-yield-adapter <yield pass> <yield adapter>"
-            exit 1
-        fi
-
-        echo "Setting Yield Pass Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/YieldPassSetYieldAdapter.s.sol:YieldPassSetYieldAdapter" --sig "run(address,address)" $2 $4
         ;;
 
     "deploy-aethir-yield-adapter")
