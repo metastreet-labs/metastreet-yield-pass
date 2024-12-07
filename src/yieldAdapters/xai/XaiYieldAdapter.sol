@@ -311,7 +311,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         bytes calldata setupData
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address[] memory) {
         /* Validate KYC'd */
-        if (!_referee.isKycApproved(minter) || !_referee.isKycApproved(discountPassRecipient)) revert NotKycApproved();
+        if (!_referee.isKycApproved(minter)) revert NotKycApproved();
 
         /* Decode setup data */
         address pool = abi.decode(setupData, (address));
