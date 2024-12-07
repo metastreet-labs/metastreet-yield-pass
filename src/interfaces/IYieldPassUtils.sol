@@ -30,6 +30,19 @@ interface IYieldPassUtils {
     /*------------------------------------------------------------------------*/
 
     /**
+     * @notice Quote borrow principal
+     * @param yieldPassToken Yield pass token
+     * @param poolToken Pool token
+     * @param yieldPassAmount Yield pass amount
+     * @return Borrow principal
+     */
+    function quoteBorrowPrincipal(
+        address yieldPassToken,
+        address poolToken,
+        uint256 yieldPassAmount
+    ) external view returns (uint256);
+
+    /**
      * @notice Validate borrow principal
      * @param yieldPassToken Yield pass token
      * @param poolToken Pool token
@@ -44,17 +57,4 @@ interface IYieldPassUtils {
         uint256 minPrincipal,
         uint64 deadline
     ) external view;
-
-    /**
-     * @notice Quote borrow principal
-     * @param yieldPassToken Yield pass token
-     * @param poolToken Pool token
-     * @param yieldPassAmount Yield pass amount
-     * @return Borrow principal
-     */
-    function quoteBorrowPrincipal(
-        address yieldPassToken,
-        address poolToken,
-        uint256 yieldPassAmount
-    ) external view returns (uint256);
 }

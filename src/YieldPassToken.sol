@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
- * @title Yield Token (ERC20)
+ * @title Yield Pass Token (ERC20)
  * @author MetaStreet Foundation
  */
 contract YieldPassToken is ERC20 {

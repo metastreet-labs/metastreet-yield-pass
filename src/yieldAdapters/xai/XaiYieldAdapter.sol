@@ -73,11 +73,6 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     error InvalidOwner();
 
     /**
-     * @notice Invalid length
-     */
-    error InvalidLength();
-
-    /**
      * @notice Unsupported pool
      */
     error UnsupportedPool();
@@ -166,7 +161,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     EnumerableSet.AddressSet private _allowedPools;
 
     /**
-     * @notice Mapping of tokenId to pool
+     * @notice Mapping of token ID to pool
      */
     mapping(uint256 => address) internal _pools;
 
@@ -180,7 +175,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice YieldAdapter constructor
+     * @notice XaiYieldAdapter constructor
      */
     constructor(address yieldPass_, address xaiPoolFactory_) {
         /* Disable initialization of implementation contract */
@@ -198,7 +193,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice YieldAdapter initializer
+     * @notice XaiYieldAdapter initializer
      */
     function initialize(
         address[] memory pools_
@@ -207,7 +202,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
 
         _initialized = true;
 
-        for (uint256 i = 0; i < pools_.length; i++) {
+        for (uint256 i; i < pools_.length; i++) {
             /* Add pool to allowlist */
             _allowedPools.add(pools_[i]);
 
@@ -224,8 +219,8 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Get yield pass
-     * @return Yield pass address
+     * @notice Get yield pass factory
+     * @return Yield pass factory address
      */
     function yieldPass() public view returns (address) {
         return _yieldPass;
@@ -254,9 +249,10 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
 
         /* Compute accumulative yield */
         uint256 amount;
-        for (uint256 i = 0; i < pools.length; i++) {
+        for (uint256 i; i < pools.length; i++) {
             amount += IPool(pools[i]).keyBucket().accumulativeDividendOf(address(this));
         }
+
         return amount;
     }
 
