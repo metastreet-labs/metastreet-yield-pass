@@ -20,6 +20,7 @@ See [`IYieldPass`](../src/interfaces/IYieldPass.sol) for the main factory contra
  * @param tokenIds NFT Token IDs
  * @param yieldPassRecipient Yield pass recipient
  * @param discountPassRecipient Discount pass recipient
+ * @param deadline Deadline
  * @param setupData Setup data
  * @param transferSignature Transfer signature
  * @return Yield pass amount
@@ -30,6 +31,7 @@ function mint(
     uint256[] calldata tokenIds,
     address yieldPassRecipient,
     address discountPassRecipient,
+    uint256 deadline,
     bytes calldata setupData,
     bytes calldata transferSignature
 ) external returns (uint256);

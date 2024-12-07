@@ -338,10 +338,9 @@ abstract contract AethirBaseTest is PoolBaseTest {
 
     function generateTransferSignature(
         address smartAccount_,
+        uint256 deadline,
         uint256[] memory tokenIds
     ) internal view returns (bytes memory) {
-        uint256 nonce = yieldPass.nonce(altCnlOwner);
-
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
@@ -353,7 +352,7 @@ abstract contract AethirBaseTest is PoolBaseTest {
         );
 
         bytes32 structHash = keccak256(
-            abi.encode(YieldPass(address(yieldPass)).TRANSFER_APPROVAL_TYPEHASH(), smartAccount_, nonce, tokenIds)
+            abi.encode(YieldPass(address(yieldPass)).TRANSFER_APPROVAL_TYPEHASH(), smartAccount_, deadline, tokenIds)
         );
 
         bytes32 hash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));

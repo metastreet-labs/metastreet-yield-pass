@@ -91,6 +91,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
             tokenIds1,
             cnlOwner,
             cnlOwner,
+            block.timestamp,
             generateSignedNodes(operator, tokenIds1, uint64(block.timestamp), 1, expiry),
             ""
         );
@@ -141,7 +142,8 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         ticks[0] = Helpers.encodeTick(100 ether, 0, 0, 0);
 
         /* Generate transfer signature */
-        bytes memory transferSignature = generateTransferSignature(address(smartAccount), tokenIds2);
+        uint256 deadline = block.timestamp + 1 days;
+        bytes memory transferSignature = generateTransferSignature(address(smartAccount), deadline, tokenIds2);
 
         /* Approve NFTs */
         IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
@@ -157,12 +159,13 @@ contract LiquidateTest is AethirSepoliaBaseTest {
             target: address(yieldPass),
             value: 0,
             data: abi.encodeWithSignature(
-                "mint(address,address,uint256[],address,address,bytes,bytes)",
+                "mint(address,address,uint256[],address,address,uint256,bytes,bytes)",
                 yp,
                 altCnlOwner,
                 tokenIds2,
                 address(smartAccount),
                 address(smartAccount),
+                deadline,
                 setupData,
                 transferSignature
             )
