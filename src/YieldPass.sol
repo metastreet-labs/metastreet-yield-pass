@@ -45,7 +45,6 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @notice Yield pass state
      * @param yieldAdapter Yield adapter
-     * @param tokenIds Array of token IDs
      * @param claimState Claim status
      * @param tokenIdRedemptions Map of token ID to redemption address
      */
@@ -70,12 +69,12 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     address[] internal _yieldPasses;
 
     /**
-     * @notice Map of yield pass to yield pass info
+     * @notice Map of yield pass token to yield pass info
      */
     mapping(address => YieldPassInfo) internal _yieldPassInfos;
 
     /**
-     * @notice Map of yield pass to yield pass state
+     * @notice Map of yield pass token to yield pass state
      */
     mapping(address => YieldPassState) internal _yieldPassStates;
 
@@ -92,6 +91,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      * @notice YieldPass constructor
      */
     constructor() {
+        /* Disable initialization of implementation contract */
         _initialized = true;
     }
 
@@ -233,17 +233,17 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
 
     /**
      * @notice Helper to get constructor parameters for token deployment
-     * @param isYieldPass True if constructing parameters for yield pass token
-     * @param token Token address
+     * @param isYieldPass True if yield pass token, otherwise discount pass token
+     * @param token NFT token
      * @param expiry Expiry
-     * @param isTransferable True if token is transferable
+     * @param isUserLocked True if token is user locked
      * @return Encoded constructor parameters
      */
     function _getCtorParam(
         bool isYieldPass,
         address token,
         uint256 expiry,
-        bool isTransferable
+        bool isUserLocked
     ) internal view returns (bytes memory) {
         /* Get token metadata */
         IERC721Metadata metadata = IERC721Metadata(token);
@@ -256,14 +256,14 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         );
         string memory tokenSymbol = string.concat(symbol, "-", isYieldPass ? "YP" : "DP", "-", Strings.toString(expiry));
 
-        return isYieldPass ? abi.encode(tokenName, tokenSymbol) : abi.encode(tokenName, tokenSymbol, isTransferable);
+        return isYieldPass ? abi.encode(tokenName, tokenSymbol) : abi.encode(tokenName, tokenSymbol, isUserLocked);
     }
 
     /**
      * @notice Helper to harvest yield from yield adapter
      * @param yieldPass Yield pass token
      * @param harvestData Harvest data
-     * @return Amount harvested
+     * @return Amount harvested in yield tokens
      */
     function _harvest(address yieldPass, bytes calldata harvestData) internal returns (uint256) {
         /* Validate yield pass is deployed */
@@ -271,7 +271,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
 
         IYieldAdapter yieldAdapter_ = _yieldPassStates[yieldPass].yieldAdapter;
 
-        /* Admin update yield adapter */
+        /* Harvest yield */
         uint256 amount = yieldAdapter_.harvest(_yieldPassInfos[yieldPass].expiry, harvestData);
 
         _yieldPassStates[yieldPass].claimState.balance += amount;
@@ -284,20 +284,20 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     }
 
     /**
-     * @notice Validate the transfer signature of the NFT owner and increase nonce
-     * @param account The address of the account
-     * @param smartAccount The address of the smart account
-     * @param tokenIds The token IDs of the NFTs
-     * @param signature The signature provided by the NFT owner
+     * @notice Validate transfer signature of NFT owner and increase nonce
+     * @param account Account holding NFTs
+     * @param proxyAccount Proxy account
+     * @param tokenIds NFT token IDs
+     * @param signature Transfer signature
      */
-    function _validateSignature(
+    function _validateTransferSignature(
         address account,
-        address smartAccount,
+        address proxyAccount,
         uint256[] calldata tokenIds,
         bytes calldata signature
     ) internal {
         bytes32 messageHash =
-            keccak256(abi.encode(block.chainid, address(this), smartAccount, _nonces[account], tokenIds));
+            keccak256(abi.encode(block.chainid, address(this), proxyAccount, _nonces[account], tokenIds));
 
         if (messageHash.toEthSignedMessageHash().recover(signature) != account) revert InvalidSignature();
 
@@ -558,7 +558,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         _yieldPassStates[yieldPass].yieldAdapter = IYieldAdapter(adapter);
 
         /* Emit YieldPassDeployed */
-        emit YieldPassDeployed(token, expiry, yieldPass, discountPass, adapter);
+        emit YieldPassDeployed(token, expiry, yieldPass, startTime, discountPass, adapter);
 
         return (yieldPass, discountPass);
     }
@@ -566,11 +566,11 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @inheritdoc IYieldPass
      */
-    function setYieldAdapter(address yieldPass, address adapter) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setYieldAdapter(address yieldPass, address yieldAdapter_) public onlyRole(DEFAULT_ADMIN_ROLE) {
         /* Update adapter */
-        _yieldPassStates[yieldPass].yieldAdapter = IYieldAdapter(adapter);
+        _yieldPassStates[yieldPass].yieldAdapter = IYieldAdapter(yieldAdapter_);
 
-        emit AdapterUpdated(yieldPass, adapter);
+        emit AdapterUpdated(yieldPass, yieldAdapter_);
     }
 
     /**

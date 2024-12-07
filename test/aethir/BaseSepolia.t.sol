@@ -321,7 +321,7 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(nodeSignerPk, hash);
 
-        AethirYieldAdapter.SignedNodes memory signedNodes = AethirYieldAdapter.SignedNodes({
+        AethirYieldAdapter.SignedValidatedNodes memory signedValidatedNodes = AethirYieldAdapter.SignedValidatedNodes({
             nodes: AethirYieldAdapter.ValidatedNodes({
                 tokenIds: tokenIds,
                 burnerWallets: burnerWallets,
@@ -332,7 +332,7 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
             signature: abi.encodePacked(r, s, v)
         });
 
-        return abi.encode(signedNodes);
+        return abi.encode(signedValidatedNodes);
     }
 
     function generateHarvestData(

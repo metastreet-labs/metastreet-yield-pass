@@ -1,9 +1,17 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
+/**
+ * @title Yield Adapter Interface
+ * @author MetaStreet Foundation
+ */
 interface IYieldAdapter is IERC721Receiver {
+    /*------------------------------------------------------------------------*/
+    /* Getters */
+    /*------------------------------------------------------------------------*/
+
     /**
      * @notice Get yield adapter name
      * @return Name
@@ -21,6 +29,10 @@ interface IYieldAdapter is IERC721Receiver {
      * @return Yield amount
      */
     function cumulativeYield() external view returns (uint256);
+
+    /*------------------------------------------------------------------------*/
+    /* Yield Adapter API */
+    /*------------------------------------------------------------------------*/
 
     /**
      * @notice Setup yield adapter

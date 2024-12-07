@@ -1,8 +1,12 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
+/**
+ * @title Yield Pass Interface
+ * @author MetaStreet Foundation
+ */
 interface IYieldPass is IERC721Receiver {
     /*------------------------------------------------------------------------*/
     /* Structures */
@@ -10,11 +14,11 @@ interface IYieldPass is IERC721Receiver {
 
     /**
      * @notice Yield pass state
-     * @param startTime Start time
-     * @param expiry Expiry
-     * @param token Token
-     * @param yieldPass Yield pass
-     * @param discountPass Discount pass
+     * @param startTime Start timestamp
+     * @param expiry Expiry timestamp
+     * @param token NFT token
+     * @param yieldPass Yield pass token
+     * @param discountPass Discount pass token
      */
     struct YieldPassInfo {
         uint64 startTime;
@@ -26,9 +30,9 @@ interface IYieldPass is IERC721Receiver {
 
     /**
      * @notice Yield claim state
-     * @param balance Yield balance
-     * @param shares Total claim shares
-     * @param total Total yield accrued
+     * @param balance Yield balance (in yield tokens)
+     * @param shares Total claim shares (in yield pass tokens)
+     * @param total Total yield accrued (in yield tokens)
      */
     struct YieldClaimState {
         uint256 balance;
@@ -95,13 +99,13 @@ interface IYieldPass is IERC721Receiver {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Emitted when Yield passs and a discount pass are minted
+     * @notice Emitted when yield pass and discount pass are minted
      * @param account Account
-     * @param yieldPass Yield pass
+     * @param yieldPass Yield pass token
      * @param token NFT token
      * @param yieldPassAmount Yield pass amount
-     * @param discountPass Discount pass
-     * @param tokenIds NFT token (and discount pass) IDs
+     * @param discountPass Discount pass token
+     * @param tokenIds NFT (and discount pass) token IDs
      * @param operators Operators
      */
     event Minted(
@@ -116,7 +120,7 @@ interface IYieldPass is IERC721Receiver {
 
     /**
      * @notice Emitted when yield is retrieved from yield adapter
-     * @param yieldPass Yield pass
+     * @param yieldPass Yield pass token
      * @param amount Amount retrieved
      */
     event Harvested(address indexed yieldPass, uint256 amount);
@@ -124,7 +128,7 @@ interface IYieldPass is IERC721Receiver {
     /**
      * @notice Emitted when yield is claimed
      * @param account Account
-     * @param yieldPass Yield pass
+     * @param yieldPass Yield pass token
      * @param recipient Recipient
      * @param yieldPassAmount Yield pass amount
      * @param yieldToken Yield token
@@ -140,12 +144,12 @@ interface IYieldPass is IERC721Receiver {
     );
 
     /**
-     * @notice Emitted when discount pass is used for redemption
+     * @notice Emitted when discount pass is redeemed
      * @param account Account
-     * @param yieldPass Yield pass
-     * @param token Token
-     * @param discountPass Discount pass
-     * @param tokenIds Token (and discount pass) IDs
+     * @param yieldPass Yield pass token
+     * @param token NFT token
+     * @param discountPass Discount pass token
+     * @param tokenIds NFT (and discount pass) token IDs
      * @param teardownData Teardown data
      */
     event Redeemed(
@@ -158,13 +162,13 @@ interface IYieldPass is IERC721Receiver {
     );
 
     /**
-     * @notice Emitted when Yield passs are burned
+     * @notice Emitted when NFTs are withdrawn
      * @param account Account
-     * @param yieldPass Yield pass
-     * @param token Token
+     * @param yieldPass Yield pass token
+     * @param token NFT token
      * @param recipient Recipient
-     * @param discountPass Discount pass
-     * @param tokenIds Token (and discount pass) IDs
+     * @param discountPass Discount pass token
+     * @param tokenIds NFT (and discount pass) token IDs
      */
     event Withdrawn(
         address indexed account,
@@ -177,25 +181,31 @@ interface IYieldPass is IERC721Receiver {
 
     /**
      * @notice Emitted when yield adapter is updated
-     * @param yieldPass Yield pass
+     * @param yieldPass Yield pass token
      * @param yieldAdapter Yield adapter
      */
     event AdapterUpdated(address indexed yieldPass, address indexed yieldAdapter);
 
     /**
-     * @notice Emitted when yield pass is deployed
-     * @param token NFT Token address
+     * @notice Emitted when yield pass and discount pass tokens are deployed
+     * @param token NFT token
      * @param expiry Expiry timestamp
-     * @param yieldPass Yield pass
-     * @param discountPass Discount pass
-     * @param adapter Yield adapter
+     * @param yieldPass Yield pass token
+     * @param startTime Start timestamp
+     * @param discountPass Discount pass token
+     * @param yieldAdapter Yield adapter
      */
     event YieldPassDeployed(
-        address indexed token, uint256 indexed expiry, address indexed yieldPass, address discountPass, address adapter
+        address indexed token,
+        uint256 indexed expiry,
+        address indexed yieldPass,
+        uint256 startTime,
+        address discountPass,
+        address yieldAdapter
     );
 
     /**
-     * @notice Emitted when nonce is increased
+     * @notice Emitted when account nonce is increased
      * @param account Account
      * @param nonce Nonce
      */
@@ -207,7 +217,7 @@ interface IYieldPass is IERC721Receiver {
 
     /**
      * @notice Get yield pass info
-     * @param yieldPass Yield pass
+     * @param yieldPass Yield pass token
      * @return Yield pass info
      */
     function yieldPassInfo(
@@ -224,8 +234,8 @@ interface IYieldPass is IERC721Receiver {
 
     /**
      * @notice Get yield claim state
-     * @param yieldPass Yield pass
-     * @return YieldClaimState
+     * @param yieldPass Yield pass token
+     * @return Yield claim state
      */
     function claimState(
         address yieldPass
@@ -233,7 +243,7 @@ interface IYieldPass is IERC721Receiver {
 
     /**
      * @notice Get yield adapter
-     * @param yieldPass Yield pass
+     * @param yieldPass Yield pass token
      * @return Yield adapter
      */
     function yieldAdapter(
@@ -241,7 +251,7 @@ interface IYieldPass is IERC721Receiver {
     ) external view returns (address);
 
     /**
-     * @notice Get nonce
+     * @notice Get account nonce
      * @param account Account
      * @return Nonce
      */
@@ -251,34 +261,34 @@ interface IYieldPass is IERC721Receiver {
 
     /**
      * @notice Get total cumulative yield
-     * @param yieldPass Yield pass
-     * @return Cumulative yield
+     * @param yieldPass Yield pass token
+     * @return Cumulative yield in yield tokens
      */
     function cumulativeYield(
         address yieldPass
     ) external view returns (uint256);
 
     /**
-     * @notice Get cumulative yield given yield pass amount
-     * @param yieldPass Yield pass
-     * @param yieldPassAmount Yield pass token amount
-     * @return Cumulative yield
+     * @notice Get cumulative yield for yield pass amount
+     * @param yieldPass Yield pass token
+     * @param yieldPassAmount Yield pass amount
+     * @return Cumulative yield in yield tokens
      */
     function cumulativeYield(address yieldPass, uint256 yieldPassAmount) external view returns (uint256);
 
     /**
-     * @notice Get claimable amount for yield
-     * @param yieldPass Yield pass
-     * @param yieldPassAmount Yield pass token amount
-     * @return Claimable yield
+     * @notice Get claimable amount for yield pass amount
+     * @param yieldPass Yield pass token
+     * @param yieldPassAmount Yield pass amount
+     * @return Claimable yield in yield tokens
      */
     function claimable(address yieldPass, uint256 yieldPassAmount) external view returns (uint256);
 
     /**
      * @notice Get yield pass token amount for mint
-     * @param yieldPass Yield pass
-     * @param count Count
-     * @return Yield pass token amount
+     * @param yieldPass Yield pass token
+     * @param count NFT count
+     * @return Yield pass amount
      */
     function quoteMint(address yieldPass, uint256 count) external view returns (uint256);
 
@@ -287,9 +297,9 @@ interface IYieldPass is IERC721Receiver {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Helper to mint a yield pass and a discount pass for an NFT token IDs
-     * @param yieldPass Yield pass
-     * @param account Account
+     * @notice Mint a yield pass and a discount pass for NFT token IDs
+     * @param yieldPass Yield pass token
+     * @param account Account holding NFT
      * @param tokenIds NFT Token IDs
      * @param yieldPassRecipient Yield pass recipient
      * @param discountPassRecipient Discount pass recipient
@@ -309,7 +319,7 @@ interface IYieldPass is IERC721Receiver {
 
     /**
      * @notice Harvest yield from yield adapter
-     * @param yieldPass Yield pass
+     * @param yieldPass Yield pass token
      * @param harvestData Harvest data
      * @return Amount harvested
      */
@@ -317,7 +327,7 @@ interface IYieldPass is IERC721Receiver {
 
     /**
      * @notice Claim yield
-     * @param yieldPass Yield pass
+     * @param yieldPass Yield pass token
      * @param recipient Recipient
      * @param amount Yield pass amount
      * @return Yield amount
@@ -325,16 +335,16 @@ interface IYieldPass is IERC721Receiver {
     function claim(address yieldPass, address recipient, uint256 amount) external returns (uint256);
 
     /**
-     * @notice Redeem yield pass
-     * @param yieldPass Yield pass
-     * @param tokenIds NFT token IDs
+     * @notice Redeem discount pass
+     * @param yieldPass Yield pass token
+     * @param tokenIds NFT (and discount pass) token IDs
      * @return Teardown data
      */
     function redeem(address yieldPass, uint256[] calldata tokenIds) external returns (bytes memory);
 
     /**
-     * @notice Withdrawal NFT
-     * @param yieldPass Yield pass
+     * @notice Withdrawal NFTs
+     * @param yieldPass Yield pass token
      * @param recipient Recipient
      * @param tokenIds NFT token IDs
      * @param harvestData Harvest data
@@ -349,7 +359,7 @@ interface IYieldPass is IERC721Receiver {
     ) external;
 
     /**
-     * @notice Helper to increase nonce
+     * @notice Increase account nonce
      */
     function increaseNonce() external;
 
@@ -359,10 +369,10 @@ interface IYieldPass is IERC721Receiver {
 
     /**
      * @notice Deploy Yield pass
-     * @param token NFT Token address
-     * @param startTime Start time
+     * @param token NFT token
+     * @param startTime Start timestamp
      * @param expiry Expiry timestamp
-     * @param isTransferable True if token is transferable
+     * @param isUserLocked True if token is user locked
      * @param adapter Yield adapter
      * @return Yield pass address, discount pass address
      */
@@ -370,20 +380,20 @@ interface IYieldPass is IERC721Receiver {
         address token,
         uint64 startTime,
         uint64 expiry,
-        bool isTransferable,
+        bool isUserLocked,
         address adapter
     ) external returns (address, address);
 
     /**
      * @notice Set yield adapter for Yield pass
-     * @param yieldPass Yield pass
-     * @param adapter Yield adapter
+     * @param yieldPass Yield pass token
+     * @param yieldAdapter Yield adapter
      */
-    function setYieldAdapter(address yieldPass, address adapter) external;
+    function setYieldAdapter(address yieldPass, address yieldAdapter) external;
 
     /**
      * @notice Set user locked for discount pass token
-     * @param yieldPass Yield pass
+     * @param yieldPass Yield pass token
      * @param isUserLocked True if user locked enabled
      */
     function setUserLocked(address yieldPass, bool isUserLocked) external;
