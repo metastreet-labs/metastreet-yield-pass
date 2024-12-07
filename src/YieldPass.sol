@@ -131,6 +131,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     function yieldPassInfo(
         address yieldPass
     ) public view returns (YieldPassInfo memory) {
+        if (_yieldPassInfos[yieldPass].expiry == 0) revert InvalidYieldPass();
         return _yieldPassInfos[yieldPass];
     }
 
@@ -146,7 +147,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
 
         /* Fill array */
         for (uint256 i = offset; i < offset + count; i++) {
-            yieldPassInfos_[i - offset] = yieldPassInfo(_yieldPasses[i]);
+            yieldPassInfos_[i - offset] = _yieldPassInfos[_yieldPasses[i]];
         }
 
         return yieldPassInfos_;
@@ -167,7 +168,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     function cumulativeYield(
         address yieldPass
     ) public view returns (uint256) {
-        return IYieldAdapter(_yieldPassInfos[yieldPass].yieldAdapter).cumulativeYield();
+        return IYieldAdapter(yieldPassInfo(yieldPass).yieldAdapter).cumulativeYield();
     }
 
     /**
@@ -175,7 +176,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      */
     function cumulativeYield(address yieldPass, uint256 yieldPassAmount) public view returns (uint256) {
         return Math.mulDiv(
-            IYieldAdapter(_yieldPassInfos[yieldPass].yieldAdapter).cumulativeYield(),
+            IYieldAdapter(yieldPassInfo(yieldPass).yieldAdapter).cumulativeYield(),
             yieldPassAmount,
             _yieldPassStates[yieldPass].claimState.shares
         );
@@ -195,10 +196,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      */
     function quoteMint(address yieldPass, uint256 count) public view returns (uint256) {
         /* Get yield pass info */
-        YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
-
-        /* Validate yield pass is deployed */
-        if (yieldPassInfo_.expiry == 0) revert InvalidYieldPass();
+        YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
 
         /* Validate mint window is open */
         if (block.timestamp < yieldPassInfo_.startTime || block.timestamp >= yieldPassInfo_.expiry) {
@@ -302,16 +300,16 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         bytes calldata setupData,
         bytes calldata transferSignature
     ) external nonReentrant returns (uint256) {
-        /* Verify transfer signature if caller is proxy account */
-        if (account != msg.sender) {
-            _validateTransferSignature(account, msg.sender, tokenIds, deadline, transferSignature);
-        }
+        /* Get yield pass info */
+        YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
 
         /* Validate deadline */
         if (deadline < block.timestamp) revert InvalidDeadline();
 
-        /* Get yield pass info */
-        YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
+        /* Verify transfer signature if caller is proxy account */
+        if (account != msg.sender) {
+            _validateTransferSignature(account, msg.sender, tokenIds, deadline, transferSignature);
+        }
 
         /* Quote mint amount */
         uint256 yieldPassAmount = quoteMint(yieldPass, tokenIds.length);
@@ -348,14 +346,12 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      */
     function harvest(address yieldPass, bytes calldata harvestData) external nonReentrant returns (uint256) {
         /* Get yield pass info */
-        YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
-
-        /* Validate yield pass is deployed */
-        if (yieldPassInfo_.expiry == 0) revert InvalidYieldPass();
+        YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
 
         /* Harvest yield */
         uint256 amount = IYieldAdapter(yieldPassInfo_.yieldAdapter).harvest(yieldPassInfo_.expiry, harvestData);
 
+        /* Update yield claim state */
         _yieldPassStates[yieldPass].claimState.balance += amount;
         _yieldPassStates[yieldPass].claimState.total += amount;
 
@@ -373,16 +369,16 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         address recipient,
         uint256 yieldPassAmount
     ) external nonReentrant returns (uint256) {
+        /* Get yield pass info */
+        YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
+
+        /* Validate yield pass is expired */
+        if (block.timestamp <= yieldPassInfo_.expiry) revert InvalidWindow();
+
         /* Validate yield pass amount */
         if (yieldPassAmount == 0 || YieldPassToken(yieldPass).balanceOf(msg.sender) < yieldPassAmount) {
             revert InvalidAmount();
         }
-
-        /* Get yield pass info */
-        YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
-
-        /* Validate expiry is in the past */
-        if (block.timestamp <= yieldPassInfo_.expiry) revert InvalidWindow();
 
         /* Compute yield amount */
         uint256 yieldAmount = claimable(yieldPass, yieldPassAmount);
@@ -414,7 +410,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      */
     function redeem(address yieldPass, uint256[] calldata tokenIds) external nonReentrant {
         /* Get yield pass info */
-        YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
+        YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
 
         for (uint256 i; i < tokenIds.length; i++) {
             /* Validate caller owns discount pass */
@@ -441,9 +437,9 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      */
     function withdraw(address yieldPass, address recipient, uint256[] calldata tokenIds) external nonReentrant {
         /* Get yield pass info */
-        YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
+        YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
 
-        /* Validate block timestamp > expiry */
+        /* Validate yield pass is expired */
         if (block.timestamp <= yieldPassInfo_.expiry) revert InvalidWindow();
 
         for (uint256 i; i < tokenIds.length; i++) {
@@ -524,7 +520,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      */
     function setUserLocked(address yieldPass, bool isUserLocked) public onlyRole(DEFAULT_ADMIN_ROLE) {
         /* Get yield pass info */
-        YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
+        YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
 
         /* Update user locked */
         DiscountPassToken(yieldPassInfo_.discountPass).setUserLocked(isUserLocked);
