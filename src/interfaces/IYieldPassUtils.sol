@@ -30,31 +30,31 @@ interface IYieldPassUtils {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Quote borrow principal
+     * @notice Quote balanced LP
      * @param yieldPassToken Yield pass token
-     * @param poolToken Pool token
+     * @param currencyToken Currency token
      * @param yieldPassAmount Yield pass amount
-     * @return Borrow principal
+     * @return Currency token amount
      */
-    function quoteBorrowPrincipal(
+    function quoteBalancedLP(
         address yieldPassToken,
-        address poolToken,
+        address currencyToken,
         uint256 yieldPassAmount
     ) external view returns (uint256);
 
     /**
-     * @notice Validate borrow principal
+     * @notice Validate balanced LP
      * @param yieldPassToken Yield pass token
-     * @param poolToken Pool token
+     * @param currencyToken Currency token
      * @param yieldPassAmount Yield pass amount
-     * @param minPrincipal Minimum principal
+     * @param minCurrencyAmount Minimum currency token amount
      * @param deadline Deadline
      */
-    function validateBorrow(
+    function validateBalancedLP(
         address yieldPassToken,
-        address poolToken,
+        address currencyToken,
         uint256 yieldPassAmount,
-        uint256 minPrincipal,
+        uint256 minCurrencyAmount,
         uint64 deadline
     ) external view;
 }
