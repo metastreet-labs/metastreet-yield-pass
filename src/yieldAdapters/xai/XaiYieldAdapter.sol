@@ -245,7 +245,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      */
     function cumulativeYield() public view returns (uint256) {
         /* Get pools */
-        address[] memory pools = _allowedPools.values();
+        address[] memory pools = _allPools.values();
 
         /* Compute accumulative yield */
         uint256 amount;
@@ -311,7 +311,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         bytes calldata setupData
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address[] memory) {
         /* Validate KYC'd */
-        if (!_referee.isKycApproved(minter) || !_referee.isKycApproved(discountPassRecipient)) revert NotKycApproved();
+        if (!_referee.isKycApproved(minter)) revert NotKycApproved();
 
         /* Decode setup data */
         address pool = abi.decode(setupData, (address));
@@ -437,22 +437,35 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Add or remove pool from whitelist
-     * @param pool Pool to add or remove
+     * @notice Add pool to allowlist
+     * @param pools Pools to add
      */
-    function updatePools(
-        address pool
+    function addPools(
+        address[] memory pools
     ) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        /* Validate pool is allowed */
-        if (_allowedPools.contains(pool)) {
-            _allowedPools.remove(pool);
+        for (uint256 i; i < pools.length; i++) {
+            /* Add pool to allowed pools */
+            _allowedPools.add(pools[i]);
 
-            emit PoolRemoved(pool);
-        } else {
-            _allowedPools.add(pool);
-            _allPools.add(pool);
+            /* Add pool to all pools */
+            _allPools.add(pools[i]);
 
-            emit PoolAdded(pool);
+            emit PoolAdded(pools[i]);
+        }
+    }
+
+    /**
+     * @notice Remove pools from allowlist
+     * @param pools Pools to remove
+     */
+    function removePools(
+        address[] memory pools
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        for (uint256 i; i < pools.length; i++) {
+            /* Remove pool from allowed pools */
+            _allowedPools.remove(pools[i]);
+
+            emit PoolRemoved(pools[i]);
         }
     }
 
