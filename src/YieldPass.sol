@@ -286,30 +286,6 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     }
 
     /**
-     * @notice Helper to harvest yield from yield adapter
-     * @param yieldPass Yield pass token
-     * @param harvestData Harvest data
-     * @return Amount harvested in yield tokens
-     */
-    function _harvest(address yieldPass, bytes calldata harvestData) internal returns (uint256) {
-        /* Validate yield pass is deployed */
-        if (_yieldPassInfos[yieldPass].expiry == 0) revert InvalidYieldPass();
-
-        IYieldAdapter yieldAdapter_ = _yieldPassStates[yieldPass].yieldAdapter;
-
-        /* Harvest yield */
-        uint256 amount = yieldAdapter_.harvest(_yieldPassInfos[yieldPass].expiry, harvestData);
-
-        _yieldPassStates[yieldPass].claimState.balance += amount;
-        _yieldPassStates[yieldPass].claimState.total += amount;
-
-        /* Emit Harvested */
-        emit Harvested(yieldPass, amount);
-
-        return amount;
-    }
-
-    /**
      * @notice Validate transfer signature of NFT owner and increase nonce
      * @param account Account holding NFTs
      * @param proxyAccount Proxy account
@@ -367,17 +343,9 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         /* Update claim state shares */
         _yieldPassStates[yieldPass].claimState.shares += yieldPassAmount;
 
-        /* Transfer ERC721 from account to yield adapter */
-        for (uint256 i; i < tokenIds.length; i++) {
-            IERC721(yieldPassInfo_.token).safeTransferFrom(
-                account, address(_yieldPassStates[yieldPass].yieldAdapter), tokenIds[i]
-            );
-        }
-
         /* Call yield adapter setup hook */
-        address[] memory operators = _yieldPassStates[yieldPass].yieldAdapter.setup(
-            tokenIds, yieldPassInfo_.expiry, account, discountPassRecipient, setupData
-        );
+        address[] memory operators =
+            _yieldPassStates[yieldPass].yieldAdapter.setup(tokenIds, yieldPassInfo_.expiry, account, setupData);
 
         /* Mint yield pass token */
         YieldPassToken(yieldPass).mint(yieldPassRecipient, yieldPassAmount);
@@ -403,7 +371,21 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      * @inheritdoc IYieldPass
      */
     function harvest(address yieldPass, bytes calldata harvestData) external nonReentrant returns (uint256) {
-        return _harvest(yieldPass, harvestData);
+        /* Validate yield pass is deployed */
+        if (_yieldPassInfos[yieldPass].expiry == 0) revert InvalidYieldPass();
+
+        IYieldAdapter yieldAdapter_ = _yieldPassStates[yieldPass].yieldAdapter;
+
+        /* Harvest yield */
+        uint256 amount = yieldAdapter_.harvest(_yieldPassInfos[yieldPass].expiry, harvestData);
+
+        _yieldPassStates[yieldPass].claimState.balance += amount;
+        _yieldPassStates[yieldPass].claimState.total += amount;
+
+        /* Emit Harvested */
+        emit Harvested(yieldPass, amount);
+
+        return amount;
     }
 
     /**
@@ -425,9 +407,6 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         /* Get yield pass state */
         YieldPassState storage yieldPassState = _yieldPassStates[yieldPass];
 
-        /* Validate claim with yield adapter */
-        if (!yieldPassState.yieldAdapter.validateClaim(msg.sender)) revert InvalidClaim();
-
         /* Compute yield amount */
         uint256 yieldAmount = claimable(yieldPass, yieldPassAmount);
 
@@ -437,14 +416,13 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         /* Burn yield pass amount */
         YieldPassToken(yieldPass).burn(msg.sender, yieldPassAmount);
 
-        /* Get yield token */
-        address yieldToken = yieldPassState.yieldAdapter.token();
-
-        /* Transfer yield amount to caller */
-        if (yieldAmount > 0) IERC20(yieldToken).safeTransfer(msg.sender, yieldAmount);
+        /* Call yield adapter claim hook to transfer yield amount to caller */
+        yieldPassState.yieldAdapter.claim(recipient, yieldAmount);
 
         /* Emit Claimed */
-        emit Claimed(msg.sender, yieldPass, recipient, yieldPassAmount, yieldToken, yieldAmount);
+        emit Claimed(
+            msg.sender, yieldPass, recipient, yieldPassAmount, yieldPassState.yieldAdapter.token(), yieldAmount
+        );
 
         return yieldAmount;
     }
@@ -452,7 +430,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @inheritdoc IYieldPass
      */
-    function redeem(address yieldPass, uint256[] calldata tokenIds) external nonReentrant returns (bytes memory) {
+    function redeem(address yieldPass, uint256[] calldata tokenIds) external nonReentrant {
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
 
@@ -472,36 +450,25 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
             DiscountPassToken(yieldPassInfo_.discountPass).burn(msg.sender, tokenIds[i]);
         }
 
-        /* Call yield adapter initiate teardown hook */
-        bytes memory teardownData = yieldPassState.yieldAdapter.initiateTeardown(tokenIds, yieldPassInfo_.expiry);
+        /* Call yield adapter initiate withdraw hook */
+        yieldPassState.yieldAdapter.initiateWithdraw(yieldPassInfo_.expiry, tokenIds);
 
         /* Emit Redeemed */
-        emit Redeemed(msg.sender, yieldPass, yieldPassInfo_.token, yieldPassInfo_.discountPass, tokenIds, teardownData);
-
-        return teardownData;
+        emit Redeemed(msg.sender, yieldPass, yieldPassInfo_.token, yieldPassInfo_.discountPass, tokenIds);
     }
 
     /**
      * @inheritdoc IYieldPass
      */
-    function withdraw(
-        address yieldPass,
-        address recipient,
-        uint256[] calldata tokenIds,
-        bytes calldata harvestData,
-        bytes calldata teardownData
-    ) external nonReentrant {
-        /* Harvest yield */
-        _harvest(yieldPass, harvestData);
-
-        /* Get yield pass state */
-        YieldPassState storage yieldPassState = _yieldPassStates[yieldPass];
-
+    function withdraw(address yieldPass, address recipient, uint256[] calldata tokenIds) external nonReentrant {
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
 
         /* Validate block timestamp > expiry */
         if (block.timestamp <= yieldPassInfo_.expiry) revert InvalidWindow();
+
+        /* Get yield pass state */
+        YieldPassState storage yieldPassState = _yieldPassStates[yieldPass];
 
         for (uint256 i; i < tokenIds.length; i++) {
             /* Validate caller burned token */
@@ -511,13 +478,8 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
             delete yieldPassState.tokenIdRedemptions[tokenIds[i]];
         }
 
-        /* Call yield adapter teardown hook */
-        _yieldPassStates[yieldPass].yieldAdapter.teardown(tokenIds, recipient, teardownData);
-
-        /* Validate caller owns token IDs */
-        for (uint256 i; i < tokenIds.length; i++) {
-            if (IERC721(yieldPassInfo_.token).ownerOf(tokenIds[i]) != recipient) revert InvalidWithdrawal();
-        }
+        /* Call yield adapter withdraw hook */
+        _yieldPassStates[yieldPass].yieldAdapter.withdraw(recipient, tokenIds);
 
         /* Emit Withdrawn */
         emit Withdrawn(msg.sender, yieldPass, yieldPassInfo_.token, recipient, yieldPassInfo_.discountPass, tokenIds);

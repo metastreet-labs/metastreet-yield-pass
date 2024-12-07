@@ -58,7 +58,7 @@ contract HarvestTest is XaiBaseTest {
 
         /* Validate state */
         assertEq(yieldPass.claimable(yp, 1 ether), 10, "Invalid claimable yield");
-        assertEq(IERC20(esXai).balanceOf(address(yieldPass)), 10, "Invalid esXAI balance");
+        assertEq(IERC20(esXai).balanceOf(address(yieldAdapter)), 10, "Invalid esXAI balance");
 
         assertEq(yieldPass.claimState(yp).total, 10, "Invalid total yield state");
         assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");

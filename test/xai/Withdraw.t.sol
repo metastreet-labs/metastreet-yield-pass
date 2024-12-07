@@ -46,7 +46,7 @@ contract WithdrawTest is XaiBaseTest {
 
         /* Withdraw */
         vm.startPrank(snlOwner);
-        yieldPass.withdraw(yp, snlOwner, tokenIds, "", "");
+        yieldPass.withdraw(yp, snlOwner, tokenIds);
         vm.stopPrank();
 
         /* Validate that NFT is withdrawn */
@@ -65,7 +65,7 @@ contract WithdrawTest is XaiBaseTest {
         /* Withdraw */
         vm.startPrank(snlOwner);
         vm.expectRevert(IYieldPass.InvalidWindow.selector);
-        yieldPass.withdraw(yp, snlOwner, tokenIds, "", "");
+        yieldPass.withdraw(yp, snlOwner, tokenIds);
         vm.stopPrank();
     }
 
@@ -81,7 +81,7 @@ contract WithdrawTest is XaiBaseTest {
         /* Withdraw */
         vm.startPrank(snlOwner);
         vm.expectRevert(IYieldPass.InvalidWithdrawal.selector);
-        yieldPass.withdraw(yp, snlOwner, tokenIds, "", "");
+        yieldPass.withdraw(yp, snlOwner, tokenIds);
         vm.stopPrank();
     }
 }
