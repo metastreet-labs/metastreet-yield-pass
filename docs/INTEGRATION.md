@@ -1,21 +1,12 @@
-# Airdrop Adapters
+# Yield Adapters
 
-Airdrop adapters facilitate checking the claim status of an airdrop and
-claiming airdrop tokens for an NFT. Since there is no standardization of ERC20
-airdrops for NFTs, each airdrop project must have a corresponding airdrop
-adapter implementation to support claiming the actual airdrop tokens for an
-airdrop pass.
+Yield adapters facilitate assigning NFTs to operators, harvesting their yield,
+and withdrawing them.
 
-Airdrop pass requires the following three preconditions to support tokenizing
-airdrops for an NFT:
+Yield adapters are implemented with the [`IYieldAdapter`](../src/interfaces/IYieldAdapter.sol) interface.
 
-* Airdrop is an ERC20 of uniform amount per NFT token ID (not per wallet)
-* Airdrop can be claimed by a [delegate.xyz](https://delegate.xyz/) delegate
-* Airdrop can be checked and claimed on-chain
+Yield adapters implement four main hooks in this interface:
 
-Airdrop adapters are implemented with the [`IAirdropAdapter`](../src/interfaces/IAirdropAdapter.sol) interface.
-
-In a nutshell, an airdrop adapter must support checking if airdrop tokens have
-been already claimed for an NFT with the `isClaimable(uint256 tokenId) -> (bool)`
-function, and must support constructing the claim calldata for an NFT with the
-`claimCalldata(uint256 tokenId) -> (address, bytes)` function.
+* `setup()` to assign NFTs to operators
+* `harvest()` to periodically harvest yield
+* `initiateTeardown()` and `teardown()` to initiate and complete the withdrawal of an NFT
