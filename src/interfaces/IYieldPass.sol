@@ -89,11 +89,6 @@ interface IYieldPass is IERC721Receiver {
      */
     error InvalidExpiry();
 
-    /**
-     * @notice Yield pass already deployed
-     */
-    error AlreadyDeployed();
-
     /*------------------------------------------------------------------------*/
     /* Events */
     /*------------------------------------------------------------------------*/

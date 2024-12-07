@@ -495,18 +495,12 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         /* Compute deployment hash based on token and expiry */
         bytes32 deploymentHash = _getDeploymentHash(token, expiry);
 
-        /* Compute yield pass token creation bytecode */
-        bytes memory yieldPassBytecode =
-            abi.encodePacked(type(YieldPassToken).creationCode, _getYieldPassCtorParams(token, expiry));
-
-        /* Compute expected yield pass token address */
-        address yieldPass = Create2.computeAddress(deploymentHash, keccak256(yieldPassBytecode));
-
-        /* Validate deployment does not exist */
-        if (_yieldPassInfos[yieldPass].expiry != 0) revert AlreadyDeployed();
-
         /* Create yield pass token */
-        Create2.deploy(0, deploymentHash, yieldPassBytecode);
+        address yieldPass = Create2.deploy(
+            0,
+            deploymentHash,
+            abi.encodePacked(type(YieldPassToken).creationCode, _getYieldPassCtorParams(token, expiry))
+        );
 
         /* Create discount pass */
         address discountPass = Create2.deploy(
