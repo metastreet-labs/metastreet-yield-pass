@@ -216,7 +216,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         uint256 yieldPassAmount = IERC20(yp).balanceOf(address(smartAccount));
 
         /* Quote borrow principal */
-        uint256 borrowPrincipal = yieldPassUtils.quoteBorrowPrincipal(yp, address(ath), yieldPassAmount);
+        uint256 borrowPrincipal = yieldPassUtils.quoteBalancedLP(yp, address(ath), yieldPassAmount);
 
         /* Calls 2 */
         ICoinbaseSmartWallet.Call[] memory calls2 = new ICoinbaseSmartWallet.Call[](6);
@@ -226,7 +226,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
             target: address(yieldPassUtils),
             value: 0,
             data: abi.encodeWithSignature(
-                "validateBorrow(address,address,uint256,uint256,uint64)",
+                "validateBalancedLP(address,address,uint256,uint256,uint64)",
                 yp,
                 address(ath),
                 yieldPassAmount,
