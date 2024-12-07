@@ -75,7 +75,7 @@ contract YieldPassUtils is IYieldPassUtils {
     /**
      * @inheritdoc IYieldPassUtils
      */
-    function quoteBorrowPrincipal(
+    function quoteBalancedLP(
         address yieldPassToken,
         address poolCurrencyToken,
         uint256 yieldPassAmount
@@ -86,7 +86,7 @@ contract YieldPassUtils is IYieldPassUtils {
     /**
      * @inheritdoc IYieldPassUtils
      */
-    function validateBorrow(
+    function validateBalancedLP(
         address yieldPassToken,
         address poolCurrencyToken,
         uint256 yieldPassAmount,

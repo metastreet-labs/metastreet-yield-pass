@@ -36,7 +36,7 @@ interface IYieldPassUtils {
      * @param yieldPassAmount Yield pass amount
      * @return Borrow principal
      */
-    function quoteBorrowPrincipal(
+    function quoteBalancedLP(
         address yieldPassToken,
         address poolToken,
         uint256 yieldPassAmount
@@ -50,7 +50,7 @@ interface IYieldPassUtils {
      * @param minPrincipal Minimum principal
      * @param deadline Deadline
      */
-    function validateBorrow(
+    function validateBalancedLP(
         address yieldPassToken,
         address poolToken,
         uint256 yieldPassAmount,
