@@ -30,11 +30,11 @@ interface IYieldPassUtils {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Quote borrow principal
+     * @notice Quote balanced LP
      * @param yieldPassToken Yield pass token
      * @param poolToken Pool token
      * @param yieldPassAmount Yield pass amount
-     * @return Borrow principal
+     * @return Balanced LP
      */
     function quoteBalancedLP(
         address yieldPassToken,
@@ -43,7 +43,7 @@ interface IYieldPassUtils {
     ) external view returns (uint256);
 
     /**
-     * @notice Validate borrow principal
+     * @notice Validate balanced LP
      * @param yieldPassToken Yield pass token
      * @param poolToken Pool token
      * @param yieldPassAmount Yield pass amount

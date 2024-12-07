@@ -38,16 +38,14 @@ interface IYieldAdapter is IERC721Receiver {
      * @notice Setup yield adapter
      * @param tokenIds Token IDs
      * @param expiry Expiry
-     * @param minter Minter
-     * @param discountPassRecipient Discount pass recipient
+     * @param account Account
      * @param setupData Setup data
      * @return Operators
      */
     function setup(
         uint256[] calldata tokenIds,
         uint64 expiry,
-        address minter,
-        address discountPassRecipient,
+        address account,
         bytes calldata setupData
     ) external returns (address[] memory);
 
@@ -58,15 +56,6 @@ interface IYieldAdapter is IERC721Receiver {
      * @return Yield amount
      */
     function harvest(uint64 expiry, bytes calldata harvestData) external returns (uint256);
-
-    /**
-     * @notice Validate claim
-     * @param claimant Claimant
-     * @return True if valid, false otherwise
-     */
-    function validateClaim(
-        address claimant
-    ) external returns (bool);
 
     /**
      * @notice Initiate teardown
@@ -80,7 +69,14 @@ interface IYieldAdapter is IERC721Receiver {
      * @notice Withdraw yield
      * @param tokenIds Token IDs
      * @param recipient Recipient
-     * @param teardownData Teardown data
      */
-    function teardown(uint256[] calldata tokenIds, address recipient, bytes calldata teardownData) external;
+    function teardown(uint256[] calldata tokenIds, address recipient) external;
+
+    /**
+     * @notice Claim yield
+     * @param recipient Recipient
+     * @param amount Amount
+     * @return Yield token
+     */
+    function claim(address recipient, uint256 amount) external returns (address);
 }

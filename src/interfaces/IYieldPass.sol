@@ -353,16 +353,8 @@ interface IYieldPass is IERC721Receiver {
      * @param yieldPass Yield pass token
      * @param recipient Recipient
      * @param tokenIds NFT token IDs
-     * @param harvestData Harvest data
-     * @param teardownData Teardown data
      */
-    function withdraw(
-        address yieldPass,
-        address recipient,
-        uint256[] calldata tokenIds,
-        bytes calldata harvestData,
-        bytes calldata teardownData
-    ) external;
+    function withdraw(address yieldPass, address recipient, uint256[] calldata tokenIds) external;
 
     /**
      * @notice Increase account nonce

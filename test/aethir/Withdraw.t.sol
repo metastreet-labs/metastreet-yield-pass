@@ -47,7 +47,7 @@ contract WithdrawTest is AethirBaseTest {
         /* Redeem */
         vm.startPrank(cnlOwner);
         yieldPass.redeem(yp, tokenIds);
-        yieldPass.withdraw(yp, cnlOwner, tokenIds, "", "");
+        yieldPass.withdraw(yp, cnlOwner, tokenIds);
         vm.stopPrank();
 
         /* Validate that NFT is withdrawn */
@@ -62,6 +62,7 @@ contract WithdrawTest is AethirBaseTest {
 
         /* Mint */
         vm.startPrank(altCnlOwner);
+
         /* Generate transfer signature */
         bytes memory transferSignature = generateTransferSignature(address(smartAccount), tokenIds);
 
@@ -91,9 +92,7 @@ contract WithdrawTest is AethirBaseTest {
         smartAccount.execute(
             address(yieldPass),
             0,
-            abi.encodeWithSignature(
-                "withdraw(address,address,uint256[],bytes,bytes)", yp, altCnlOwner, tokenIds, "", ""
-            )
+            abi.encodeWithSignature("withdraw(address,address,uint256[])", yp, altCnlOwner, tokenIds)
         );
         vm.stopPrank();
 
@@ -121,7 +120,7 @@ contract WithdrawTest is AethirBaseTest {
         /* Withdraw */
         vm.startPrank(cnlOwner);
         vm.expectRevert(IYieldPass.InvalidWindow.selector);
-        yieldPass.withdraw(yp, cnlOwner, tokenIds, "", "");
+        yieldPass.withdraw(yp, cnlOwner, tokenIds);
         vm.stopPrank();
     }
 
@@ -145,7 +144,7 @@ contract WithdrawTest is AethirBaseTest {
         /* Withdraw */
         vm.startPrank(cnlOwner);
         vm.expectRevert(IYieldPass.InvalidWithdrawal.selector);
-        yieldPass.withdraw(yp, cnlOwner, tokenIds, "", "");
+        yieldPass.withdraw(yp, cnlOwner, tokenIds);
         vm.stopPrank();
     }
 }

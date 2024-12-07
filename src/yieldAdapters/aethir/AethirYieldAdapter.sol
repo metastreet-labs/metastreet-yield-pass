@@ -68,14 +68,14 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Invalid token owner
-     */
-    error InvalidOwner();
-
-    /**
      * @notice Invalid window
      */
     error InvalidWindow();
+
+    /**
+     * @notice Invalid claim
+     */
+    error InvalidClaim();
 
     /**
      * @notice Invalid cliff seconds
@@ -295,7 +295,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @param data Claim data
      * @return Yield amount
      */
-    function _claim(
+    function _virtualClaim(
         bytes memory data
     ) internal returns (uint256) {
         /* Decode harvest data */
@@ -351,9 +351,6 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
 
         /* Compute yield amount */
         uint256 yieldAmount = balanceAfter - balanceBefore;
-
-        /* Transfer yield amount to yield pass contract */
-        if (yieldAmount > 0) _athToken.safeTransfer(_yieldPass, yieldAmount);
 
         return yieldAmount;
     }
@@ -531,8 +528,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     function setup(
         uint256[] calldata tokenIds,
         uint64 expiry,
-        address,
-        address,
+        address account,
         bytes calldata setupData
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address[] memory) {
         /* Decode setup data */
@@ -542,8 +538,8 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         address[] memory burnerWallets = _validateSignedNodes(tokenIds, expiry, signedValidatedNodes);
 
         for (uint256 i; i < tokenIds.length; i++) {
-            /* Validate this contract owns token ID */
-            if (IERC721(_checkerNodeLicense).ownerOf(tokenIds[i]) != address(this)) revert InvalidOwner();
+            /* Transfer license NFT from account to yield adapter */
+            IERC721(_checkerNodeLicense).safeTransferFrom(account, address(this), tokenIds[i]);
 
             /* Set user on license NFT */
             IERC4907(_checkerNodeLicense).setUser(tokenIds[i], burnerWallets[i], expiry);
@@ -551,20 +547,10 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
 
         return burnerWallets;
     }
-
     /**
      * @inheritdoc IYieldAdapter
      */
-    function validateClaim(
-        address
-    ) external view whenNotPaused returns (bool) {
-        /* Validate all order IDs have been processed for withdrawal */
-        return _orderIds.length() == 0;
-    }
 
-    /**
-     * @inheritdoc IYieldAdapter
-     */
     function harvest(
         uint64 expiry,
         bytes calldata harvestData
@@ -577,7 +563,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
 
         if (isClaim) {
             /* Claim vATH */
-            _claim(data);
+            _virtualClaim(data);
 
             return 0;
         } else {
@@ -607,13 +593,25 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      */
     function teardown(
         uint256[] calldata tokenIds,
-        address recipient,
-        bytes calldata
+        address recipient
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
         /* Transfer key to recipient */
         for (uint256 i; i < tokenIds.length; i++) {
             IERC721(_checkerNodeLicense).transferFrom(address(this), recipient, tokenIds[i]);
         }
+    }
+
+    /**
+     * @inheritdoc IYieldAdapter
+     */
+    function claim(address recipient, uint256 amount) external onlyRole(YIELD_PASS_ROLE) returns (address) {
+        /* Validate all order IDs have been processed for withdrawal */
+        if (_orderIds.length() != 0) revert InvalidClaim();
+
+        /* Transfer yield amount to recipient */
+        if (amount > 0) _athToken.safeTransfer(recipient, amount);
+
+        return address(_athToken);
     }
 
     /*------------------------------------------------------------------------*/
