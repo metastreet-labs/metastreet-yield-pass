@@ -320,16 +320,19 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         bytes calldata setupData,
         bytes calldata transferSignature
     ) external nonReentrant returns (uint256) {
+        /* Verify transfer signature if caller is proxy account */
+        if (account != msg.sender) {
+            _validateTransferSignature(account, msg.sender, tokenIds, transferSignature);
+        }
+
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = _yieldPassInfos[yieldPass];
 
         /* Quote mint amount */
         uint256 yieldPassAmount = quoteMint(yieldPass, tokenIds.length);
 
-        /* Verify transfer signature if caller is smart account */
-        if (account != msg.sender) {
-            _validateSignature(account, msg.sender, tokenIds, transferSignature);
-        }
+        /* Update claim state shares */
+        _yieldPassStates[yieldPass].claimState.shares += yieldPassAmount;
 
         /* Transfer ERC721 from account to yield adapter */
         for (uint256 i; i < tokenIds.length; i++) {
@@ -337,9 +340,6 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
                 account, address(_yieldPassStates[yieldPass].yieldAdapter), tokenIds[i]
             );
         }
-
-        /* Update claim state shares */
-        _yieldPassStates[yieldPass].claimState.shares += yieldPassAmount;
 
         /* Call yield adapter setup hook */
         address[] memory operators = _yieldPassStates[yieldPass].yieldAdapter.setup(
