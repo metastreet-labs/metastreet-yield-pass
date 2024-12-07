@@ -164,11 +164,13 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
         startTime = uint64(block.timestamp);
         expiry = startTime + 10 days;
 
+        deployYieldAdapter(false);
+        addWhitelist();
+
         vm.startPrank(cnlOwner);
 
         /* Approve license */
-        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPass), true);
-        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
+        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldAdapter), true);
 
         /* Delegate to operator */
         IERC4907(checkerNodeLicense).setUser(776, operator, expiry);
@@ -178,13 +180,10 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
         IERC4907(checkerNodeLicense).setUser(780, operator, expiry);
         vm.stopPrank();
 
-        deployYieldAdapter(false);
-        addWhitelist();
-
         vm.startPrank(altCnlOwner);
 
         /* Approve license */
-        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPass), true);
+        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldAdapter), true);
 
         /* Create smart account */
         createAccount();

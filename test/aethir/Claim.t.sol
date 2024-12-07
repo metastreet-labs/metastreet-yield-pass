@@ -30,6 +30,12 @@ contract ClaimTest is AethirBaseTest {
         deployYieldAdapter(true);
         addWhitelist();
 
+        vm.prank(cnlOwner);
+        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldAdapter), true);
+
+        vm.prank(altCnlOwner);
+        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldAdapter), true);
+
         (yp, dp) = AethirBaseTest.deployYieldPass(address(checkerNodeLicense), startTime, expiry, address(yieldAdapter));
 
         expiryTimestamp = uint48(block.timestamp) + 360 days;
