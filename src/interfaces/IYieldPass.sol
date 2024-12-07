@@ -361,7 +361,7 @@ interface IYieldPass is IERC721Receiver {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Deploy Yield pass
+     * @notice Deploy Yield Pass for an NFT
      * @param token NFT token
      * @param startTime Start timestamp
      * @param expiry Expiry timestamp

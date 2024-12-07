@@ -1,140 +1,205 @@
-# Airdrop Pass
+# Yield Pass
 
-The Airdrop Pass is a tokenized right to an NFT's airdrop(s). It's implemented
-as an ERC20 wrapper around [Delegate Market](https://github.com/delegatexyz/delegate-market) Delegate Tokens, with support for
-claiming airdrop tokens. Airdrop passes can be minted from an NFT for a fixed
-duration and then traded on DEXes. When airdrops become available for the
-associated NFT, users can burn their airdrop passes in exchange for claiming
-the actual airdrop tokens. After airdrop passes (and the delegate and principal
-tokens) expire, principal token holders can claim the underlying NFT.
+Yield Pass allows a user to tokenize the future yield (yield pass) and future
+ownership (discount pass) of a productive NFT (i.e. yield generating) for a
+fixed duration of time. This enables NFT owners to delegate the productivity of
+their NFT, to trade the present value of its future yield, to borrow against
+the NFT as collateral, or to sell the future ownership of the NFT. It enables
+other users to purchase broad exposure to the NFT's yield generation, to lend
+against the NFTs, or to purchase future ownership rights to them.
 
-See [`IAirdropPass`](../src/interfaces/IAirdropPass.sol) for the main contract interface.
+See [`IYieldPass`](../src/interfaces/IYieldPass.sol) for the main factory contract interface.
 
 ## Minting
 
 ```solidity
 /**
- * @notice Mint a airdrop pass token
- * @param token Token address
- * @param tokenId Token ID
- * @param expiry Expiry
- * @param rights Rights
- * @return Principal token ID
+ * @notice Mint a yield pass and a discount pass for NFT token IDs
+ * @param yieldPass Yield pass token
+ * @param account Account holding NFT
+ * @param tokenIds NFT Token IDs
+ * @param yieldPassRecipient Yield pass recipient
+ * @param discountPassRecipient Discount pass recipient
+ * @param setupData Setup data
+ * @param transferSignature Transfer signature
+ * @return Yield pass amount
  */
-function mint(address token, uint256 tokenId, uint256 expiry, bytes32 rights) external returns (uint256);
+function mint(
+    address yieldPass,
+    address account,
+    uint256[] calldata tokenIds,
+    address yieldPassRecipient,
+    address discountPassRecipient,
+    bytes calldata setupData,
+    bytes calldata transferSignature
+) external returns (uint256);
 ```
 
-`mint()` can be called to mint an airdrop pass token and principal token from
-an NFT. This function will create a delegation for the NFT, escrow the delegate
-token with the airdrop pass contract, mint the principal token to the caller,
-and mint 1e18 airdrop pass tokens to the caller.
+`mint()` is called by a user to mint yield pass and discount pass tokens for
+one or more NFT token IDs. The function will escrow the NFT tokens with the
+yield adapter, mint ERC20 yield pass tokens proportional to quantity of NFTs
+and the yield market's expiry, and mint ERC721 discount pass tokens for each
+NFT escrowed. The NFTs will be assigned for productive operation by the
+associated yield adapter.
 
 ```mermaid
 sequenceDiagram
     actor User
-    User->>+Airdrop Pass: NFT (EC721)
-    Airdrop Pass->>+Delegate Market: NFT (ERC721)
-    Delegate Market->>+Airdrop Pass: Delegate Token (ERC721)
-    Delegate Market->>+User: Principal Token (ERC721)
-    Airdrop Pass->>+User: Airdrop Pass Token (ERC20)
+    User->>+Yield Pass: NFT (ERC721)
+    Yield Pass->>+Yield Adapter: NFT (ERC721)
+    Yield Adapter->>+Operators: Assign NFT
+    Yield Pass->>+User: Yield Pass Token (ERC20)
+    Yield Pass->>+User: Discount Pass Token (ERC721)
 ```
 
-## Burning / Claiming Airdrops
+## Harvesting and Claiming Yield
 
 ```solidity
 /**
- * @notice Burn airdrop pass token
- * @param airdropPassToken Airdrop pass token
- * @param amount Amount to claim
+ * @notice Harvest yield from yield adapter
+ * @param yieldPass Yield pass token
+ * @param harvestData Harvest data
+ * @return Yield token amount harvested
  */
-function burn(address airdropPassToken, uint256 amount) external;
+function harvest(address yieldPass, bytes calldata harvestData) external returns (uint256);
 ```
 
-`burn()` can be called to burn airdrop pass tokens in exchange for airdrop
-credits, which can then be used to fractionally claim one or more airdrops.
-Once airdrop pass tokens are burned, they cannot be reminted, as the associated
-delegate token(s) are held in escrow until expiry.
+`harvest()` can be called periodically to harvest the yield tokens for
+productive NFTs in escrow with the yield adapter, making the yield available
+for claiming by yield pass token holders at expiry.
 
 ```mermaid
 sequenceDiagram
     actor User
-    User->>+Airdrop Pass: Burn Airdrop Pass Token (ERC20)
-    Note right of Airdrop Pass: Airdrop credits incremented for User
+    User->>+Yield Pass: Harvest
+    Yield Pass->>+Yield Adapter: Harvest
+    Node Network->>+Yield Adapter: Yield Tokens
+    Yield Adapter->>+Yield Pass: Yield Tokens
+    Note right of Yield Pass: Yield token balance incremented
 ```
 
 ```solidity
 /**
- * @notice Claim airdrop
- * @param airdropPassToken Airdrop pass token
- * @param airdropId Airdrop ID
+ * @notice Claim yield
+ * @param yieldPass Yield pass token
+ * @param recipient Recipient
+ * @param amount Yield pass amount
+ * @return Yield token amount
  */
-function claim(address airdropPassToken, uint256 airdropId) external;
+function claim(address yieldPass, address recipient, uint256 amount) external returns (uint256);
 ```
 
-`claim()` can be called to claim airdrop tokens with airdrop credits (issued by
-`burn()`). Each airdrop pass token will have one or more associated airdrop
-adapters to facilitate the actual claim of airdrop tokens. Airdrop credits can
-be used independently for each airdrop adapters to claim all airdrop tokens
-available for an NFT. Claims can be made fractionally.
+`claim()` is called after yield market expiry to claim a proportional amount of
+yield tokens in exchange for yield pass tokens. The yield pass tokens are
+burned.
 
 ```mermaid
 sequenceDiagram
     actor User
-    User->>+Airdrop Pass: Claim Fractional Airdrop
-    Airdrop Pass->>+Airdrop Project: Claim Airdrop Tokens for DT
-    Note right of Airdrop Pass: Airdrop credits debited for User
-    Airdrop Project->>+Airdrop Pass: Airdrop Tokens (ERC20)
-    Airdrop Pass->>+User: Fractional Airdrop Tokens (ERC20)
+    User->>+Yield Pass: Burn Yield Pass Tokens (ERC20)
+    Note right of Yield Pass: Yield shares and token balance decremented
+    Yield Pass->>+User: Yield Tokens (ERC20)
 ```
 
-In practice, `burn()`, followed by several calls to `claim()`, can be
-multicalled to claim all airdrop tokens in one transaction.
+## Redeeming and Withdrawing NFTs
 
-## Burning / Claiming NFTs
+Exchanging the discount pass for the underlying NFT at yield market expiry is
+done in two phases: `redeem()` and `withdraw()`, to accommodate the withdrawal
+delay for some NFTs.
 
-The underlying NFT can be claimed directly by the principal token holder by
-calling [`withdraw()`](https://github.com/delegatexyz/delegate-market/blob/main/src/interfaces/IDelegateToken.sol#L98) on Delegate Market Delegate Token contract.
+```solidity
+/**
+ * @notice Redeem discount pass
+ * @param yieldPass Yield pass token
+ * @param tokenIds NFT (and discount pass) token IDs
+ * @return Teardown data
+ */
+function redeem(address yieldPass, uint256[] calldata tokenIds) external returns (bytes memory);
+```
+
+`redeem()` is called to initiate the withdrawal of the underlying NFT token IDs
+of the supplied discount passes. The discount passes are burned, while the
+token IDs are set aside for withdrawal while the redemption is in process.
 
 ```mermaid
 sequenceDiagram
     actor User
-    User->>+Delegate Token: Principal Token (ERC721)
-    Delegate Token->>+User: NFT (ERC721)
+    User->>+Yield Pass: Burn Discount Pass Token (ERC721)
+    Yield Pass->>+Yield Adapter: Teardown NFT
+    Yield Adapter->>+Node Network: Unstake NFT
+    Note right of Yield Pass: NFT marked for redemption
 ```
 
-## Deploying Airdrop Pass Token
+``` solidity
+/**
+ * @notice Withdrawal NFTs
+ * @param yieldPass Yield pass token
+ * @param recipient Recipient
+ * @param tokenIds NFT token IDs
+ * @param harvestData Harvest data
+ * @param teardownData Teardown data
+ */
+function withdraw(
+    address yieldPass,
+    address recipient,
+    uint256[] calldata tokenIds,
+    bytes calldata harvestData,
+    bytes calldata teardownData
+) external;
+```
+
+`withdraw()` is called to complete withdrawal of the underlying NFT token IDs
+after the yield adapter's redemption process is complete.
+
+```mermaid
+sequenceDiagram
+    actor User
+    User->>+Yield Pass: Withdraw NFT
+    Yield Pass->>+Yield Adapter: Withdraw NFT
+    Yield Adapter->>+User: NFT (ERC721)
+```
+
+## Deploying Yield Pass and Discount Pass Tokens
 
 ```solidity
 /**
- * @notice Deploy airdrop pass token
- * @param token Token address
- * @param expiry Expiry
- * @param rights Rights
- * @return Deployment address
+ * @notice Deploy Yield Pass for an NFT
+ * @param token NFT token
+ * @param startTime Start timestamp
+ * @param expiry Expiry timestamp
+ * @param isUserLocked True if token is user locked
+ * @param adapter Yield adapter
+ * @return Yield pass address, discount pass address
  */
-function deployAirdropPassToken(address token, uint256 expiry, bytes32 rights) external returns (address);
+function deployYieldPass(
+    address token,
+    uint64 startTime,
+    uint64 expiry,
+    bool isUserLocked,
+    address adapter
+) external returns (address, address);
 ```
 
-`deployAirdropPassToken()` is used to deploy an airdrop pass token for a given
-a NFT collection address, expiry timestamp, and delegation rights. Currently,
-this function is privileged because airdrop adapters must be manually
-configured for each airdrop pass.
+`deployYieldPass()` is a permissioned function called to create a new yield
+market for an NFT, with a given start time, expiration time, and yield adapter.
+This creates the necessary accounting state in the yield pass factory, and
+deploys the yield pass (ERC20) and discount pass (ERC721) tokens for the yield
+market.
 
-## Configuring Airdrop Adapters
+See the [`IYieldAdapter`](../src/interfaces/IYieldAdapter.sol) interface for a yield adapter.
 
-```solidity
-/**
- * @notice Set airdrop adapter for given airdrop pass token
- * @param airdropPassToken Airdrop pass token
- * @param airdropIndex Airdrop index
- * @param adapter Airdrop adapter
- */
-function setAirdropAdapter(address airdropPassToken, uint256 airdropIndex, address adapter) external;
-```
+## Yield Accounting
 
-`setAirdropAdapter()` is used to associate an airdrop adapter with an airdrop
-pass token. Airdrop passes can have multiple airdrop adapters, representing
-different future airdrops available to claim. Each airdrop adapter is
-identified by an airdrop id.
+Yield pass tokens are minted proportionally to market expiry, starting at 1e18
+yield pass tokens per NFT token ID at the start of the yield market. For
+example, minting a quarter into the yield market lifetime for one NFT would
+result in 0.75e18 yield pass tokens (ERC20) and one discount pass token
+(ERC721).
 
-See the [`IAirdropAdapter`](../src/interfaces/IAirdropAdapter.sol) interface for an airdrop adapter.
+Yield pass tokens represent shares of the total yield accrued by all NFTs
+escrowed by the yield adapter, which are redeemable for a proportional amount
+of yield tokens at market expiry.
+
+This accounting assumes 1) a majority of the NFTs are assigned by the yield
+adapter and are productive, and 2) yield generation is roughly even and linear
+over the lifetime of the yield market.
