@@ -38,16 +38,14 @@ interface IYieldAdapter is IERC721Receiver {
      * @notice Setup yield adapter
      * @param tokenIds Token IDs
      * @param expiry Expiry
-     * @param minter Minter
-     * @param discountPassRecipient Discount pass recipient
+     * @param account Account
      * @param setupData Setup data
      * @return Operators
      */
     function setup(
         uint256[] calldata tokenIds,
         uint64 expiry,
-        address minter,
-        address discountPassRecipient,
+        address account,
         bytes calldata setupData
     ) external returns (address[] memory);
 
@@ -60,27 +58,24 @@ interface IYieldAdapter is IERC721Receiver {
     function harvest(uint64 expiry, bytes calldata harvestData) external returns (uint256);
 
     /**
-     * @notice Validate claim
-     * @param claimant Claimant
-     * @return True if valid, false otherwise
-     */
-    function validateClaim(
-        address claimant
-    ) external returns (bool);
-
-    /**
-     * @notice Initiate teardown
-     * @param tokenIds Token IDs
-     * @param expiry Expiry
-     * @return Teardown data
-     */
-    function initiateTeardown(uint256[] calldata tokenIds, uint64 expiry) external returns (bytes memory);
-
-    /**
-     * @notice Withdraw yield
-     * @param tokenIds Token IDs
+     * @notice Claim yield
      * @param recipient Recipient
-     * @param teardownData Teardown data
+     * @param amount Amount
+     * @return Yield token
      */
-    function teardown(uint256[] calldata tokenIds, address recipient, bytes calldata teardownData) external;
+    function claim(address recipient, uint256 amount) external returns (address);
+
+    /**
+     * @notice Initiate withdraw of token IDs
+     * @param expiry Expiry
+     * @param tokenIds Token IDs
+     */
+    function initiateWithdraw(uint64 expiry, uint256[] calldata tokenIds) external;
+
+    /**
+     * @notice Withdraw token IDs
+     * @param recipient Recipient
+     * @param tokenIds Token IDs
+     */
+    function withdraw(address recipient, uint256[] calldata tokenIds) external;
 }

@@ -68,11 +68,6 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Invalid token owner
-     */
-    error InvalidOwner();
-
-    /**
      * @notice Unsupported pool
      */
     error UnsupportedPool();
@@ -306,12 +301,11 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     function setup(
         uint256[] calldata tokenIds,
         uint64,
-        address minter,
-        address discountPassRecipient,
+        address account,
         bytes calldata setupData
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address[] memory) {
         /* Validate KYC'd */
-        if (!_referee.isKycApproved(minter)) revert NotKycApproved();
+        if (!_referee.isKycApproved(account)) revert NotKycApproved();
 
         /* Decode setup data */
         address pool = abi.decode(setupData, (address));
@@ -320,8 +314,8 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         if (!_allowedPools.contains(pool)) revert UnsupportedPool();
 
         for (uint256 i; i < tokenIds.length; i++) {
-            /* Validate this contract owns the keys */
-            if (_sentryNodeLicense.ownerOf(tokenIds[i]) != address(this)) revert InvalidOwner();
+            /* Transfer license NFT from account to yield adapter */
+            IERC721(_sentryNodeLicense).safeTransferFrom(account, address(this), tokenIds[i]);
 
             /* Store pool */
             _pools[tokenIds[i]] = pool;
@@ -340,15 +334,6 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /**
      * @inheritdoc IYieldAdapter
      */
-    function validateClaim(
-        address
-    ) external view whenNotPaused returns (bool) {
-        return true;
-    }
-
-    /**
-     * @inheritdoc IYieldAdapter
-     */
     function harvest(uint64, bytes calldata) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (uint256) {
         /* Snapshot balance before */
         uint256 balanceBefore = _esXaiToken.balanceOf(address(this));
@@ -362,24 +347,30 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         /* Compute yield amount */
         uint256 yieldAmount = balanceAfter - balanceBefore;
 
-        /* Transfer yield amount to yield pass contract */
-        if (yieldAmount > 0) _esXaiToken.safeTransfer(_yieldPass, yieldAmount);
-
         return yieldAmount;
     }
 
     /**
      * @inheritdoc IYieldAdapter
      */
-    function initiateTeardown(
-        uint256[] calldata tokenIds,
-        uint64 expiry
-    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (bytes memory) {
-        /* Validate prepare teardown is within window */
+    function claim(address recipient, uint256 amount) external onlyRole(YIELD_PASS_ROLE) returns (address) {
+        /* Transfer yield amount to recipient */
+        if (amount > 0) _esXaiToken.safeTransfer(recipient, amount);
+
+        return address(_esXaiToken);
+    }
+
+    /**
+     * @inheritdoc IYieldAdapter
+     */
+    function initiateWithdraw(
+        uint64 expiry,
+        uint256[] calldata tokenIds
+    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
+        /* Validate prepare withdraw is within window */
         if (block.timestamp <= expiry - _poolFactory.unstakeKeysDelayPeriod()) revert InvalidWindow();
 
         /* Create unstake requests */
-        uint256[] memory unstakeRequestIndexes = new uint256[](tokenIds.length);
         for (uint256 i; i < tokenIds.length; i++) {
             /* Get pool */
             address pool = _pools[tokenIds[i]];
@@ -392,22 +383,15 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
 
             /* Store unstake request index */
             _unstakeRequestIndexes[tokenIds[i]] = unstakeRequestIndex;
-
-            /* Store unstake request index */
-            unstakeRequestIndexes[i] = unstakeRequestIndex;
         }
-
-        /* Return unstake request indexes */
-        return abi.encode(unstakeRequestIndexes);
     }
 
     /**
      * @inheritdoc IYieldAdapter
      */
-    function teardown(
-        uint256[] calldata tokenIds,
+    function withdraw(
         address recipient,
-        bytes calldata
+        uint256[] calldata tokenIds
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
         for (uint256 i; i < tokenIds.length; i++) {
             /* Get pool */

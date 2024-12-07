@@ -75,7 +75,6 @@ sequenceDiagram
     User->>+Yield Pass: Harvest
     Yield Pass->>+Yield Adapter: Harvest
     Node Network->>+Yield Adapter: Yield Tokens
-    Yield Adapter->>+Yield Pass: Yield Tokens
     Note right of Yield Pass: Yield token balance incremented
 ```
 
@@ -99,7 +98,8 @@ sequenceDiagram
     actor User
     User->>+Yield Pass: Burn Yield Pass Tokens (ERC20)
     Note right of Yield Pass: Yield shares and token balance decremented
-    Yield Pass->>+User: Yield Tokens (ERC20)
+    Yield Pass->>+Yield Adapter: Claim Yield Tokens
+    Yield Adapter->>+User: Yield Tokens (ERC20)
 ```
 
 ## Redeeming and Withdrawing NFTs
@@ -113,9 +113,8 @@ delay for some NFTs.
  * @notice Redeem discount pass
  * @param yieldPass Yield pass token
  * @param tokenIds NFT (and discount pass) token IDs
- * @return Teardown data
  */
-function redeem(address yieldPass, uint256[] calldata tokenIds) external returns (bytes memory);
+function redeem(address yieldPass, uint256[] calldata tokenIds) external;
 ```
 
 `redeem()` is called to initiate the withdrawal of the underlying NFT token IDs
@@ -126,27 +125,19 @@ token IDs are set aside for withdrawal while the redemption is in process.
 sequenceDiagram
     actor User
     User->>+Yield Pass: Burn Discount Pass Token (ERC721)
-    Yield Pass->>+Yield Adapter: Teardown NFT
-    Yield Adapter->>+Node Network: Unstake NFT
+    Yield Pass->>+Yield Adapter: Initiate Withdraw NFT
+    Yield Adapter->>+Node Network: Withdraw NFT
     Note right of Yield Pass: NFT marked for redemption
 ```
 
 ``` solidity
 /**
- * @notice Withdrawal NFTs
+ * @notice Withdraw NFTs
  * @param yieldPass Yield pass token
  * @param recipient Recipient
  * @param tokenIds NFT token IDs
- * @param harvestData Harvest data
- * @param teardownData Teardown data
  */
-function withdraw(
-    address yieldPass,
-    address recipient,
-    uint256[] calldata tokenIds,
-    bytes calldata harvestData,
-    bytes calldata teardownData
-) external;
+function withdraw(address yieldPass, address recipient, uint256[] calldata tokenIds) external;
 ```
 
 `withdraw()` is called to complete withdrawal of the underlying NFT token IDs
@@ -187,7 +178,7 @@ This creates the necessary accounting state in the yield pass factory, and
 deploys the yield pass (ERC20) and discount pass (ERC721) tokens for the yield
 market.
 
-See the [`IYieldAdapter`](../src/interfaces/IYieldAdapter.sol) interface for a yield adapter.
+See the [`IYieldAdapter`](../src/interfaces/IYieldAdapter.sol) for the yield adapter interface.
 
 ## Yield Accounting
 

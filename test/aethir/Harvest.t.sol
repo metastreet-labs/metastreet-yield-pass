@@ -29,6 +29,9 @@ contract HarvestTest is AethirBaseTest {
         deployYieldAdapter(true);
         addWhitelist();
 
+        vm.prank(cnlOwner);
+        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldAdapter), true);
+
         (yp, dp) = AethirBaseTest.deployYieldPass(address(checkerNodeLicense), startTime, expiry, address(yieldAdapter));
 
         expiryTimestamp = uint48(block.timestamp) + 360 days;
@@ -83,7 +86,7 @@ contract HarvestTest is AethirBaseTest {
 
         /* Validate state */
         assertEq(yieldPass.claimable(yp, 1 ether), 0, "Invalid claimable yield");
-        assertEq(IERC20(ath).balanceOf(address(yieldPass)), 0, "Invalid ath balance");
+        assertEq(IERC20(ath).balanceOf(address(yieldAdapter)), 0, "Invalid ath balance");
 
         assertEq(yieldPass.claimState(yp).total, 0, "Invalid total yield state");
         assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");
@@ -107,7 +110,7 @@ contract HarvestTest is AethirBaseTest {
 
         /* Validate state */
         assertEq(yieldPass.claimable(yp, 1 ether), 1_000_000, "Invalid claimable yield");
-        assertEq(IERC20(ath).balanceOf(address(yieldPass)), 1_000_000, "Invalid ath balance");
+        assertEq(IERC20(ath).balanceOf(address(yieldAdapter)), 1_000_000, "Invalid ath balance");
 
         assertEq(yieldPass.claimState(yp).total, 1_000_000, "Invalid total yield state");
         assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");

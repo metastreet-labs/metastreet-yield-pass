@@ -70,11 +70,6 @@ interface IYieldPass is IERC721Receiver {
     error InvalidWindow();
 
     /**
-     * @notice Invalid claim
-     */
-    error InvalidClaim();
-
-    /**
      * @notice Invalid redemption
      */
     error InvalidRedemption();
@@ -119,9 +114,9 @@ interface IYieldPass is IERC721Receiver {
     );
 
     /**
-     * @notice Emitted when yield is retrieved from yield adapter
+     * @notice Emitted when yield is harvest from yield adapter
      * @param yieldPass Yield pass token
-     * @param amount Amount retrieved
+     * @param amount Yield token amount harvested
      */
     event Harvested(address indexed yieldPass, uint256 amount);
 
@@ -150,15 +145,13 @@ interface IYieldPass is IERC721Receiver {
      * @param token NFT token
      * @param discountPass Discount pass token
      * @param tokenIds NFT (and discount pass) token IDs
-     * @param teardownData Teardown data
      */
     event Redeemed(
         address indexed account,
         address indexed yieldPass,
         address indexed token,
         address discountPass,
-        uint256[] tokenIds,
-        bytes teardownData
+        uint256[] tokenIds
     );
 
     /**
@@ -337,25 +330,16 @@ interface IYieldPass is IERC721Receiver {
      * @notice Redeem discount pass
      * @param yieldPass Yield pass token
      * @param tokenIds NFT (and discount pass) token IDs
-     * @return Teardown data
      */
-    function redeem(address yieldPass, uint256[] calldata tokenIds) external returns (bytes memory);
+    function redeem(address yieldPass, uint256[] calldata tokenIds) external;
 
     /**
-     * @notice Withdrawal NFTs
+     * @notice Withdraw NFTs
      * @param yieldPass Yield pass token
      * @param recipient Recipient
      * @param tokenIds NFT token IDs
-     * @param harvestData Harvest data
-     * @param teardownData Teardown data
      */
-    function withdraw(
-        address yieldPass,
-        address recipient,
-        uint256[] calldata tokenIds,
-        bytes calldata harvestData,
-        bytes calldata teardownData
-    ) external;
+    function withdraw(address yieldPass, address recipient, uint256[] calldata tokenIds) external;
 
     /**
      * @notice Increase account nonce

@@ -113,18 +113,18 @@ abstract contract XaiBaseTest is PoolBaseTest {
         poolFactory.unstakeKeys(stakingPool, unstakeRequestIndex, licenses);
         vm.stopPrank();
 
-        /* Approve license */
-        vm.startPrank(snlOwner);
-        sentryNodeLicense.setApprovalForAll(address(yieldPass), true);
-        vm.stopPrank();
-
-        startTime = uint64(block.timestamp);
-        expiry = startTime + 10 days;
-
         upgradeNodeLicense();
         deployYieldAdapter();
         addKyc(address(yieldAdapter));
         addWhitelist();
+
+        /* Approve license */
+        vm.startPrank(snlOwner);
+        sentryNodeLicense.setApprovalForAll(address(yieldAdapter), true);
+        vm.stopPrank();
+
+        startTime = uint64(block.timestamp);
+        expiry = startTime + 10 days;
     }
 
     function deployYieldPass(
