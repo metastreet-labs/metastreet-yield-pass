@@ -9,13 +9,16 @@ import {XaiYieldAdapter} from "src/yieldAdapters/xai/XaiYieldAdapter.sol";
 import {Deployer} from "../../utils/Deployer.s.sol";
 
 contract DeployXaiYieldAdapter is Deployer {
-    function run(address yieldPass, address xaiPoolFactory) public broadcast useDeployment returns (address) {
+    function run(
+        address xaiPoolFactory
+    ) public broadcast useDeployment returns (address) {
+        if (_deployment.yieldPass == address(0)) revert MissingDependency();
         if (_deployment.xaiYieldAdapter != address(0)) revert AlreadyDeployed();
 
         /* XaiYieldAdapter Implementation */
         console.log("Deploying XaiYieldAdapter implementation...");
 
-        XaiYieldAdapter yieldAdapterImpl = new XaiYieldAdapter(yieldPass, xaiPoolFactory);
+        XaiYieldAdapter yieldAdapterImpl = new XaiYieldAdapter(_deployment.yieldPass, xaiPoolFactory);
 
         console.log("XaiYieldAdapter implementation deployed at: %s\n", address(yieldAdapterImpl));
 
