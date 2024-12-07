@@ -19,6 +19,7 @@ interface IYieldPass is IERC721Receiver {
      * @param token NFT token
      * @param yieldPass Yield pass token
      * @param discountPass Discount pass token
+     * @param yieldAdapter Yield adapter
      */
     struct YieldPassInfo {
         uint64 startTime;
@@ -26,6 +27,7 @@ interface IYieldPass is IERC721Receiver {
         address token;
         address yieldPass;
         address discountPass;
+        address yieldAdapter;
     }
 
     /**
@@ -225,15 +227,6 @@ interface IYieldPass is IERC721Receiver {
     function claimState(
         address yieldPass
     ) external view returns (YieldClaimState memory);
-
-    /**
-     * @notice Get yield adapter
-     * @param yieldPass Yield pass token
-     * @return Yield adapter
-     */
-    function yieldAdapter(
-        address yieldPass
-    ) external view returns (address);
 
     /**
      * @notice Get total cumulative yield
