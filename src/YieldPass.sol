@@ -19,7 +19,7 @@ import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {IYieldPass} from "./interfaces/IYieldPass.sol";
 import {IYieldAdapter} from "./interfaces/IYieldAdapter.sol";
 import {YieldPassToken} from "./YieldPassToken.sol";
-import {DiscountPassToken} from "./DiscountPassToken.sol";
+import {NodePassToken} from "./NodePassToken.sol";
 
 /**
  * @title Yield Pass
@@ -239,20 +239,20 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     }
 
     /**
-     * @notice Helper to get discount pass token constructor parameters
+     * @notice Helper to get node pass token constructor parameters
      * @param token NFT token
      * @param expiry Expiry
      * @param isUserLocked True if token is user locked
      * @return Encoded constructor parameters
      */
-    function _getDiscountPassCtorParams(
+    function _getNodePassCtorParams(
         address token,
         uint256 expiry,
         bool isUserLocked
     ) internal view returns (bytes memory) {
-        /* Construct discount pass name and symbol */
+        /* Construct node pass name and symbol */
         string memory tokenName =
-            string.concat(IERC721Metadata(token).name(), " (Discount Pass - Expiry: ", Strings.toString(expiry), ")");
+            string.concat(IERC721Metadata(token).name(), " (Node Pass - Expiry: ", Strings.toString(expiry), ")");
         string memory tokenSymbol = string.concat(IERC721Metadata(token).symbol(), "-DP-", Strings.toString(expiry));
 
         return abi.encode(tokenName, tokenSymbol, isUserLocked);
@@ -295,7 +295,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         address account,
         uint256[] calldata tokenIds,
         address yieldPassRecipient,
-        address discountPassRecipient,
+        address nodePassRecipient,
         uint256 deadline,
         bytes calldata setupData,
         bytes calldata transferSignature
@@ -324,18 +324,12 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         /* Mint yield pass token */
         YieldPassToken(yieldPass).mint(yieldPassRecipient, yieldPassAmount);
 
-        /* Mint discount pass tokens */
-        DiscountPassToken(yieldPassInfo_.discountPass).mint(discountPassRecipient, tokenIds);
+        /* Mint node pass tokens */
+        NodePassToken(yieldPassInfo_.nodePass).mint(nodePassRecipient, tokenIds);
 
         /* Emit Minted */
         emit Minted(
-            msg.sender,
-            yieldPass,
-            yieldPassInfo_.token,
-            yieldPassAmount,
-            yieldPassInfo_.discountPass,
-            tokenIds,
-            operators
+            msg.sender, yieldPass, yieldPassInfo_.token, yieldPassAmount, yieldPassInfo_.nodePass, tokenIds, operators
         );
 
         return yieldPassAmount;
@@ -413,23 +407,23 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
 
         for (uint256 i; i < tokenIds.length; i++) {
-            /* Validate caller owns discount pass */
-            if (DiscountPassToken(yieldPassInfo_.discountPass).ownerOf(tokenIds[i]) != msg.sender) {
+            /* Validate caller owns node pass */
+            if (NodePassToken(yieldPassInfo_.nodePass).ownerOf(tokenIds[i]) != msg.sender) {
                 revert InvalidRedemption();
             }
 
             /* Store redemption address */
             _yieldPassStates[yieldPass].tokenIdRedemptions[tokenIds[i]] = msg.sender;
 
-            /* Burn discount pass */
-            DiscountPassToken(yieldPassInfo_.discountPass).burn(msg.sender, tokenIds[i]);
+            /* Burn node pass */
+            NodePassToken(yieldPassInfo_.nodePass).burn(msg.sender, tokenIds[i]);
         }
 
         /* Call yield adapter initiate withdraw hook */
         IYieldAdapter(yieldPassInfo_.yieldAdapter).initiateWithdraw(yieldPassInfo_.expiry, tokenIds);
 
         /* Emit Redeemed */
-        emit Redeemed(msg.sender, yieldPass, yieldPassInfo_.token, yieldPassInfo_.discountPass, tokenIds);
+        emit Redeemed(msg.sender, yieldPass, yieldPassInfo_.token, yieldPassInfo_.nodePass, tokenIds);
     }
 
     /**
@@ -454,7 +448,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         IYieldAdapter(yieldPassInfo_.yieldAdapter).withdraw(recipient, tokenIds);
 
         /* Emit Withdrawn */
-        emit Withdrawn(msg.sender, yieldPass, yieldPassInfo_.token, recipient, yieldPassInfo_.discountPass, tokenIds);
+        emit Withdrawn(msg.sender, yieldPass, yieldPassInfo_.token, recipient, yieldPassInfo_.nodePass, tokenIds);
     }
 
     /*------------------------------------------------------------------------*/
@@ -487,13 +481,11 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
             abi.encodePacked(type(YieldPassToken).creationCode, _getYieldPassCtorParams(token, expiry))
         );
 
-        /* Create discount pass */
-        address discountPass = Create2.deploy(
+        /* Create node pass */
+        address nodePass = Create2.deploy(
             0,
             deploymentHash,
-            abi.encodePacked(
-                type(DiscountPassToken).creationCode, _getDiscountPassCtorParams(token, expiry, isUserLocked)
-            )
+            abi.encodePacked(type(NodePassToken).creationCode, _getNodePassCtorParams(token, expiry, isUserLocked))
         );
 
         /* Store yield pass info */
@@ -502,7 +494,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
             expiry: expiry,
             token: token,
             yieldPass: yieldPass,
-            discountPass: discountPass,
+            nodePass: nodePass,
             yieldAdapter: adapter
         });
 
@@ -510,9 +502,9 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         _yieldPasses.push(yieldPass);
 
         /* Emit YieldPassDeployed */
-        emit YieldPassDeployed(token, expiry, yieldPass, startTime, discountPass, adapter);
+        emit YieldPassDeployed(token, expiry, yieldPass, startTime, nodePass, adapter);
 
-        return (yieldPass, discountPass);
+        return (yieldPass, nodePass);
     }
 
     /**
@@ -523,6 +515,6 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
 
         /* Update user locked */
-        DiscountPassToken(yieldPassInfo_.discountPass).setUserLocked(isUserLocked);
+        NodePassToken(yieldPassInfo_.nodePass).setUserLocked(isUserLocked);
     }
 }

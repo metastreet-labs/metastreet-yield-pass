@@ -18,7 +18,7 @@ interface IYieldPass is IERC721Receiver {
      * @param expiry Expiry timestamp
      * @param token NFT token
      * @param yieldPass Yield pass token
-     * @param discountPass Discount pass token
+     * @param nodePass Node pass token
      * @param yieldAdapter Yield adapter
      */
     struct YieldPassInfo {
@@ -26,7 +26,7 @@ interface IYieldPass is IERC721Receiver {
         uint64 expiry;
         address token;
         address yieldPass;
-        address discountPass;
+        address nodePass;
         address yieldAdapter;
     }
 
@@ -96,13 +96,13 @@ interface IYieldPass is IERC721Receiver {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Emitted when yield pass and discount pass are minted
+     * @notice Emitted when yield pass and node pass are minted
      * @param account Account
      * @param yieldPass Yield pass token
      * @param token NFT token
      * @param yieldPassAmount Yield pass amount
-     * @param discountPass Discount pass token
-     * @param tokenIds NFT (and discount pass) token IDs
+     * @param nodePass Node pass token
+     * @param tokenIds NFT (and node pass) token IDs
      * @param operators Operators
      */
     event Minted(
@@ -110,7 +110,7 @@ interface IYieldPass is IERC721Receiver {
         address indexed yieldPass,
         address indexed token,
         uint256 yieldPassAmount,
-        address discountPass,
+        address nodePass,
         uint256[] tokenIds,
         address[] operators
     );
@@ -141,19 +141,15 @@ interface IYieldPass is IERC721Receiver {
     );
 
     /**
-     * @notice Emitted when discount pass is redeemed
+     * @notice Emitted when node pass is redeemed
      * @param account Account
      * @param yieldPass Yield pass token
      * @param token NFT token
-     * @param discountPass Discount pass token
-     * @param tokenIds NFT (and discount pass) token IDs
+     * @param nodePass Node pass token
+     * @param tokenIds NFT (and node pass) token IDs
      */
     event Redeemed(
-        address indexed account,
-        address indexed yieldPass,
-        address indexed token,
-        address discountPass,
-        uint256[] tokenIds
+        address indexed account, address indexed yieldPass, address indexed token, address nodePass, uint256[] tokenIds
     );
 
     /**
@@ -162,25 +158,25 @@ interface IYieldPass is IERC721Receiver {
      * @param yieldPass Yield pass token
      * @param token NFT token
      * @param recipient Recipient
-     * @param discountPass Discount pass token
-     * @param tokenIds NFT (and discount pass) token IDs
+     * @param nodePass Node pass token
+     * @param tokenIds NFT (and node pass) token IDs
      */
     event Withdrawn(
         address indexed account,
         address indexed yieldPass,
         address indexed token,
         address recipient,
-        address discountPass,
+        address nodePass,
         uint256[] tokenIds
     );
 
     /**
-     * @notice Emitted when yield pass and discount pass tokens are deployed
+     * @notice Emitted when yield pass and node pass tokens are deployed
      * @param token NFT token
      * @param expiry Expiry timestamp
      * @param yieldPass Yield pass token
      * @param startTime Start timestamp
-     * @param discountPass Discount pass token
+     * @param nodePass Node pass token
      * @param yieldAdapter Yield adapter
      */
     event YieldPassDeployed(
@@ -188,7 +184,7 @@ interface IYieldPass is IERC721Receiver {
         uint256 indexed expiry,
         address indexed yieldPass,
         uint256 startTime,
-        address discountPass,
+        address nodePass,
         address yieldAdapter
     );
 
@@ -266,12 +262,12 @@ interface IYieldPass is IERC721Receiver {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Mint a yield pass and a discount pass for NFT token IDs
+     * @notice Mint a yield pass and a node pass for NFT token IDs
      * @param yieldPass Yield pass token
      * @param account Account holding NFT
      * @param tokenIds NFT Token IDs
      * @param yieldPassRecipient Yield pass recipient
-     * @param discountPassRecipient Discount pass recipient
+     * @param nodePassRecipient Node pass recipient
      * @param deadline Deadline
      * @param setupData Setup data
      * @param transferSignature Transfer signature
@@ -282,7 +278,7 @@ interface IYieldPass is IERC721Receiver {
         address account,
         uint256[] calldata tokenIds,
         address yieldPassRecipient,
-        address discountPassRecipient,
+        address nodePassRecipient,
         uint256 deadline,
         bytes calldata setupData,
         bytes calldata transferSignature
@@ -306,9 +302,9 @@ interface IYieldPass is IERC721Receiver {
     function claim(address yieldPass, address recipient, uint256 amount) external returns (uint256);
 
     /**
-     * @notice Redeem discount pass
+     * @notice Redeem node pass
      * @param yieldPass Yield pass token
-     * @param tokenIds NFT (and discount pass) token IDs
+     * @param tokenIds NFT (and node pass) token IDs
      */
     function redeem(address yieldPass, uint256[] calldata tokenIds) external;
 
@@ -331,7 +327,7 @@ interface IYieldPass is IERC721Receiver {
      * @param expiry Expiry timestamp
      * @param isUserLocked True if token is user locked
      * @param adapter Yield adapter
-     * @return Yield pass address, discount pass address
+     * @return Yield pass address, node pass address
      */
     function deployYieldPass(
         address token,
@@ -342,7 +338,7 @@ interface IYieldPass is IERC721Receiver {
     ) external returns (address, address);
 
     /**
-     * @notice Set user locked for discount pass token
+     * @notice Set user locked for node pass token
      * @param yieldPass Yield pass token
      * @param isUserLocked True if user locked enabled
      */

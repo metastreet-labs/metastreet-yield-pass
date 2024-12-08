@@ -14,14 +14,14 @@ import "forge-std/console.sol";
 
 contract HarvestTest is XaiBaseTest {
     address internal yp;
-    address internal dp;
+    address internal np;
     uint256[] internal tokenIds;
 
     function setUp() public override {
         /* Set up Nft */
         XaiBaseTest.setUp();
 
-        (yp, dp) = XaiBaseTest.deployYieldPass(address(sentryNodeLicense), startTime, expiry, address(yieldAdapter));
+        (yp, np) = XaiBaseTest.deployYieldPass(address(sentryNodeLicense), startTime, expiry, address(yieldAdapter));
 
         tokenIds = new uint256[](1);
         tokenIds[0] = 19727;

@@ -16,14 +16,14 @@ import "forge-std/console.sol";
 
 contract RedeemTest is XaiBaseTest {
     address internal yp;
-    address internal dp;
+    address internal np;
     uint256[] internal tokenIds;
 
     function setUp() public override {
         /* Set up Nft */
         XaiBaseTest.setUp();
 
-        (yp, dp) = XaiBaseTest.deployYieldPass(address(sentryNodeLicense), startTime, expiry, address(yieldAdapter));
+        (yp, np) = XaiBaseTest.deployYieldPass(address(sentryNodeLicense), startTime, expiry, address(yieldAdapter));
 
         tokenIds = new uint256[](1);
         tokenIds[0] = 19727;
@@ -45,9 +45,9 @@ contract RedeemTest is XaiBaseTest {
         yieldPass.redeem(yp, tokenIds);
         vm.stopPrank();
 
-        /* Check that the discount pass is burned */
+        /* Check that the node pass is burned */
         vm.expectRevert();
-        IERC721(dp).ownerOf(19727);
+        IERC721(np).ownerOf(19727);
     }
 
     function test__Redeem_RevertWhen_TokenNotOwned() external {
@@ -61,7 +61,7 @@ contract RedeemTest is XaiBaseTest {
         yieldPass.mint(
             yp, snlOwner, tokenIds, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
         );
-        IERC721(dp).transferFrom(snlOwner, address(1), 19727);
+        IERC721(np).transferFrom(snlOwner, address(1), 19727);
         vm.stopPrank();
 
         /* Fast-forward to 7 days before expiry */

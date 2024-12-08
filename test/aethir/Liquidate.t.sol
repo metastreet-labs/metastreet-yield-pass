@@ -46,7 +46,7 @@ interface IBundleCollateralWrapper {
 
 contract LiquidateTest is AethirSepoliaBaseTest {
     address internal yp;
-    address internal dp;
+    address internal np;
     uint128 internal tick;
     address internal pair;
     uint256[] internal tokenIds1;
@@ -56,7 +56,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         /* Set up Nft */
         AethirSepoliaBaseTest.setUp();
 
-        (yp, dp) =
+        (yp, np) =
             AethirSepoliaBaseTest.deployYieldPass(address(checkerNodeLicense), startTime, expiry, address(yieldAdapter));
 
         tokenIds1 = new uint256[](3);
@@ -69,7 +69,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         tokenIds2[1] = 780;
 
         PoolBaseTest.setMetaStreetPoolFactoryAndImpl(address(metaStreetPoolFactory), metaStreetPoolImpl);
-        PoolBaseTest.deployMetaStreetPool(address(dp), address(ath), address(0));
+        PoolBaseTest.deployMetaStreetPool(address(np), address(ath), address(0));
         BaseTest.deployYieldPassUtils(address(uniswapV2Factory));
 
         setUpUniswap();
@@ -171,23 +171,23 @@ contract LiquidateTest is AethirSepoliaBaseTest {
             )
         });
 
-        /* Set approval for DPs for bundle collateral wrapper */
+        /* Set approval for NPs for bundle collateral wrapper */
         calls1[1] = ICoinbaseSmartWallet.Call({
-            target: dp,
+            target: np,
             value: 0,
             data: abi.encodeWithSignature("setApprovalForAll(address,bool)", bundleCollateralWrapper, true)
         });
 
-        /* Bundle DPs */
+        /* Bundle NPs */
         calls1[2] = ICoinbaseSmartWallet.Call({
             target: bundleCollateralWrapper,
             value: 0,
-            data: abi.encodeWithSignature("mint(address,uint256[])", dp, tokenIds2)
+            data: abi.encodeWithSignature("mint(address,uint256[])", np, tokenIds2)
         });
 
-        /* Unset approval for bundle collateral wrapper for DP */
+        /* Unset approval for bundle collateral wrapper for NP */
         calls1[3] = ICoinbaseSmartWallet.Call({
-            target: dp,
+            target: np,
             value: 0,
             data: abi.encodeWithSignature("setApprovalForAll(address,bool)", bundleCollateralWrapper, false)
         });
