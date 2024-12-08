@@ -124,7 +124,7 @@ abstract contract XaiBaseTest is PoolBaseTest {
         vm.stopPrank();
 
         startTime = uint64(block.timestamp);
-        expiry = startTime + 10 days;
+        expiry = startTime + 15 days;
     }
 
     function deployYieldPass(

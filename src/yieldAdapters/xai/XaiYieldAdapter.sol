@@ -300,10 +300,13 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      */
     function setup(
         uint256[] calldata tokenIds,
-        uint64,
+        uint64 expiry,
         address account,
         bytes calldata setupData
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address[] memory) {
+        /* Validate setup is before unstake window */
+        if (block.timestamp >= expiry - _poolFactory.unstakeKeysDelayPeriod()) revert InvalidWindow();
+
         /* Validate KYC'd */
         if (!_referee.isKycApproved(account)) revert NotKycApproved();
 
@@ -365,7 +368,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         uint64 expiry,
         uint256[] calldata tokenIds
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
-        /* Validate prepare withdraw is within window */
+        /* Validate initiate withdraw is within window */
         if (block.timestamp <= expiry - _poolFactory.unstakeKeysDelayPeriod()) revert InvalidWindow();
 
         /* Create unstake requests */

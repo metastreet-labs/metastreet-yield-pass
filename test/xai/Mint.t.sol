@@ -83,35 +83,6 @@ contract XaiMintTest is XaiBaseTest {
         assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
         assertEq(yieldPass.claimState(yp).balance, 0, "Invalid claim state balance");
         assertEq(yieldPass.claimState(yp).shares, expectedAmount1 + expectedAmount2, "Invalid claim state shares");
-
-        /* Fast-forward to 1 second before expiry */
-        vm.warp(expiry - 1);
-
-        /* Mint again */
-        vm.startPrank(snlOwner);
-        yieldPass.mint(
-            yp, snlOwner, tokenIds3, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
-        );
-        vm.stopPrank();
-
-        uint256 expectedAmount3 = (1 ether * (expiry - block.timestamp)) / (expiry - startTime);
-        assertEq(
-            IERC20(yp).balanceOf(snlOwner),
-            expectedAmount1 + expectedAmount2 + expectedAmount3,
-            "Invalid yield token balance"
-        );
-        assertEq(IERC20(yp).totalSupply(), expectedAmount1 + expectedAmount2 + expectedAmount3, "Invalid total supply");
-        assertEq(sentryNodeLicense.ownerOf(19729), address(yieldAdapter), "Invalid NFT owner");
-        assertEq(IERC721(np).ownerOf(19729), snlOwner, "Invalid delegate token owner");
-
-        assertEq(yieldPass.cumulativeYield(yp, 0), 0, "Invalid cumulative yield");
-        assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
-        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid claim state balance");
-        assertEq(
-            yieldPass.claimState(yp).shares,
-            expectedAmount1 + expectedAmount2 + expectedAmount3,
-            "Invalid claim state shares"
-        );
     }
 
     function test__Mint_RevertWhen_Paused() external {
