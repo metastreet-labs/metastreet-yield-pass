@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
-import {DiscountPassToken} from "src/DiscountPassToken.sol";
+import {NodePassToken} from "src/NodePassToken.sol";
 import {XaiYieldAdapter} from "src/yieldAdapters/xai/XaiYieldAdapter.sol";
 
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
@@ -19,7 +19,7 @@ import "forge-std/console.sol";
 
 contract XaiMintTest is XaiBaseTest {
     address internal yp;
-    address internal dp;
+    address internal np;
     uint256[] internal tokenIds1;
     uint256[] internal tokenIds2;
     uint256[] internal tokenIds3;
@@ -29,7 +29,7 @@ contract XaiMintTest is XaiBaseTest {
         /* Set up Nft */
         XaiBaseTest.setUp();
 
-        (yp, dp) = XaiBaseTest.deployYieldPass(address(sentryNodeLicense), startTime, expiry, address(yieldAdapter));
+        (yp, np) = XaiBaseTest.deployYieldPass(address(sentryNodeLicense), startTime, expiry, address(yieldAdapter));
 
         tokenIds1 = new uint256[](1);
         tokenIds1[0] = 19727;
@@ -56,7 +56,7 @@ contract XaiMintTest is XaiBaseTest {
         assertEq(IERC20(yp).balanceOf(snlOwner), expectedAmount1, "Invalid yield token balance");
         assertEq(IERC20(yp).totalSupply(), expectedAmount1, "Invalid total supply");
         assertEq(sentryNodeLicense.ownerOf(19727), address(yieldAdapter), "Invalid NFT owner");
-        assertEq(IERC721(dp).ownerOf(19727), snlOwner, "Invalid discount token owner");
+        assertEq(IERC721(np).ownerOf(19727), snlOwner, "Invalid node token owner");
 
         assertEq(yieldPass.cumulativeYield(yp, 0), 0, "Invalid cumulative yield");
         assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
@@ -77,7 +77,7 @@ contract XaiMintTest is XaiBaseTest {
         assertEq(IERC20(yp).balanceOf(snlOwner), expectedAmount1 + expectedAmount2, "Invalid yield token balance");
         assertEq(IERC20(yp).totalSupply(), expectedAmount1 + expectedAmount2, "Invalid total supply");
         assertEq(sentryNodeLicense.ownerOf(19728), address(yieldAdapter), "Invalid NFT owner");
-        assertEq(IERC721(dp).ownerOf(19728), snlOwner, "Invalid delegate token owner");
+        assertEq(IERC721(np).ownerOf(19728), snlOwner, "Invalid delegate token owner");
 
         assertEq(yieldPass.cumulativeYield(yp, 0), 0, "Invalid cumulative yield");
         assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
@@ -102,7 +102,7 @@ contract XaiMintTest is XaiBaseTest {
         );
         assertEq(IERC20(yp).totalSupply(), expectedAmount1 + expectedAmount2 + expectedAmount3, "Invalid total supply");
         assertEq(sentryNodeLicense.ownerOf(19729), address(yieldAdapter), "Invalid NFT owner");
-        assertEq(IERC721(dp).ownerOf(19729), snlOwner, "Invalid delegate token owner");
+        assertEq(IERC721(np).ownerOf(19729), snlOwner, "Invalid delegate token owner");
 
         assertEq(yieldPass.cumulativeYield(yp, 0), 0, "Invalid cumulative yield");
         assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");

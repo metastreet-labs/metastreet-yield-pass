@@ -17,7 +17,7 @@ import "forge-std/console.sol";
 
 contract ClaimTest is AethirBaseTest {
     address internal yp;
-    address internal dp;
+    address internal np;
     uint48 internal expiryTimestamp;
     uint256[] internal tokenIds;
 
@@ -36,7 +36,7 @@ contract ClaimTest is AethirBaseTest {
         vm.prank(altCnlOwner);
         IERC721(checkerNodeLicense).setApprovalForAll(address(yieldAdapter), true);
 
-        (yp, dp) = AethirBaseTest.deployYieldPass(address(checkerNodeLicense), startTime, expiry, address(yieldAdapter));
+        (yp, np) = AethirBaseTest.deployYieldPass(address(checkerNodeLicense), startTime, expiry, address(yieldAdapter));
 
         expiryTimestamp = uint48(block.timestamp) + 360 days;
 
@@ -118,7 +118,7 @@ contract ClaimTest is AethirBaseTest {
         assertEq(IERC20(yp).totalSupply(), 0, "Invalid total supply");
         assertEq(IERC20(ath).balanceOf(cnlOwner), initialBalance + 1_000_000, "Invalid ath balance");
         assertEq(IERC721(checkerNodeLicense).ownerOf(91521), address(yieldAdapter), "Invalid NFT owner");
-        assertEq(IERC721(dp).ownerOf(91521), cnlOwner, "Invalid delegate token owner");
+        assertEq(IERC721(np).ownerOf(91521), cnlOwner, "Invalid delegate token owner");
         assertEq(yieldPass.claimState(yp).total, 1_000_000, "Invalid total yield state");
         assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");
         assertEq(yieldPass.claimState(yp).balance, 0, "Invalid yield balance state");
@@ -183,7 +183,7 @@ contract ClaimTest is AethirBaseTest {
         assertEq(IERC20(yp).totalSupply(), 0, "Invalid total supply");
         assertEq(IERC20(ath).balanceOf(address(smartAccount)), initialBalance + 1_000_000, "Invalid ath balance");
         assertEq(IERC721(checkerNodeLicense).ownerOf(91521), address(yieldAdapter), "Invalid NFT owner");
-        assertEq(IERC721(dp).ownerOf(91521), address(smartAccount), "Invalid delegate token owner");
+        assertEq(IERC721(np).ownerOf(91521), address(smartAccount), "Invalid delegate token owner");
         assertEq(yieldPass.claimState(yp).total, 1_000_000, "Invalid total yield state");
         assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");
         assertEq(yieldPass.claimState(yp).balance, 0, "Invalid yield balance state");

@@ -196,9 +196,9 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
         uint64 startTime_,
         uint64 expiry_,
         address yieldAdapter_
-    ) internal returns (address yp, address dp) {
+    ) internal returns (address yp, address np) {
         vm.startPrank(users.deployer);
-        (yp, dp) = yieldPass.deployYieldPass(nft_, startTime_, expiry_, true, yieldAdapter_);
+        (yp, np) = yieldPass.deployYieldPass(nft_, startTime_, expiry_, true, yieldAdapter_);
         vm.stopPrank();
     }
 

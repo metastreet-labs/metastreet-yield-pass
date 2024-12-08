@@ -16,7 +16,7 @@ import {AethirYieldAdapter} from "src/yieldAdapters/aethir/AethirYieldAdapter.so
 
 contract HarvestTest is AethirBaseTest {
     address internal yp;
-    address internal dp;
+    address internal np;
     uint48 internal expiryTimestamp;
     uint256[] internal tokenIds;
 
@@ -32,7 +32,7 @@ contract HarvestTest is AethirBaseTest {
         vm.prank(cnlOwner);
         IERC721(checkerNodeLicense).setApprovalForAll(address(yieldAdapter), true);
 
-        (yp, dp) = AethirBaseTest.deployYieldPass(address(checkerNodeLicense), startTime, expiry, address(yieldAdapter));
+        (yp, np) = AethirBaseTest.deployYieldPass(address(checkerNodeLicense), startTime, expiry, address(yieldAdapter));
 
         expiryTimestamp = uint48(block.timestamp) + 360 days;
 

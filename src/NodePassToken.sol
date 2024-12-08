@@ -4,10 +4,10 @@ pragma solidity 0.8.26;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 /**
- * @title Discount Pass Token (ERC721)
+ * @title Node Pass Token (ERC721)
  * @author MetaStreet Foundation
  */
-contract DiscountPassToken is ERC721 {
+contract NodePassToken is ERC721 {
     /*------------------------------------------------------------------------*/
     /* Events */
     /*------------------------------------------------------------------------*/
@@ -46,7 +46,7 @@ contract DiscountPassToken is ERC721 {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice DiscountPassToken constructor
+     * @notice NodePassToken constructor
      */
     constructor(string memory name_, string memory symbol_, bool isUserLocked_) ERC721(name_, symbol_) {
         _owner = msg.sender;
@@ -78,11 +78,11 @@ contract DiscountPassToken is ERC721 {
     }
 
     /*------------------------------------------------------------------------*/
-    /* Discount Token API */
+    /* Node Pass Token API */
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Mint discount tokens
+     * @notice Mint node tokens
      * @param to Account
      * @param tokenIds Token IDs
      */
@@ -97,7 +97,7 @@ contract DiscountPassToken is ERC721 {
     }
 
     /**
-     * @notice Burn discount token
+     * @notice Burn node token
      * @param from Account
      * @param tokenId Token ID
      */

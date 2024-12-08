@@ -14,14 +14,14 @@ import "forge-std/console.sol";
 
 contract ClaimTest is XaiBaseTest {
     address internal yp;
-    address internal dp;
+    address internal np;
     uint256[] internal tokenIds;
 
     function setUp() public override {
         /* Set up Nft */
         XaiBaseTest.setUp();
 
-        (yp, dp) = XaiBaseTest.deployYieldPass(address(sentryNodeLicense), startTime, expiry, address(yieldAdapter));
+        (yp, np) = XaiBaseTest.deployYieldPass(address(sentryNodeLicense), startTime, expiry, address(yieldAdapter));
 
         tokenIds = new uint256[](1);
         tokenIds[0] = 19727;
@@ -77,7 +77,7 @@ contract ClaimTest is XaiBaseTest {
         assertEq(IERC20(yp).totalSupply(), 0, "Invalid total supply");
         assertEq(IERC20(esXai).balanceOf(snlOwner), initialBalance + 10, "Invalid esXAI balance");
         assertEq(sentryNodeLicense.ownerOf(19727), address(yieldAdapter), "Invalid NFT owner");
-        assertEq(IERC721(dp).ownerOf(19727), snlOwner, "Invalid delegate token owner");
+        assertEq(IERC721(np).ownerOf(19727), snlOwner, "Invalid delegate token owner");
 
         assertEq(yieldPass.claimState(yp).total, 10, "Invalid total yield state");
         assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");

@@ -1,12 +1,12 @@
 # Yield Pass
 
 Yield Pass allows a user to tokenize the future yield (yield pass) and future
-ownership (discount pass) of a productive NFT (i.e. yield generating) for a
-fixed duration of time. This enables NFT owners to delegate the productivity of
-their NFT, to trade the present value of its future yield, to borrow against
-the NFT as collateral, or to sell the future ownership of the NFT. It enables
-other users to purchase broad exposure to the NFT's yield generation, to lend
-against the NFTs, or to purchase future ownership rights to them.
+ownership (node pass) of a productive NFT (i.e. yield generating) for a fixed
+duration of time. This enables NFT owners to delegate the productivity of their
+NFT, to trade the present value of its future yield, to borrow against the NFT
+as collateral, or to sell the future ownership of the NFT. It enables other
+users to purchase broad exposure to the NFT's yield generation, to lend against
+the NFTs, or to purchase future ownership rights to them.
 
 See [`IYieldPass`](../src/interfaces/IYieldPass.sol) for the main factory contract interface.
 
@@ -14,12 +14,12 @@ See [`IYieldPass`](../src/interfaces/IYieldPass.sol) for the main factory contra
 
 ```solidity
 /**
- * @notice Mint a yield pass and a discount pass for NFT token IDs
+ * @notice Mint a yield pass and a node pass for NFT token IDs
  * @param yieldPass Yield pass token
  * @param account Account holding NFT
  * @param tokenIds NFT Token IDs
  * @param yieldPassRecipient Yield pass recipient
- * @param discountPassRecipient Discount pass recipient
+ * @param nodePassRecipient Node pass recipient
  * @param deadline Deadline
  * @param setupData Setup data
  * @param transferSignature Transfer signature
@@ -30,19 +30,19 @@ function mint(
     address account,
     uint256[] calldata tokenIds,
     address yieldPassRecipient,
-    address discountPassRecipient,
+    address nodePassRecipient,
     uint256 deadline,
     bytes calldata setupData,
     bytes calldata transferSignature
 ) external returns (uint256);
 ```
 
-`mint()` is called by a user to mint yield pass and discount pass tokens for
-one or more NFT token IDs. The function will escrow the NFT tokens with the
-yield adapter, mint ERC20 yield pass tokens proportional to quantity of NFTs
-and the yield market's expiry, and mint ERC721 discount pass tokens for each
-NFT escrowed. The NFTs will be assigned for productive operation by the
-associated yield adapter.
+`mint()` is called by a user to mint yield pass and node pass tokens for one or
+more NFT token IDs. The function will escrow the NFT tokens with the yield
+adapter, mint ERC20 yield pass tokens proportional to quantity of NFTs and the
+yield market's expiry, and mint ERC721 node pass tokens for each NFT escrowed.
+The NFTs will be assigned for productive operation by the associated yield
+adapter.
 
 ```mermaid
 sequenceDiagram
@@ -51,7 +51,7 @@ sequenceDiagram
     Yield Pass->>+Yield Adapter: NFT (ERC721)
     Yield Adapter->>+Node Operators: Assign NFT
     Yield Pass->>+User: Yield Pass Token (ERC20)
-    Yield Pass->>+User: Discount Pass Token (ERC721)
+    Yield Pass->>+User: Node Pass Token (ERC721)
 ```
 
 ## Harvesting and Claiming Yield
@@ -105,27 +105,27 @@ sequenceDiagram
 
 ## Redeeming and Withdrawing NFTs
 
-Exchanging the discount pass for the underlying NFT at yield market expiry is
+Exchanging the node pass for the underlying NFT at yield market expiry is
 done in two phases: `redeem()` and `withdraw()`, to accommodate the withdrawal
 delay for some NFTs.
 
 ```solidity
 /**
- * @notice Redeem discount pass
+ * @notice Redeem node pass
  * @param yieldPass Yield pass token
- * @param tokenIds NFT (and discount pass) token IDs
+ * @param tokenIds NFT (and node pass) token IDs
  */
 function redeem(address yieldPass, uint256[] calldata tokenIds) external;
 ```
 
 `redeem()` is called to initiate the withdrawal of the underlying NFT token IDs
-of the supplied discount passes. The discount passes are burned, while the
-token IDs are set aside for withdrawal while the redemption is in process.
+of the supplied node passes. The node passes are burned, while the token IDs
+are set aside for withdrawal while the redemption is in process.
 
 ```mermaid
 sequenceDiagram
     actor User
-    User->>+Yield Pass: Burn Discount Pass Token (ERC721)
+    User->>+Yield Pass: Burn Node Pass Token (ERC721)
     Yield Pass->>+Yield Adapter: Initiate Withdraw NFT
     Yield Adapter->>+Node Network: Withdraw NFT
     Note right of Yield Pass: NFT marked for redemption
@@ -152,7 +152,7 @@ sequenceDiagram
     Yield Adapter->>+User: NFT (ERC721)
 ```
 
-## Deploying Yield Pass and Discount Pass Tokens
+## Deploying Yield Pass and Node Pass Tokens
 
 ```solidity
 /**
@@ -162,7 +162,7 @@ sequenceDiagram
  * @param expiry Expiry timestamp
  * @param isUserLocked True if token is user locked
  * @param adapter Yield adapter
- * @return Yield pass address, discount pass address
+ * @return Yield pass address, node pass address
  */
 function deployYieldPass(
     address token,
@@ -176,7 +176,7 @@ function deployYieldPass(
 `deployYieldPass()` is a permissioned function called to create a new yield
 market for an NFT, with a given start time, expiration time, and yield adapter.
 This creates the necessary accounting state in the yield pass factory, and
-deploys the yield pass (ERC20) and discount pass (ERC721) tokens for the yield
+deploys the yield pass (ERC20) and node pass (ERC721) tokens for the yield
 market.
 
 See the [`IYieldAdapter`](../src/interfaces/IYieldAdapter.sol) for the yield adapter interface.
@@ -186,8 +186,7 @@ See the [`IYieldAdapter`](../src/interfaces/IYieldAdapter.sol) for the yield ada
 Yield pass tokens are minted proportionally to market expiry, starting at 1e18
 yield pass tokens per NFT token ID at the start of the yield market. For
 example, minting a quarter into the yield market lifetime for one NFT would
-result in 0.75e18 yield pass tokens (ERC20) and one discount pass token
-(ERC721).
+result in 0.75e18 yield pass tokens (ERC20) and one node pass token (ERC721).
 
 Yield pass tokens represent shares of the total yield accrued by all NFTs
 escrowed by the yield adapter, which are redeemable for a proportional amount
