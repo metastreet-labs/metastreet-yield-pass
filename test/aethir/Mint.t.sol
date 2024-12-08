@@ -59,7 +59,7 @@ contract MintTest is AethirBaseTest {
         assertEq(IERC20(yp).balanceOf(cnlOwner), expectedAmount1, "Invalid yield token balance");
         assertEq(IERC20(yp).totalSupply(), expectedAmount1, "Invalid total supply");
         assertEq(IERC721(checkerNodeLicense).ownerOf(91521), address(yieldAdapter), "Invalid NFT owner");
-        assertEq(IERC721(dp).ownerOf(91521), cnlOwner, "Invalid discount token owner");
+        assertEq(IERC721(dp).ownerOf(91521), cnlOwner, "Invalid node token owner");
 
         assertEq(yieldPass.cumulativeYield(yp), 0, "Invalid cumulative yield");
         assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
@@ -169,7 +169,7 @@ contract MintTest is AethirBaseTest {
         assertEq(IERC20(yp).balanceOf(address(smartAccount)), expectedAmount, "Invalid yield token balance");
         assertEq(IERC20(yp).totalSupply(), expectedAmount, "Invalid total supply");
         assertEq(IERC721(checkerNodeLicense).ownerOf(91521), address(yieldAdapter), "Invalid NFT owner");
-        assertEq(IERC721(dp).ownerOf(91521), address(smartAccount), "Invalid discount token owner");
+        assertEq(IERC721(dp).ownerOf(91521), address(smartAccount), "Invalid node token owner");
     }
 
     function test__Mint_WithSmartWallet_RevertWhen_InvalidTransferSignature() external {

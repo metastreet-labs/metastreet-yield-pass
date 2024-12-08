@@ -45,7 +45,7 @@ contract RedeemTest is XaiBaseTest {
         yieldPass.redeem(yp, tokenIds);
         vm.stopPrank();
 
-        /* Check that the discount pass is burned */
+        /* Check that the node pass is burned */
         vm.expectRevert();
         IERC721(dp).ownerOf(19727);
     }

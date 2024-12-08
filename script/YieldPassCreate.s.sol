@@ -18,12 +18,12 @@ contract YieldPassCreate is Deployer {
 
         console.log("Creating Yield Pass Token...");
 
-        (address yieldToken, address discountToken) =
+        (address yieldToken, address nodeToken) =
             yieldPass.deployYieldPass(nft, startTime, expiry, isUserLocked, adapter);
 
         console.log("Yield Token: %s\n", yieldToken);
-        console.log("Discount Token: %s\n", discountToken);
+        console.log("Node Token: %s\n", nodeToken);
 
-        return (yieldToken, discountToken);
+        return (yieldToken, nodeToken);
     }
 }

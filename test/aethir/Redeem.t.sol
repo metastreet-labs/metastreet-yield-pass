@@ -11,7 +11,7 @@ import {AethirBaseTest} from "./Base.t.sol";
 import {AethirYieldAdapter, IERC4907} from "src/yieldAdapters/aethir/AethirYieldAdapter.sol";
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
 
-import {DiscountPassToken} from "src/DiscountPassToken.sol";
+import {NodePassToken} from "src/NodePassToken.sol";
 
 import "forge-std/console.sol";
 
@@ -53,7 +53,7 @@ contract RedeemTest is AethirBaseTest {
         yieldPass.redeem(yp, tokenIds);
         vm.stopPrank();
 
-        /* Check that the discount pass is burned */
+        /* Check that the node pass is burned */
         vm.expectRevert();
         IERC721(dp).ownerOf(91521);
     }

@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
-import {DiscountPassToken} from "src/DiscountPassToken.sol";
+import {NodePassToken} from "src/NodePassToken.sol";
 import {XaiYieldAdapter} from "src/yieldAdapters/xai/XaiYieldAdapter.sol";
 
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
@@ -56,7 +56,7 @@ contract XaiMintTest is XaiBaseTest {
         assertEq(IERC20(yp).balanceOf(snlOwner), expectedAmount1, "Invalid yield token balance");
         assertEq(IERC20(yp).totalSupply(), expectedAmount1, "Invalid total supply");
         assertEq(sentryNodeLicense.ownerOf(19727), address(yieldAdapter), "Invalid NFT owner");
-        assertEq(IERC721(dp).ownerOf(19727), snlOwner, "Invalid discount token owner");
+        assertEq(IERC721(dp).ownerOf(19727), snlOwner, "Invalid node token owner");
 
         assertEq(yieldPass.cumulativeYield(yp, 0), 0, "Invalid cumulative yield");
         assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
