@@ -244,6 +244,15 @@ interface IYieldPass is IERC721Receiver {
     function cumulativeYield(address yieldPass, uint256 yieldPassAmount) external view returns (uint256);
 
     /**
+     * @notice Get total claimable yield
+     * @param yieldPass Yield pass token
+     * @return Claimable yield in yield tokens
+     */
+    function claimableYield(
+        address yieldPass
+    ) external view returns (uint256);
+
+    /**
      * @notice Get claimable yield for yield pass amount
      * @param yieldPass Yield pass token
      * @param yieldPassAmount Yield pass amount

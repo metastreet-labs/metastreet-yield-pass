@@ -184,6 +184,15 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @inheritdoc IYieldPass
      */
+    function claimableYield(
+        address yieldPass
+    ) public view returns (uint256) {
+        return _yieldPassStates[yieldPass].claimState.total;
+    }
+
+    /**
+     * @inheritdoc IYieldPass
+     */
     function claimableYield(address yieldPass, uint256 yieldPassAmount) public view returns (uint256) {
         return Math.mulDiv(
             _yieldPassStates[yieldPass].claimState.total, yieldPassAmount, _yieldPassStates[yieldPass].claimState.shares

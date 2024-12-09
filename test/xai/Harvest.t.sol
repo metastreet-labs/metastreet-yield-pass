@@ -59,6 +59,7 @@ contract HarvestTest is XaiBaseTest {
         vm.stopPrank();
 
         /* Validate state */
+        assertEq(yieldPass.claimableYield(yp), 10, "Invalid claimable yield");
         assertEq(yieldPass.claimableYield(yp, 1 ether), 10, "Invalid claimable yield");
         assertEq(IERC20(esXai).balanceOf(address(yieldAdapter)), 10, "Invalid esXAI balance");
 

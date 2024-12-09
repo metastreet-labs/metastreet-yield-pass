@@ -86,6 +86,7 @@ contract HarvestTest is AethirBaseTest {
         assertEq(yieldPass.cumulativeYield(yp, 1 ether), 1_000_000, "Invalid cumulative yield");
 
         /* Validate state */
+        assertEq(yieldPass.claimableYield(yp), 0, "Invalid claimable yield");
         assertEq(yieldPass.claimableYield(yp, 1 ether), 0, "Invalid claimable yield");
         assertEq(IERC20(ath).balanceOf(address(yieldAdapter)), 0, "Invalid ath balance");
 
@@ -110,6 +111,7 @@ contract HarvestTest is AethirBaseTest {
         assertEq(yieldPass.cumulativeYield(yp, 1 ether), 1_000_000, "Invalid cumulative yield");
 
         /* Validate state */
+        assertEq(yieldPass.claimableYield(yp), 1_000_000, "Invalid claimable yield");
         assertEq(yieldPass.claimableYield(yp, 1 ether), 1_000_000, "Invalid claimable yield");
         assertEq(IERC20(ath).balanceOf(address(yieldAdapter)), 1_000_000, "Invalid ath balance");
 
