@@ -48,7 +48,7 @@ contract XaiMintTest is XaiBaseTest {
         /* Mint */
         vm.startPrank(snlOwner);
         yieldPass.mint(
-            yp, snlOwner, tokenIds1, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+            yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds1, generateStakingPools(stakingPool), ""
         );
         vm.stopPrank();
 
@@ -69,7 +69,7 @@ contract XaiMintTest is XaiBaseTest {
         /* Mint again */
         vm.startPrank(snlOwner);
         yieldPass.mint(
-            yp, snlOwner, tokenIds2, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+            yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds2, generateStakingPools(stakingPool), ""
         );
         vm.stopPrank();
 
@@ -90,7 +90,7 @@ contract XaiMintTest is XaiBaseTest {
         /* Mint again */
         vm.startPrank(snlOwner);
         yieldPass.mint(
-            yp, snlOwner, tokenIds3, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+            yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds3, generateStakingPools(stakingPool), ""
         );
         vm.stopPrank();
 
@@ -125,7 +125,7 @@ contract XaiMintTest is XaiBaseTest {
 
         /* Claim when paused */
         vm.expectRevert(Pausable.EnforcedPause.selector);
-        yieldPass.mint(yp, snlOwner, tokenIds1, snlOwner, snlOwner, block.timestamp, pools, "");
+        yieldPass.mint(yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds1, pools, "");
         vm.stopPrank();
     }
 
@@ -137,7 +137,7 @@ contract XaiMintTest is XaiBaseTest {
             address(uint160(uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao)))));
         bytes memory pools = generateStakingPools(stakingPool);
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidYieldPass.selector));
-        yieldPass.mint(randomAddress, snlOwner, tokenIds1, snlOwner, snlOwner, block.timestamp, pools, "");
+        yieldPass.mint(randomAddress, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds1, pools, "");
 
         vm.stopPrank();
     }
@@ -149,7 +149,7 @@ contract XaiMintTest is XaiBaseTest {
 
         /* Mint with staked key */
         vm.expectRevert();
-        yieldPass.mint(yp, snlOwner, tokenIds4, snlOwner, snlOwner, block.timestamp, pools, "");
+        yieldPass.mint(yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds4, pools, "");
 
         vm.stopPrank();
     }
@@ -162,7 +162,7 @@ contract XaiMintTest is XaiBaseTest {
         vm.startPrank(snlOwner);
         bytes memory pools = generateStakingPools(stakingPool);
         vm.expectRevert(abi.encodeWithSelector(XaiYieldAdapter.NotKycApproved.selector));
-        yieldPass.mint(yp, snlOwner, tokenIds1, snlOwner, snlOwner, block.timestamp, pools, "");
+        yieldPass.mint(yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds1, pools, "");
         vm.stopPrank();
     }
 
@@ -173,12 +173,12 @@ contract XaiMintTest is XaiBaseTest {
         vm.warp(expiry);
         bytes memory pools = generateStakingPools(stakingPool);
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidWindow.selector));
-        yieldPass.mint(yp, snlOwner, tokenIds1, snlOwner, snlOwner, block.timestamp, pools, "");
+        yieldPass.mint(yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds1, pools, "");
 
         /* Mint before start time */
         vm.warp(startTime - 1);
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidWindow.selector));
-        yieldPass.mint(yp, snlOwner, tokenIds1, snlOwner, snlOwner, block.timestamp, pools, "");
+        yieldPass.mint(yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds1, pools, "");
 
         vm.stopPrank();
     }

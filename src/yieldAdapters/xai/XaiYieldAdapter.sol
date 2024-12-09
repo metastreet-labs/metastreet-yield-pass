@@ -64,7 +64,25 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /*------------------------------------------------------------------------*/
-    /* Error */
+    /* Constants */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Implementation version
+     */
+    string public constant IMPLEMENTATION_VERSION = "1.0";
+
+    /*------------------------------------------------------------------------*/
+    /* Access Control Roles */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Yield pass role
+     */
+    bytes32 public constant YIELD_PASS_ROLE = keccak256("YIELD_PASS_ROLE");
+
+    /*------------------------------------------------------------------------*/
+    /* Errors */
     /*------------------------------------------------------------------------*/
 
     /**
@@ -83,15 +101,6 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     error NotKycApproved();
 
     /*------------------------------------------------------------------------*/
-    /* Access Control Roles */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Yield pass role
-     */
-    bytes32 public constant YIELD_PASS_ROLE = keccak256("YIELD_PASS_ROLE");
-
-    /*------------------------------------------------------------------------*/
     /* Events */
     /*------------------------------------------------------------------------*/
 
@@ -108,7 +117,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     event PoolRemoved(address indexed pool);
 
     /*------------------------------------------------------------------------*/
-    /* Immutable state */
+    /* Immutable State */
     /*------------------------------------------------------------------------*/
 
     /**
@@ -117,9 +126,14 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     address internal immutable _yieldPass;
 
     /**
-     * @notice Pool factory
+     * @notice XAI Pool factory
      */
-    IPoolFactory internal immutable _poolFactory;
+    IPoolFactory internal immutable _xaiPoolFactory;
+
+    /**
+     * @notice XAI Sentry node license
+     */
+    IERC721 internal immutable _xaiSentryNodeLicense;
 
     /**
      * @notice esXAI token
@@ -127,14 +141,9 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     IERC20 internal immutable _esXaiToken;
 
     /**
-     * @notice Referee
+     * @notice XAI Referee
      */
-    IReferee internal immutable _referee;
-
-    /**
-     * @notice Sentry node license
-     */
-    IERC721 internal immutable _sentryNodeLicense;
+    IReferee internal immutable _xaiReferee;
 
     /*------------------------------------------------------------------------*/
     /* State */
@@ -156,9 +165,9 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     EnumerableSet.AddressSet private _allowedPools;
 
     /**
-     * @notice Mapping of token ID to pool
+     * @notice Mapping of token ID to assigned pool
      */
-    mapping(uint256 => address) internal _pools;
+    mapping(uint256 => address) internal _assignedPools;
 
     /**
      * @notice Mapping of token ID to unstake request index
@@ -177,10 +186,10 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         _initialized = true;
 
         _yieldPass = yieldPass_;
-        _poolFactory = IPoolFactory(xaiPoolFactory_);
-        _esXaiToken = IERC20(_poolFactory.esXaiAddress());
-        _referee = IReferee(_poolFactory.refereeAddress());
-        _sentryNodeLicense = IERC721(_poolFactory.nodeLicenseAddress());
+        _xaiPoolFactory = IPoolFactory(xaiPoolFactory_);
+        _xaiSentryNodeLicense = IERC721(_xaiPoolFactory.nodeLicenseAddress());
+        _esXaiToken = IERC20(_xaiPoolFactory.esXaiAddress());
+        _xaiReferee = IReferee(_xaiPoolFactory.refereeAddress());
     }
 
     /*------------------------------------------------------------------------*/
@@ -214,14 +223,6 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Get yield pass factory
-     * @return Yield pass factory address
-     */
-    function yieldPass() public view returns (address) {
-        return _yieldPass;
-    }
-
-    /**
      * @inheritdoc IYieldAdapter
      */
     function name() public pure returns (string memory) {
@@ -252,27 +253,35 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     }
 
     /**
-     * @notice Get pool factory
+     * @notice Get yield pass factory
+     * @return Yield pass factory address
+     */
+    function yieldPass() public view returns (address) {
+        return _yieldPass;
+    }
+
+    /**
+     * @notice Get XAI pool factory
      * @return Pool factory address
      */
-    function poolFactory() public view returns (address) {
-        return address(_poolFactory);
+    function xaiPoolFactory() public view returns (address) {
+        return address(_xaiPoolFactory);
     }
 
     /**
-     * @notice Get sentry node license
+     * @notice Get XAI sentry node license
      * @return Sentry node license address
      */
-    function license() public view returns (address) {
-        return address(_sentryNodeLicense);
+    function xaiSentryNodeLicense() public view returns (address) {
+        return address(_xaiSentryNodeLicense);
     }
 
     /**
-     * @notice Get referee
+     * @notice Get XAI referee
      * @return Referee address
      */
-    function referee() public view returns (address) {
-        return address(_referee);
+    function xaiReferee() public view returns (address) {
+        return address(_xaiReferee);
     }
 
     /**
@@ -299,13 +308,13 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      * @inheritdoc IYieldAdapter
      */
     function setup(
-        uint256[] calldata tokenIds,
         uint64,
         address account,
+        uint256[] calldata tokenIds,
         bytes calldata setupData
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address[] memory) {
         /* Validate KYC'd */
-        if (!_referee.isKycApproved(account)) revert NotKycApproved();
+        if (!_xaiReferee.isKycApproved(account)) revert NotKycApproved();
 
         /* Decode setup data */
         address pool = abi.decode(setupData, (address));
@@ -315,20 +324,20 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
 
         for (uint256 i; i < tokenIds.length; i++) {
             /* Transfer license NFT from account to yield adapter */
-            IERC721(_sentryNodeLicense).safeTransferFrom(account, address(this), tokenIds[i]);
+            IERC721(_xaiSentryNodeLicense).safeTransferFrom(account, address(this), tokenIds[i]);
 
             /* Store pool */
-            _pools[tokenIds[i]] = pool;
+            _assignedPools[tokenIds[i]] = pool;
         }
 
         /* Stake licenses */
-        _poolFactory.stakeKeys(pool, tokenIds);
+        _xaiPoolFactory.stakeKeys(pool, tokenIds);
 
-        /* Instantiate pools */
-        address[] memory pools = new address[](1);
-        pools[0] = pool;
+        /* Return operators (pool) */
+        address[] memory operators = new address[](1);
+        operators[0] = pool;
 
-        return pools;
+        return operators;
     }
 
     /**
@@ -338,8 +347,8 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         /* Snapshot balance before */
         uint256 balanceBefore = _esXaiToken.balanceOf(address(this));
 
-        /* Claim from pools */
-        _poolFactory.claimFromPools(_allPools.values());
+        /* Claim from all pools */
+        _xaiPoolFactory.claimFromPools(_allPools.values());
 
         /* Snapshot balance after */
         uint256 balanceAfter = _esXaiToken.balanceOf(address(this));
@@ -362,19 +371,19 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      * @inheritdoc IYieldAdapter
      */
     function initiateWithdraw(
-        uint64 expiry,
+        uint64 expiryTime,
         uint256[] calldata tokenIds
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
-        /* Validate prepare withdraw is within window */
-        if (block.timestamp <= expiry - _poolFactory.unstakeKeysDelayPeriod()) revert InvalidWindow();
+        /* Validate unstaking would complete after expiry */
+        if (block.timestamp <= expiryTime - _xaiPoolFactory.unstakeKeysDelayPeriod()) revert InvalidWindow();
 
         /* Create unstake requests */
         for (uint256 i; i < tokenIds.length; i++) {
-            /* Get pool */
-            address pool = _pools[tokenIds[i]];
+            /* Get assigned pool */
+            address pool = _assignedPools[tokenIds[i]];
 
             /* Create unstake request */
-            _poolFactory.createUnstakeKeyRequest(pool, 1);
+            _xaiPoolFactory.createUnstakeKeyRequest(pool, 1);
 
             /* Unstake request ID */
             uint256 unstakeRequestIndex = IPool(pool).getUnstakeRequestCount(address(this)) - 1;
@@ -392,25 +401,25 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         uint256[] calldata tokenIds
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
         for (uint256 i; i < tokenIds.length; i++) {
-            /* Get pool */
-            address pool = _pools[tokenIds[i]];
+            /* Get assigned pool */
+            address pool = _assignedPools[tokenIds[i]];
 
             /* Get unstake request index */
             uint256 unstakeRequestIndex = _unstakeRequestIndexes[tokenIds[i]];
 
-            /* Remove token ID to unstake request index mapping */
+            /* Delete unstake request index mapping */
             delete _unstakeRequestIndexes[tokenIds[i]];
 
-            /* Remove token ID to pool from mapping */
-            delete _pools[tokenIds[i]];
+            /* Delete assigned pool mapping */
+            delete _assignedPools[tokenIds[i]];
 
             /* Unstake from pool */
             uint256[] memory licenses = new uint256[](1);
             licenses[0] = tokenIds[i];
-            _poolFactory.unstakeKeys(pool, unstakeRequestIndex, licenses);
+            _xaiPoolFactory.unstakeKeys(pool, unstakeRequestIndex, licenses);
 
-            /* Transfer key to recipient */
-            _sentryNodeLicense.transferFrom(address(this), recipient, tokenIds[i]);
+            /* Transfer license NFT to recipient */
+            _xaiSentryNodeLicense.transferFrom(address(this), recipient, tokenIds[i]);
         }
     }
 

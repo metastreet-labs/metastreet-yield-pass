@@ -46,10 +46,10 @@ contract MintTest is AethirBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds1,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds1,
             generateSignedNodes(operator, tokenIds1, uint64(block.timestamp), 1, expiry),
             ""
         );
@@ -75,10 +75,10 @@ contract MintTest is AethirBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds2,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds2,
             generateSignedNodes(operator, tokenIds2, halfWayPoint, 1, expiry),
             ""
         );
@@ -104,10 +104,10 @@ contract MintTest is AethirBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds3,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds3,
             generateSignedNodes(operator, tokenIds3, oneSecondBeforeExpiry, 1, expiry),
             ""
         );
@@ -151,13 +151,13 @@ contract MintTest is AethirBaseTest {
             address(yieldPass),
             0,
             abi.encodeWithSignature(
-                "mint(address,address,uint256[],address,address,uint256,bytes,bytes)",
+                "mint(address,address,address,address,uint256,uint256[],bytes,bytes)",
                 yp,
                 altCnlOwner,
-                tokenIds1,
                 address(smartAccount),
                 address(smartAccount),
                 deadline,
+                tokenIds1,
                 generateSignedNodes(operator, tokenIds1, uint64(block.timestamp), 1, expiry),
                 transferSignature
             )
@@ -191,13 +191,13 @@ contract MintTest is AethirBaseTest {
             address(yieldPass),
             0,
             abi.encodeWithSignature(
-                "mint(address,address,uint256[],address,address,uint256,bytes,bytes)",
+                "mint(address,address,address,address,uint256,uint256[],bytes,bytes)",
                 yp,
                 altCnlOwner,
-                tokenIds1,
                 address(smartAccount),
                 address(smartAccount),
                 deadline,
+                tokenIds1,
                 setupData,
                 transferSignature1
             )
@@ -212,13 +212,13 @@ contract MintTest is AethirBaseTest {
             address(yieldPass),
             0,
             abi.encodeWithSignature(
-                "mint(address,address,uint256[],address,address,uint256,bytes,bytes)",
+                "mint(address,address,address,address,uint256,uint256[],bytes,bytes)",
                 yp,
                 altCnlOwner,
-                tokenIds1,
                 address(smartAccount),
                 address(smartAccount),
                 deadline,
+                tokenIds1,
                 setupData,
                 transferSignature2
             )
@@ -237,7 +237,7 @@ contract MintTest is AethirBaseTest {
         /* Mint when paused */
         bytes memory setupData = generateSignedNodes(operator, tokenIds1, uint64(block.timestamp), 1, expiry);
         vm.expectRevert(Pausable.EnforcedPause.selector);
-        yieldPass.mint(yp, cnlOwner, tokenIds1, cnlOwner, cnlOwner, block.timestamp, setupData, "");
+        yieldPass.mint(yp, cnlOwner, cnlOwner, cnlOwner, block.timestamp, tokenIds1, setupData, "");
     }
 
     function test__Mint_RevertWhen_UndeployedYieldPass() external {
@@ -248,7 +248,7 @@ contract MintTest is AethirBaseTest {
             address(uint160(uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao)))));
         bytes memory setupData = generateSignedNodes(operator, tokenIds1, uint64(block.timestamp), 1, expiry);
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidYieldPass.selector));
-        yieldPass.mint(randomAddress, cnlOwner, tokenIds1, cnlOwner, cnlOwner, block.timestamp, setupData, "");
+        yieldPass.mint(randomAddress, cnlOwner, cnlOwner, cnlOwner, block.timestamp, tokenIds1, setupData, "");
         vm.stopPrank();
     }
 
@@ -259,13 +259,13 @@ contract MintTest is AethirBaseTest {
         vm.warp(expiry);
         bytes memory setupData1 = generateSignedNodes(operator, tokenIds1, uint64(block.timestamp), 1, expiry);
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidWindow.selector));
-        yieldPass.mint(yp, cnlOwner, tokenIds1, cnlOwner, cnlOwner, block.timestamp, setupData1, "");
+        yieldPass.mint(yp, cnlOwner, cnlOwner, cnlOwner, block.timestamp, tokenIds1, setupData1, "");
 
         /* Mint before start time */
         vm.warp(startTime - 1);
         bytes memory setupData2 = generateSignedNodes(operator, tokenIds1, uint64(startTime - 1), 1, expiry);
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidWindow.selector));
-        yieldPass.mint(yp, cnlOwner, tokenIds1, cnlOwner, cnlOwner, block.timestamp, setupData2, "");
+        yieldPass.mint(yp, cnlOwner, cnlOwner, cnlOwner, block.timestamp, tokenIds1, setupData2, "");
 
         vm.stopPrank();
     }
@@ -276,12 +276,12 @@ contract MintTest is AethirBaseTest {
         /* Mint with timestamp in the future */
         bytes memory setupData1 = generateSignedNodes(operator, tokenIds1, uint64(block.timestamp + 1), 0, expiry);
         vm.expectRevert(abi.encodeWithSelector(AethirYieldAdapter.InvalidTimestamp.selector));
-        yieldPass.mint(yp, cnlOwner, tokenIds1, cnlOwner, cnlOwner, block.timestamp, setupData1, "");
+        yieldPass.mint(yp, cnlOwner, cnlOwner, cnlOwner, block.timestamp, tokenIds1, setupData1, "");
 
         /* Mint with expired timestamp */
         bytes memory setupData2 = generateSignedNodes(operator, tokenIds1, uint64(block.timestamp - 2), 1, expiry);
         vm.expectRevert(abi.encodeWithSelector(AethirYieldAdapter.InvalidTimestamp.selector));
-        yieldPass.mint(yp, cnlOwner, tokenIds1, cnlOwner, cnlOwner, block.timestamp, setupData2, "");
+        yieldPass.mint(yp, cnlOwner, cnlOwner, cnlOwner, block.timestamp, tokenIds1, setupData2, "");
 
         vm.stopPrank();
     }
@@ -291,7 +291,7 @@ contract MintTest is AethirBaseTest {
 
         bytes memory setupData = generateSignedNodes(operator, tokenIds1, uint64(block.timestamp), 1, expiry - 1);
         vm.expectRevert(abi.encodeWithSelector(AethirYieldAdapter.InvalidExpiry.selector));
-        yieldPass.mint(yp, cnlOwner, tokenIds1, cnlOwner, cnlOwner, block.timestamp, setupData, "");
+        yieldPass.mint(yp, cnlOwner, cnlOwner, cnlOwner, block.timestamp, tokenIds1, setupData, "");
 
         vm.stopPrank();
     }

@@ -45,7 +45,7 @@ contract ClaimTest is XaiBaseTest {
         /* Mint */
         vm.startPrank(snlOwner);
         yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+            yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds, generateStakingPools(stakingPool), ""
         );
         vm.stopPrank();
 
@@ -71,7 +71,7 @@ contract ClaimTest is XaiBaseTest {
         assertEq(yieldPass.cumulativeYield(yp, 1 ether), 10, "Invalid cumulative yield");
 
         /* Check claimable yield */
-        assertEq(yieldPass.claimable(yp, 1 ether), 10, "Invalid claimable yield");
+        assertEq(yieldPass.claimableYield(yp, 1 ether), 10, "Invalid claimable yield");
 
         assertEq(IERC20(yp).balanceOf(snlOwner), 0, "Invalid yield token balance");
         assertEq(IERC20(yp).totalSupply(), 0, "Invalid total supply");
@@ -88,7 +88,7 @@ contract ClaimTest is XaiBaseTest {
         /* Mint */
         vm.startPrank(snlOwner);
         yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+            yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds, generateStakingPools(stakingPool), ""
         );
         vm.stopPrank();
 
@@ -121,7 +121,7 @@ contract ClaimTest is XaiBaseTest {
         /* Mint */
         vm.startPrank(snlOwner);
         yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+            yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds, generateStakingPools(stakingPool), ""
         );
         vm.stopPrank();
 

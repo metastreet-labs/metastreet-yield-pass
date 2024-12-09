@@ -11,11 +11,6 @@ interface IYieldPassUtils {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Invalid address (e.g. zero address)
-     */
-    error InvalidAddress();
-
-    /**
      * @notice Invalid slippage
      */
     error InvalidSlippage();

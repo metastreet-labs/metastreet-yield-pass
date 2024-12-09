@@ -44,7 +44,7 @@ usage() {
     echo "  deploy-yield-pass-utils <uniswap v2 factory>"
     echo "  upgrade-yield-pass-utils <uniswap v2 factory>"
     echo ""
-    echo "  yield-pass-create <nft> <startTime> <expiry> <is user locked> <yield adapter>"
+    echo "  yield-pass-create <nft> <start time> <expiry time> <is user locked> <yield adapter>"
     echo ""
     echo "  deploy-aethir-yield-adapter <checker node license> <checker claim and withdraw> <ath token> <cliff seconds> <signer>"
     echo "  upgrade-aethir-yield-adapter <checker node license> <checker claim and withdraw> <ath token>"
@@ -112,7 +112,7 @@ case $1 in
 
     "yield-pass-create")
         if [ "$#" -ne 6 ]; then
-            echo "Invalid param count; Usage: $0 yield-pass-create <nft> <start-time> <expiry> <is-user-locked> <yield-adapter>"
+            echo "Invalid param count; Usage: $0 yield-pass-create <nft> <start time> <expiry time> <is user locked> <yield adapter>"
             exit 1
         fi
 

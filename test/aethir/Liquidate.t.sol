@@ -88,10 +88,10 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds1,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds1,
             generateSignedNodes(operator, tokenIds1, uint64(block.timestamp), 1, expiry),
             ""
         );
@@ -159,13 +159,13 @@ contract LiquidateTest is AethirSepoliaBaseTest {
             target: address(yieldPass),
             value: 0,
             data: abi.encodeWithSignature(
-                "mint(address,address,uint256[],address,address,uint256,bytes,bytes)",
+                "mint(address,address,address,address,uint256,uint256[],bytes,bytes)",
                 yp,
                 altCnlOwner,
-                tokenIds2,
                 address(smartAccount),
                 address(smartAccount),
                 deadline,
+                tokenIds2,
                 setupData,
                 transferSignature
             )

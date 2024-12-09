@@ -14,7 +14,7 @@ contract NodePassToken is ERC721 {
 
     /**
      * @notice Emitted when user locked is set
-     * @param isUserLocked True if user locked enabled
+     * @param isUserLocked True if user token lock enabled, otherwise false
      */
     event UserLockedSet(bool isUserLocked);
 
@@ -32,7 +32,7 @@ contract NodePassToken is ERC721 {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice True if user locked enabled
+     * @notice User token locked status
      */
     bool internal _isUserLocked;
 
@@ -59,15 +59,15 @@ contract NodePassToken is ERC721 {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Get if token is user locked
-     * @return True if token is user locked
+     * @notice Get user token locked status
+     * @return True if user token lock enabled, otherwise false
      */
     function isUserLocked() external view returns (bool) {
         return _isUserLocked;
     }
 
     /**
-     * @notice Get token ID to account lock
+     * @notice Get account for locked token ID
      * @param tokenId Token ID
      * @return Locked account address
      */
@@ -116,7 +116,7 @@ contract NodePassToken is ERC721 {
 
     /**
      * @notice Set user locked
-     * @param isUserLocked_ True if user locked enabled
+     * @param isUserLocked_ True if user locked enabled, otherwise false
      */
     function setUserLocked(
         bool isUserLocked_

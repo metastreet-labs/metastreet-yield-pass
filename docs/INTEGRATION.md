@@ -10,4 +10,4 @@ Yield adapters implement four main hooks in this interface:
 * `setup()` to assign NFTs to operators
 * `harvest()` to periodically harvest yield
 * `claim()` to claim yield tokens
-* `initiateWidthraw()` and `withdraw()` to initiate and complete the withdrawal of NFTs
+* `initiateWithdraw()` and `withdraw()` to initiate and complete withdrawal of NFTs

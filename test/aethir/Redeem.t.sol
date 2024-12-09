@@ -36,10 +36,10 @@ contract RedeemTest is AethirBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds,
             generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
@@ -64,10 +64,10 @@ contract RedeemTest is AethirBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds,
             generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
@@ -90,10 +90,10 @@ contract RedeemTest is AethirBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds,
             generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
@@ -115,10 +115,10 @@ contract RedeemTest is AethirBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds,
             generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );

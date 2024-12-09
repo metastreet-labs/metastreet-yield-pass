@@ -313,7 +313,7 @@ abstract contract AethirBaseTest is PoolBaseTest {
     ) internal pure returns (bytes memory) {
         /* Generate claim data */
         if (isClaim) {
-            AethirYieldAdapter.ClaimData memory claimData = AethirYieldAdapter.ClaimData({
+            AethirYieldAdapter.AethirClaimData memory claimData = AethirYieldAdapter.AethirClaimData({
                 orderId: 1,
                 cliffSeconds: withError ? 180 days - 1 : 180 days,
                 expiryTimestamp: orderExpiryTimestamp,
@@ -327,7 +327,7 @@ abstract contract AethirBaseTest is PoolBaseTest {
         uint256[] memory orderIdArray = new uint256[](1);
         orderIdArray[0] = 1;
 
-        AethirYieldAdapter.WithdrawData memory withdrawData = AethirYieldAdapter.WithdrawData({
+        AethirYieldAdapter.AethirWithdrawData memory withdrawData = AethirYieldAdapter.AethirWithdrawData({
             orderIdArray: orderIdArray,
             expiryTimestamp: orderExpiryTimestamp,
             signatureArray: new bytes[](1)

@@ -33,7 +33,7 @@ contract RedeemTest is XaiBaseTest {
         /* Mint */
         vm.startPrank(snlOwner);
         yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+            yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds, generateStakingPools(stakingPool), ""
         );
         vm.stopPrank();
 
@@ -59,7 +59,7 @@ contract RedeemTest is XaiBaseTest {
         /* Mint */
         vm.startPrank(snlOwner);
         yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+            yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds, generateStakingPools(stakingPool), ""
         );
         IERC721(np).transferFrom(snlOwner, address(1), 19727);
         vm.stopPrank();
@@ -78,7 +78,7 @@ contract RedeemTest is XaiBaseTest {
         /* Mint */
         vm.startPrank(snlOwner);
         yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+            yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds, generateStakingPools(stakingPool), ""
         );
         vm.stopPrank();
 

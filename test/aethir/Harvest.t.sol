@@ -57,10 +57,10 @@ contract HarvestTest is AethirBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds,
             generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
@@ -86,7 +86,7 @@ contract HarvestTest is AethirBaseTest {
         assertEq(yieldPass.cumulativeYield(yp, 1 ether), 1_000_000, "Invalid cumulative yield");
 
         /* Validate state */
-        assertEq(yieldPass.claimable(yp, 1 ether), 0, "Invalid claimable yield");
+        assertEq(yieldPass.claimableYield(yp, 1 ether), 0, "Invalid claimable yield");
         assertEq(IERC20(ath).balanceOf(address(yieldAdapter)), 0, "Invalid ath balance");
 
         assertEq(yieldPass.claimState(yp).total, 0, "Invalid total yield state");
@@ -110,7 +110,7 @@ contract HarvestTest is AethirBaseTest {
         assertEq(yieldPass.cumulativeYield(yp, 1 ether), 1_000_000, "Invalid cumulative yield");
 
         /* Validate state */
-        assertEq(yieldPass.claimable(yp, 1 ether), 1_000_000, "Invalid claimable yield");
+        assertEq(yieldPass.claimableYield(yp, 1 ether), 1_000_000, "Invalid claimable yield");
         assertEq(IERC20(ath).balanceOf(address(yieldAdapter)), 1_000_000, "Invalid ath balance");
 
         assertEq(yieldPass.claimState(yp).total, 1_000_000, "Invalid total yield state");
@@ -124,10 +124,10 @@ contract HarvestTest is AethirBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds,
             generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );

@@ -31,7 +31,7 @@ contract WithdrawTest is XaiBaseTest {
         /* Mint */
         vm.startPrank(snlOwner);
         yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+            yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds, generateStakingPools(stakingPool), ""
         );
         vm.stopPrank();
 
@@ -59,7 +59,7 @@ contract WithdrawTest is XaiBaseTest {
         /* Mint */
         vm.startPrank(snlOwner);
         yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+            yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds, generateStakingPools(stakingPool), ""
         );
         vm.stopPrank();
 
@@ -77,7 +77,7 @@ contract WithdrawTest is XaiBaseTest {
         /* Mint */
         vm.startPrank(snlOwner);
         yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+            yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds, generateStakingPools(stakingPool), ""
         );
         vm.stopPrank();
 

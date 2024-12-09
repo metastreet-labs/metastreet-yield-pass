@@ -3,9 +3,9 @@ pragma solidity 0.8.26;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import "./interfaces/IYieldPassUtils.sol";
-
 import "./libraries/UniswapV2Library.sol";
+
+import {IYieldPassUtils} from "./interfaces/IYieldPassUtils.sol";
 
 /**
  * @title Yield Pass Utilities
@@ -39,7 +39,7 @@ contract YieldPassUtils is IYieldPassUtils {
     constructor(
         address uniswapV2Factory_
     ) {
-        if (address(uniswapV2Factory_) == address(0)) revert InvalidAddress();
+        require(address(uniswapV2Factory_) != address(0), "Invalid address");
 
         uniswapV2Factory = uniswapV2Factory_;
     }
@@ -49,7 +49,7 @@ contract YieldPassUtils is IYieldPassUtils {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Compute balanced LP for yield pass token amount
+     * @notice Compute balanced LP
      * @param yieldPassToken Yield pass token
      * @param currencyToken Currency token
      * @param yieldPassAmount Yield pass amount
@@ -96,7 +96,7 @@ contract YieldPassUtils is IYieldPassUtils {
         /* Compute balanced LP amount */
         uint256 currencyAmount = _computeBalancedLP(yieldPassToken, currencyToken, yieldPassAmount);
 
-        /* Validate min currency token amount */
+        /* Validate min currency amount */
         if (currencyAmount < minCurrencyAmount) revert InvalidSlippage();
 
         /* Validate deadline */

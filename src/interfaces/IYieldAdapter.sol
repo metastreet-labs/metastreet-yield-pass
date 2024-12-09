@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
@@ -26,7 +26,7 @@ interface IYieldAdapter is IERC721Receiver {
 
     /**
      * @notice Get cumulative yield
-     * @return Yield token amount
+     * @return Cumulative yield token amount
      */
     function cumulativeYield() external view returns (uint256);
 
@@ -35,41 +35,41 @@ interface IYieldAdapter is IERC721Receiver {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Setup yield adapter
-     * @param tokenIds Token IDs
-     * @param expiry Expiry
+     * @notice Setup token IDs for yield
+     * @param expiryTime Expiry timestamp
      * @param account Account
+     * @param tokenIds Token IDs
      * @param setupData Setup data
      * @return Operators
      */
     function setup(
-        uint256[] calldata tokenIds,
-        uint64 expiry,
+        uint64 expiryTime,
         address account,
+        uint256[] calldata tokenIds,
         bytes calldata setupData
     ) external returns (address[] memory);
 
     /**
      * @notice Harvest yield
-     * @param expiry Expiry
+     * @param expiryTime Expiry timestamp
      * @param harvestData Harvest data
-     * @return Yield token amount
+     * @return Yield token amount harvested
      */
-    function harvest(uint64 expiry, bytes calldata harvestData) external returns (uint256);
+    function harvest(uint64 expiryTime, bytes calldata harvestData) external returns (uint256);
 
     /**
      * @notice Claim yield
      * @param recipient Recipient
-     * @param amount Amount
+     * @param amount Yield token amount
      */
     function claim(address recipient, uint256 amount) external;
 
     /**
      * @notice Initiate withdraw of token IDs
-     * @param expiry Expiry
+     * @param expiryTime Expiry timestamp
      * @param tokenIds Token IDs
      */
-    function initiateWithdraw(uint64 expiry, uint256[] calldata tokenIds) external;
+    function initiateWithdraw(uint64 expiryTime, uint256[] calldata tokenIds) external;
 
     /**
      * @notice Withdraw token IDs

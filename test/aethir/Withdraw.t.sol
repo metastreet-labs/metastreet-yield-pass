@@ -33,10 +33,10 @@ contract WithdrawTest is AethirBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds,
             generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
@@ -73,13 +73,13 @@ contract WithdrawTest is AethirBaseTest {
             address(yieldPass),
             0,
             abi.encodeWithSignature(
-                "mint(address,address,uint256[],address,address,uint256,bytes,bytes)",
+                "mint(address,address,address,address,uint256,uint256[],bytes,bytes)",
                 yp,
                 altCnlOwner,
-                tokenIds,
                 address(smartAccount),
                 address(smartAccount),
                 deadline,
+                tokenIds,
                 generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
                 transferSignature
             )
@@ -109,10 +109,10 @@ contract WithdrawTest is AethirBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds,
             generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
@@ -134,10 +134,10 @@ contract WithdrawTest is AethirBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds,
             generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );

@@ -91,10 +91,10 @@ contract ClaimTest is AethirBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds,
             generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
@@ -113,7 +113,7 @@ contract ClaimTest is AethirBaseTest {
         assertEq(yieldPass.cumulativeYield(yp, 1 ether), 1_000_000, "Invalid cumulative yield");
 
         /* Check claimable yield */
-        assertEq(yieldPass.claimable(yp, 1 ether), 1_000_000, "Invalid claimable yield");
+        assertEq(yieldPass.claimableYield(yp, 1 ether), 1_000_000, "Invalid claimable yield");
         assertEq(IERC20(yp).balanceOf(cnlOwner), 0, "Invalid yield token balance");
         assertEq(IERC20(yp).totalSupply(), 0, "Invalid total supply");
         assertEq(IERC20(ath).balanceOf(cnlOwner), initialBalance + 1_000_000, "Invalid ath balance");
@@ -145,13 +145,13 @@ contract ClaimTest is AethirBaseTest {
             address(yieldPass),
             0,
             abi.encodeWithSignature(
-                "mint(address,address,uint256[],address,address,uint256,bytes,bytes)",
+                "mint(address,address,address,address,uint256,uint256[],bytes,bytes)",
                 yp,
                 altCnlOwner,
-                tokenIds,
                 address(smartAccount),
                 address(smartAccount),
                 deadline,
+                tokenIds,
                 generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
                 transferSignature
             )
@@ -178,7 +178,7 @@ contract ClaimTest is AethirBaseTest {
         assertEq(yieldPass.cumulativeYield(yp, 1 ether), 1_000_000, "Invalid cumulative yield");
 
         /* Check claimable yield */
-        assertEq(yieldPass.claimable(yp, 1 ether), 1_000_000, "Invalid claimable yield");
+        assertEq(yieldPass.claimableYield(yp, 1 ether), 1_000_000, "Invalid claimable yield");
         assertEq(IERC20(yp).balanceOf(address(smartAccount)), 0, "Invalid yield token balance");
         assertEq(IERC20(yp).totalSupply(), 0, "Invalid total supply");
         assertEq(IERC20(ath).balanceOf(address(smartAccount)), initialBalance + 1_000_000, "Invalid ath balance");
@@ -195,10 +195,10 @@ contract ClaimTest is AethirBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds,
             generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );
@@ -226,10 +226,10 @@ contract ClaimTest is AethirBaseTest {
         yieldPass.mint(
             yp,
             cnlOwner,
-            tokenIds,
             cnlOwner,
             cnlOwner,
             block.timestamp,
+            tokenIds,
             generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
             ""
         );

@@ -42,7 +42,7 @@ contract HarvestTest is XaiBaseTest {
         /* Mint */
         vm.startPrank(snlOwner);
         yieldPass.mint(
-            yp, snlOwner, tokenIds, snlOwner, snlOwner, block.timestamp, generateStakingPools(stakingPool), ""
+            yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds, generateStakingPools(stakingPool), ""
         );
         vm.stopPrank();
 
@@ -59,7 +59,7 @@ contract HarvestTest is XaiBaseTest {
         vm.stopPrank();
 
         /* Validate state */
-        assertEq(yieldPass.claimable(yp, 1 ether), 10, "Invalid claimable yield");
+        assertEq(yieldPass.claimableYield(yp, 1 ether), 10, "Invalid claimable yield");
         assertEq(IERC20(esXai).balanceOf(address(yieldAdapter)), 10, "Invalid esXAI balance");
 
         assertEq(yieldPass.claimState(yp).total, 10, "Invalid total yield state");

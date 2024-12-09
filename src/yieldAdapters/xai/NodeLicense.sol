@@ -176,12 +176,12 @@ contract NodeLicense is ERC721EnumerableUpgradeable, AccessControlUpgradeable {
         }
 
         uint256 remainder = msg.value - finalPrice;
-        (bool sent, bytes memory data) = fundsReceiver.call{value: finalPrice - referralReward}("");
+        (bool sent,) = fundsReceiver.call{value: finalPrice - referralReward}("");
         require(sent, "Failed to send Ether");
 
         // Send back the remainder amount
         if (remainder > 0) {
-            (bool sentRemainder, bytes memory dataRemainder) = msg.sender.call{value: remainder}("");
+            (bool sentRemainder,) = msg.sender.call{value: remainder}("");
             require(sentRemainder, "Failed to send back the remainder Ether");
         }
     }
