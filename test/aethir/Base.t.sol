@@ -200,8 +200,7 @@ abstract contract AethirBaseTest is PoolBaseTest {
         yieldAdapterImpl = new AethirYieldAdapter(
             address(yieldPass),
             address(checkerNodeLicense),
-            isMock ? address(mockCheckerClaimAndWithdraw) : address(checkerClaimAndWithdraw),
-            address(ath)
+            isMock ? address(mockCheckerClaimAndWithdraw) : address(checkerClaimAndWithdraw)
         );
 
         /* Deploy yield adapter proxy */

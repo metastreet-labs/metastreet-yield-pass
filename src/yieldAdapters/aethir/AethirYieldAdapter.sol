@@ -33,6 +33,7 @@ interface IERC4907 {
  * @title Aethir Checker Claim And Withdraw Interface
  */
 interface ICheckerClaimAndWithdraw {
+    function aethirTokenAdress() external view returns (address);
     function withdraw(uint256[] memory orderIds, uint48 expiryTimestamp, bytes[] memory signatures) external;
     function claim(
         uint256 orderId,
@@ -263,8 +264,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     constructor(
         address yieldPass_,
         address aethirCheckerNodeLicense_,
-        address aethirCheckerClaimAndWithdraw_,
-        address athToken_
+        address aethirCheckerClaimAndWithdraw_
     ) EIP712(name(), DOMAIN_VERSION) {
         /* Disable initialization of implementation contract */
         _initialized = true;
@@ -272,7 +272,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         _yieldPass = yieldPass_;
         _aethirCheckerNodeLicense = aethirCheckerNodeLicense_;
         _aethirCheckerClaimAndWithdraw = ICheckerClaimAndWithdraw(aethirCheckerClaimAndWithdraw_);
-        _athToken = IERC20(athToken_);
+        _athToken = IERC20(_aethirCheckerClaimAndWithdraw.aethirTokenAdress());
     }
 
     /*------------------------------------------------------------------------*/

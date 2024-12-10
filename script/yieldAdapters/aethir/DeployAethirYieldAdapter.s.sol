@@ -12,7 +12,6 @@ contract DeployAethirYieldAdapter is Deployer {
     function run(
         address checkerNodeLicense,
         address checkerClaimAndWithdraw,
-        address athToken,
         uint48 cliffSeconds,
         address signer
     ) public broadcast useDeployment returns (address) {
@@ -23,7 +22,7 @@ contract DeployAethirYieldAdapter is Deployer {
         console.log("Deploying AethirYieldAdapter implementation...");
 
         AethirYieldAdapter yieldAdapterImpl =
-            new AethirYieldAdapter(_deployment.yieldPass, checkerNodeLicense, checkerClaimAndWithdraw, athToken);
+            new AethirYieldAdapter(_deployment.yieldPass, checkerNodeLicense, checkerClaimAndWithdraw);
 
         console.log("AethirYieldAdapter implementation deployed at: %s\n", address(yieldAdapterImpl));
 

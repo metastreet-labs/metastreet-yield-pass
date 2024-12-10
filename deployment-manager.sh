@@ -46,8 +46,8 @@ usage() {
     echo ""
     echo "  yield-pass-create <nft> <start time> <expiry time> <is user locked> <yield adapter>"
     echo ""
-    echo "  deploy-aethir-yield-adapter <checker node license> <checker claim and withdraw> <ath token> <cliff seconds> <signer>"
-    echo "  upgrade-aethir-yield-adapter <checker node license> <checker claim and withdraw> <ath token>"
+    echo "  deploy-aethir-yield-adapter <checker node license> <checker claim and withdraw> <cliff seconds> <signer>"
+    echo "  upgrade-aethir-yield-adapter <checker node license> <checker claim and withdraw>"
     echo ""
     echo "  deploy-xai-yield-adapter <xai pool factory>"
     echo "  upgrade-xai-yield-adapter <xai pool factory>"
@@ -121,23 +121,23 @@ case $1 in
         ;;
 
     "deploy-aethir-yield-adapter")
-        if [ "$#" -ne 6 ]; then
-            echo "Invalid param count; Usage: $0 deploy-aethir-yield-adapter <checker node license> <checker claim and withdraw> <ath token> <cliff seconds> <signer>"
+        if [ "$#" -ne 5 ]; then
+            echo "Invalid param count; Usage: $0 deploy-aethir-yield-adapter <checker node license> <checker claim and withdraw> <cliff seconds> <signer>"
             exit 1
         fi
 
         echo "Deploying Aethir Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/DeployAethirYieldAdapter.s.sol:DeployAethirYieldAdapter" --sig "run(address,address,address,uint48,address)" $2 $3 $4 $5 $6
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/DeployAethirYieldAdapter.s.sol:DeployAethirYieldAdapter" --sig "run(address,address,uint48,address)" $2 $3 $4 $5
         ;;
 
     "upgrade-aethir-yield-adapter")
-        if [ "$#" -ne 4 ]; then
-            echo "Invalid param count; Usage: $0 upgrade-aethir-yield-adapter <checker node license> <checker claim and withdraw> <ath token>"
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid param count; Usage: $0 upgrade-aethir-yield-adapter <checker node license> <checker claim and withdraw>"
             exit 1
         fi
 
         echo "Upgrading Aethir Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/UpgradeAethirYieldAdapter.s.sol:UpgradeAethirYieldAdapter" --sig "run(address,address,address)" $2 $3 $4
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/UpgradeAethirYieldAdapter.s.sol:UpgradeAethirYieldAdapter" --sig "run(address,address)" $2 $3
         ;;
 
     "deploy-xai-yield-adapter")
