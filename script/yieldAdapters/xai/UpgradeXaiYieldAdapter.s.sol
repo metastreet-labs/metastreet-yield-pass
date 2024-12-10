@@ -10,7 +10,11 @@ import {XaiYieldAdapter} from "src/yieldAdapters/xai/XaiYieldAdapter.sol";
 import {Deployer} from "../../utils/Deployer.s.sol";
 
 contract UpgradeXaiYieldAdapter is Deployer {
-    function run(address yieldPass, address xaiPoolFactory) public broadcast useDeployment returns (address) {
+    function run(
+        address proxy,
+        address yieldPass,
+        address xaiPoolFactory
+    ) public broadcast useDeployment returns (address) {
         /* Deploy new XaiYieldAdapter Implementation */
         console.log("Deploying XaiYieldAdapter implementation...");
 
@@ -18,17 +22,15 @@ contract UpgradeXaiYieldAdapter is Deployer {
 
         console.log("XaiYieldAdapter implementation deployed at: %s\n", address(yieldAdapterImpl));
 
-        console.log("Upgrading proxy %s implementation...", _deployment.xaiYieldAdapter);
+        console.log("Upgrading proxy %s implementation...", proxy);
 
         /* Lookup proxy admin */
-        address proxyAdmin = address(uint160(uint256(vm.load(_deployment.xaiYieldAdapter, ERC1967Utils.ADMIN_SLOT))));
+        address proxyAdmin = address(uint160(uint256(vm.load(proxy, ERC1967Utils.ADMIN_SLOT))));
 
         /* Upgrade Proxy */
-        ProxyAdmin(proxyAdmin).upgradeAndCall(
-            ITransparentUpgradeableProxy(_deployment.xaiYieldAdapter), address(yieldAdapterImpl), ""
-        );
+        ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(proxy), address(yieldAdapterImpl), "");
 
-        console.log("Upgraded proxy %s implementation to: %s\n", _deployment.xaiYieldAdapter, address(yieldAdapterImpl));
+        console.log("Upgraded proxy %s implementation to: %s\n", proxy, address(yieldAdapterImpl));
 
         return address(yieldAdapterImpl);
     }

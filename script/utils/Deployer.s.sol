@@ -24,8 +24,6 @@ contract Deployer is BaseScript {
     struct Deployment {
         address yieldPass;
         address yieldPassUtils;
-        address aethirYieldAdapter;
-        address xaiYieldAdapter;
     }
 
     /*--------------------------------------------------------------------------*/
@@ -102,10 +100,6 @@ contract Deployer is BaseScript {
         json = stdJson.serialize("", "YieldPass", _deployment.yieldPass);
         json = stdJson.serialize("", "YieldPassUtils", _deployment.yieldPassUtils);
 
-        /* Adapters */
-        json = stdJson.serialize("", "AethirYieldAdapter", _deployment.aethirYieldAdapter);
-        json = stdJson.serialize("", "XaiYieldAdapter", _deployment.xaiYieldAdapter);
-
         console.log("Writing json to file: %s\n", json);
         vm.writeJson(json, _getJsonFilePath());
     }
@@ -130,20 +124,6 @@ contract Deployer is BaseScript {
             _deployment.yieldPassUtils = instance;
         } catch {
             console.log("Could not parse YieldPassUtils");
-        }
-
-        /* Deserialize Aethir Yield Adapter */
-        try vm.parseJsonAddress(json, ".AethirYieldAdapter") returns (address instance) {
-            _deployment.aethirYieldAdapter = instance;
-        } catch {
-            console.log("Could not parse AethirYieldAdapter");
-        }
-
-        /* Deserialize XAI Yield Adapter */
-        try vm.parseJsonAddress(json, ".XaiYieldAdapter") returns (address instance) {
-            _deployment.xaiYieldAdapter = instance;
-        } catch {
-            console.log("Could not parse XaiYieldAdapter");
         }
     }
 }

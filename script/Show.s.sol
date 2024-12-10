@@ -16,9 +16,6 @@ contract Show is Deployer {
         console.log("Yield Pass:       %s", _deployment.yieldPass);
         console.log("Yield Pass Utils: %s", _deployment.yieldPassUtils);
 
-        console.log("Printing adapter deployments");
-        console.log("   Aethir Yield Adapter: %s", _deployment.aethirYieldAdapter);
-
         console.log("Printing deployments completed");
     }
 }

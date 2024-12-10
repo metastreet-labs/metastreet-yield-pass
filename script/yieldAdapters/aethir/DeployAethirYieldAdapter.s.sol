@@ -16,7 +16,6 @@ contract DeployAethirYieldAdapter is Deployer {
         address signer
     ) public broadcast useDeployment returns (address) {
         if (_deployment.yieldPass == address(0)) revert MissingDependency();
-        if (_deployment.aethirYieldAdapter != address(0)) revert AlreadyDeployed();
 
         /* AethirYieldAdapter Implementation */
         console.log("Deploying AethirYieldAdapter implementation...");
@@ -34,9 +33,6 @@ contract DeployAethirYieldAdapter is Deployer {
             msg.sender,
             abi.encodeWithSignature("initialize(uint48,address)", cliffSeconds, signer)
         );
-
-        /* Log deployment */
-        _deployment.aethirYieldAdapter = address(proxy);
 
         console.log("AethirYieldAdapter proxy deployed at: %s\n", address(proxy));
 

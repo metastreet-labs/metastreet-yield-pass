@@ -13,7 +13,6 @@ contract DeployXaiYieldAdapter is Deployer {
         address xaiPoolFactory
     ) public broadcast useDeployment returns (address) {
         if (_deployment.yieldPass == address(0)) revert MissingDependency();
-        if (_deployment.xaiYieldAdapter != address(0)) revert AlreadyDeployed();
 
         /* XaiYieldAdapter Implementation */
         console.log("Deploying XaiYieldAdapter implementation...");
@@ -30,9 +29,6 @@ contract DeployXaiYieldAdapter is Deployer {
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
             address(yieldAdapterImpl), msg.sender, abi.encodeWithSignature("initialize(address[])", pools)
         );
-
-        /* Log deployment */
-        _deployment.xaiYieldAdapter = address(proxy);
 
         console.log("XaiYieldAdapter proxy deployed at: %s\n", address(proxy));
 

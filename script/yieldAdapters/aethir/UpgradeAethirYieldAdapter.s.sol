@@ -11,6 +11,7 @@ import {Deployer} from "../../utils/Deployer.s.sol";
 
 contract UpgradeAethirYieldAdapter is Deployer {
     function run(
+        address proxy,
         address checkerNodeLicense,
         address checkerClaimAndWithdraw
     ) public broadcast useDeployment returns (address) {
@@ -22,19 +23,15 @@ contract UpgradeAethirYieldAdapter is Deployer {
 
         console.log("AethirYieldAdapter implementation deployed at: %s\n", address(yieldAdapterImpl));
 
-        console.log("Upgrading proxy %s implementation...", _deployment.aethirYieldAdapter);
+        console.log("Upgrading proxy %s implementation...", proxy);
 
         /* Lookup proxy admin */
-        address proxyAdmin = address(uint160(uint256(vm.load(_deployment.aethirYieldAdapter, ERC1967Utils.ADMIN_SLOT))));
+        address proxyAdmin = address(uint160(uint256(vm.load(proxy, ERC1967Utils.ADMIN_SLOT))));
 
         /* Upgrade Proxy */
-        ProxyAdmin(proxyAdmin).upgradeAndCall(
-            ITransparentUpgradeableProxy(_deployment.aethirYieldAdapter), address(yieldAdapterImpl), ""
-        );
+        ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(proxy), address(yieldAdapterImpl), "");
 
-        console.log(
-            "Upgraded proxy %s implementation to: %s\n", _deployment.aethirYieldAdapter, address(yieldAdapterImpl)
-        );
+        console.log("Upgraded proxy %s implementation to: %s\n", proxy, address(yieldAdapterImpl));
 
         return address(yieldAdapterImpl);
     }
