@@ -82,6 +82,11 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      */
     bytes32 public constant YIELD_PASS_ROLE = keccak256("YIELD_PASS_ROLE");
 
+    /**
+     * @notice Pause admin role
+     */
+    bytes32 public constant PAUSE_ADMIN_ROLE = keccak256("PAUSE_ADMIN_ROLE");
+
     /*------------------------------------------------------------------------*/
     /* Errors */
     /*------------------------------------------------------------------------*/
@@ -291,6 +296,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         _signer = signer_;
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(PAUSE_ADMIN_ROLE, msg.sender);
         _grantRole(YIELD_PASS_ROLE, _yieldPass);
     }
 
@@ -635,14 +641,14 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /**
      * @notice Pause the contract
      */
-    function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function pause() public onlyRole(PAUSE_ADMIN_ROLE) {
         _pause();
     }
 
     /**
      * @notice Unpause the contract
      */
-    function unpause() public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function unpause() public onlyRole(PAUSE_ADMIN_ROLE) {
         _unpause();
     }
 }
