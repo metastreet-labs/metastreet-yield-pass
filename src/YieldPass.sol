@@ -280,9 +280,17 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         uint256[] calldata tokenIds,
         bytes calldata signature
     ) internal view {
+        /* Encode token IDs */
+        bytes memory encodedTokenIds;
+        for (uint256 i; i < tokenIds.length; i++) {
+            encodedTokenIds = bytes.concat(encodedTokenIds, abi.encode(tokenIds[i]));
+        }
+
         /* Recover transfer approval signer */
         address signer = ECDSA.recover(
-            _hashTypedDataV4(keccak256(abi.encode(TRANSFER_APPROVAL_TYPEHASH, proxyAccount, deadline, tokenIds))),
+            _hashTypedDataV4(
+                keccak256(abi.encode(TRANSFER_APPROVAL_TYPEHASH, proxyAccount, deadline, keccak256(encodedTokenIds)))
+            ),
             signature
         );
 
