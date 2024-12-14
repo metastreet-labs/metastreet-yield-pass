@@ -389,13 +389,26 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
                 || nodes.burnerWallets.length != tokenIds.length
         ) revert InvalidLength();
 
-        /* Validate token IDs */
+        /* Validate token IDs and compute encoded data */
+        bytes memory encodedTokenIds;
+        bytes memory encodedBurnerWallets;
+        bytes memory encodedSubscriptionExpiries;
         for (uint256 i; i < tokenIds.length; i++) {
             /* Validate token ID */
             if (nodes.tokenIds[i] != tokenIds[i]) revert InvalidTokenId();
 
             /* Validate expiry */
             if (nodes.subscriptionExpiries[i] < expiryTime) revert InvalidExpiry();
+
+            /* Encode token ID */
+            encodedTokenIds = bytes.concat(encodedTokenIds, abi.encode(nodes.tokenIds[i]));
+
+            /* Encode burner wallet */
+            encodedBurnerWallets = bytes.concat(encodedBurnerWallets, abi.encode(nodes.burnerWallets[i]));
+
+            /* Encode subscription expiry */
+            encodedSubscriptionExpiries =
+                bytes.concat(encodedSubscriptionExpiries, abi.encode(nodes.subscriptionExpiries[i]));
         }
 
         /* Validate signature timestamp */
@@ -409,9 +422,9 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
                 keccak256(
                     abi.encode(
                         VALIDATED_NODES_TYPEHASH,
-                        nodes.tokenIds,
-                        nodes.burnerWallets,
-                        nodes.subscriptionExpiries,
+                        keccak256(encodedTokenIds),
+                        keccak256(encodedBurnerWallets),
+                        keccak256(encodedSubscriptionExpiries),
                         nodes.timestamp,
                         nodes.duration
                     )
