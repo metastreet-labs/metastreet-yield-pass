@@ -364,8 +364,19 @@ abstract contract AethirBaseTest is PoolBaseTest {
             )
         );
 
+        /* Encode token IDs */
+        bytes memory encodedTokenIds;
+        for (uint256 i; i < tokenIds.length; i++) {
+            encodedTokenIds = bytes.concat(encodedTokenIds, abi.encode(tokenIds[i]));
+        }
+
         bytes32 structHash = keccak256(
-            abi.encode(YieldPass(address(yieldPass)).TRANSFER_APPROVAL_TYPEHASH(), smartAccount_, deadline, tokenIds)
+            abi.encode(
+                YieldPass(address(yieldPass)).TRANSFER_APPROVAL_TYPEHASH(),
+                smartAccount_,
+                deadline,
+                keccak256(encodedTokenIds)
+            )
         );
 
         bytes32 hash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
