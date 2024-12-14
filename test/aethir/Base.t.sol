@@ -276,12 +276,26 @@ abstract contract AethirBaseTest is PoolBaseTest {
             subscriptionExpiries[i] = subscriptionExpiry;
         }
 
+        bytes memory encodedTokenIds;
+        bytes memory encodedBurnerWallets;
+        bytes memory encodedSubscriptionExpiries;
+        for (uint256 i; i < tokenIds.length; i++) {
+            /* Encode token ID */
+            encodedTokenIds = bytes.concat(encodedTokenIds, abi.encode(tokenIds[i]));
+
+            /* Encode burner wallet */
+            encodedBurnerWallets = bytes.concat(encodedBurnerWallets, abi.encode(burnerWallets[i]));
+
+            /* Encode subscription expiry */
+            encodedSubscriptionExpiries = bytes.concat(encodedSubscriptionExpiries, abi.encode(subscriptionExpiries[i]));
+        }
+
         bytes32 structHash = keccak256(
             abi.encode(
                 AethirYieldAdapter(address(yieldAdapter)).VALIDATED_NODES_TYPEHASH(),
-                tokenIds,
-                burnerWallets,
-                subscriptionExpiries,
+                keccak256(encodedTokenIds),
+                keccak256(encodedBurnerWallets),
+                keccak256(encodedSubscriptionExpiries),
                 timestamp,
                 duration
             )
