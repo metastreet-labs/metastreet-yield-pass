@@ -14,7 +14,7 @@ run() {
             forge script "$contract" --fork-url http://localhost:8545 --private-key $PRIVATE_KEY --broadcast -vvvv "${@:4}"
             ;;
 
-        "goerli"|"sepolia"|"mainnet"|"blast"|"base"|"arbitrum_sepolia")
+        "goerli"|"sepolia"|"mainnet"|"blast"|"base"|"arbitrum_sepolia"|"arbitrum")
             local rpc_url="${!rpc_url_var}"
             if [[ -z $rpc_url ]]; then
                 echo "$rpc_url_var is not set"
@@ -55,7 +55,7 @@ usage() {
     echo "  show"
     echo ""
     echo "Options:"
-    echo "  NETWORK: Set this environment variable to either 'local', 'goerli', 'sepolia', 'mainnet', 'blast', or 'base'"
+    echo "  NETWORK: Set this environment variable to either 'local' or a network name."
 }
 
 ### deployment manager ###
