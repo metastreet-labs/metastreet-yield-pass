@@ -47,7 +47,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      * @notice Transfer approval EIP-712 typehash
      */
     bytes32 public constant TRANSFER_APPROVAL_TYPEHASH =
-        keccak256("TransferApproval(address proxyAccount,uint256 deadline,uint256[] tokenIds)");
+        keccak256("TransferApproval(address yieldPass,address proxyAccount,uint256 deadline,uint256[] tokenIds)");
 
     /*------------------------------------------------------------------------*/
     /* Structures */
@@ -267,6 +267,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
 
     /**
      * @notice Validate transfer signature of NFT owner
+     * @param yieldPass Yield pass
      * @param account Account owning NFTs
      * @param proxyAccount Proxy account
      * @param deadline Deadline
@@ -274,6 +275,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      * @param signature Transfer signature
      */
     function _validateTransferSignature(
+        address yieldPass,
         address account,
         address proxyAccount,
         uint256 deadline,
@@ -289,7 +291,11 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         /* Recover transfer approval signer */
         address signer = ECDSA.recover(
             _hashTypedDataV4(
-                keccak256(abi.encode(TRANSFER_APPROVAL_TYPEHASH, proxyAccount, deadline, keccak256(encodedTokenIds)))
+                keccak256(
+                    abi.encode(
+                        TRANSFER_APPROVAL_TYPEHASH, yieldPass, proxyAccount, deadline, keccak256(encodedTokenIds)
+                    )
+                )
             ),
             signature
         );
@@ -323,7 +329,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
 
         /* Verify transfer signature if caller is proxy account */
         if (account != msg.sender) {
-            _validateTransferSignature(account, msg.sender, deadline, tokenIds, transferSignature);
+            _validateTransferSignature(yieldPass, account, msg.sender, deadline, tokenIds, transferSignature);
         }
 
         /* Quote mint amount */

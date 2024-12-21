@@ -143,7 +143,7 @@ contract LiquidateTest is AethirSepoliaBaseTest {
 
         /* Generate transfer signature */
         uint256 deadline = block.timestamp + 1 days;
-        bytes memory transferSignature = generateTransferSignature(address(smartAccount), deadline, tokenIds2);
+        bytes memory transferSignature = generateTransferSignature(yp, address(smartAccount), deadline, tokenIds2);
 
         /* Approve NFTs */
         IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);

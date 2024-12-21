@@ -144,7 +144,7 @@ contract MintTest is AethirBaseTest {
         uint256 deadline = block.timestamp + 1 days;
 
         /* Generate transfer signature */
-        bytes memory transferSignature = generateTransferSignature(address(smartAccount), deadline, tokenIds1);
+        bytes memory transferSignature = generateTransferSignature(yp, address(smartAccount), deadline, tokenIds1);
 
         /* Mint through smart account */
         smartAccount.execute(
@@ -183,7 +183,7 @@ contract MintTest is AethirBaseTest {
 
         /* Generate invalid transfer signature with invalid approved account */
         uint256 deadline = block.timestamp + 1 days;
-        bytes memory transferSignature1 = generateTransferSignature(altCnlOwner, deadline, tokenIds1);
+        bytes memory transferSignature1 = generateTransferSignature(yp, altCnlOwner, deadline, tokenIds1);
 
         /* Mint through smart account */
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidSignature.selector));
@@ -204,7 +204,7 @@ contract MintTest is AethirBaseTest {
         );
 
         /* Generate invalid transfer signature with invalid token IDs */
-        bytes memory transferSignature2 = generateTransferSignature(cnlOwner, deadline, tokenIds2);
+        bytes memory transferSignature2 = generateTransferSignature(yp, cnlOwner, deadline, tokenIds2);
 
         /* Mint through smart account */
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidSignature.selector));

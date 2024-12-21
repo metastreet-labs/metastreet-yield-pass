@@ -139,7 +139,7 @@ contract ClaimTest is AethirBaseTest {
 
         /* Generate transfer signature */
         uint256 deadline = block.timestamp + 1 days;
-        bytes memory transferSignature = generateTransferSignature(address(smartAccount), deadline, tokenIds);
+        bytes memory transferSignature = generateTransferSignature(yp, address(smartAccount), deadline, tokenIds);
 
         /* Mint through smart account */
         smartAccount.execute(

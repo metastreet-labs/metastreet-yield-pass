@@ -382,6 +382,7 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
     }
 
     function generateTransferSignature(
+        address yieldPassToken,
         address smartAccount_,
         uint256 deadline,
         uint256[] memory tokenIds
@@ -405,6 +406,7 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
         bytes32 structHash = keccak256(
             abi.encode(
                 YieldPass(address(yieldPass)).TRANSFER_APPROVAL_TYPEHASH(),
+                yieldPassToken,
                 smartAccount_,
                 deadline,
                 keccak256(encodedTokenIds)
