@@ -3,7 +3,7 @@ pragma solidity 0.8.26;
 
 import {Vm} from "forge-std/Vm.sol";
 
-import {XaiBaseTest} from "./Base.t.sol";
+import {XaiBaseTest} from "./BaseArbSepolia.t.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -16,6 +16,8 @@ contract HarvestTest is XaiBaseTest {
     address internal yp;
     address internal np;
     uint256[] internal tokenIds;
+    address[] internal stakingPools1;
+    uint256[] internal quantities1;
 
     function setUp() public override {
         /* Set up Nft */
@@ -24,25 +26,38 @@ contract HarvestTest is XaiBaseTest {
         (yp, np) = XaiBaseTest.deployYieldPass(address(sentryNodeLicense), startTime, expiry, address(yieldAdapter));
 
         tokenIds = new uint256[](1);
-        tokenIds[0] = 19727;
+        tokenIds[0] = 123714;
+
+        stakingPools1 = new address[](1);
+        stakingPools1[0] = stakingPool1;
+
+        quantities1 = new uint256[](1);
+        quantities1[0] = 1;
     }
 
     function simulateYieldDistributionInStakingPool() internal {
-        uint256 beforeBalance = esXai.balanceOf(address(stakingPool));
+        uint256 beforeBalance = esXai.balanceOf(address(stakingPool1));
 
         vm.startPrank(esXaiOwner);
-        esXai.transfer(address(stakingPool), 10000);
+        esXai.transfer(address(stakingPool1), 10000);
         vm.stopPrank();
 
-        uint256 afterBalance = esXai.balanceOf(address(stakingPool));
+        uint256 afterBalance = esXai.balanceOf(address(stakingPool1));
         assertEq(afterBalance, beforeBalance + 10000, "Invalid balance");
     }
 
     function test_Harvest() external {
         /* Mint */
-        vm.startPrank(snlOwner);
+        vm.startPrank(snlOwner1);
         yieldPass.mint(
-            yp, snlOwner, snlOwner, snlOwner, block.timestamp, tokenIds, generateStakingPools(stakingPool), ""
+            yp,
+            snlOwner1,
+            snlOwner1,
+            snlOwner1,
+            block.timestamp,
+            tokenIds,
+            generateStakingPools(stakingPools1, quantities1),
+            ""
         );
         vm.stopPrank();
 
@@ -55,17 +70,17 @@ contract HarvestTest is XaiBaseTest {
         /* Harvest yield */
         vm.startPrank(users.deployer);
         uint256 amount = yieldPass.harvest(yp, "");
-        assertEq(amount, 10, "Invalid yield amount");
+        assertEq(amount, 2, "Invalid yield amount");
         vm.stopPrank();
 
         /* Validate state */
-        assertEq(yieldPass.claimableYield(yp), 10, "Invalid claimable yield");
-        assertEq(yieldPass.claimableYield(yp, 1 ether), 10, "Invalid claimable yield");
-        assertEq(IERC20(esXai).balanceOf(address(yieldAdapter)), 10, "Invalid esXAI balance");
+        assertEq(yieldPass.claimableYield(yp), 2, "Invalid claimable yield");
+        assertEq(yieldPass.claimableYield(yp, 1 ether), 2, "Invalid claimable yield");
+        assertEq(IERC20(esXai).balanceOf(address(yieldAdapter)), 2, "Invalid esXAI balance");
 
-        assertEq(yieldPass.claimState(yp).total, 10, "Invalid total yield state");
+        assertEq(yieldPass.claimState(yp).total, 2, "Invalid total yield state");
         assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");
-        assertEq(yieldPass.claimState(yp).balance, 10, "Invalid yield balance state");
+        assertEq(yieldPass.claimState(yp).balance, 2, "Invalid yield balance state");
     }
 
     function test__Harvest_RevertWhen_UndeployedYieldPass() external {
