@@ -6,17 +6,17 @@ schema:
 dataSources:
   - kind: ethereum
     name: YieldPass
-    network: arbitrum-one
+    network: sepolia
     source:
       abi: YieldPass
-      address: "0x24147F47B916bcF7E0a8810f859bA3bf703d436d"
-      startBlock: 285765427
+      address: "0x32c5eAe432b09Dc4e93eFab51B93A769AFB7BC92"
+      startBlock: 7258316
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - YieldPassToken
+        - YieldPass
       abis:
         - name: YieldPass
           file: ../out/YieldPass.sol/YieldPass.json
@@ -24,6 +24,8 @@ dataSources:
           file: ../out/IYieldAdapter.sol/IYieldAdapter.json
         - name: ERC20
           file: ../out/ERC20.sol/ERC20.json
+        - name: ERC721
+          file: ../out/ERC721.sol/ERC721.json
       eventHandlers:
         - event: Claimed(indexed address,indexed address,uint256,indexed
             address,address,uint256)
@@ -45,11 +47,11 @@ dataSources:
       file: ./src/yield-pass.ts
   - kind: ethereum
     name: UniswapV2Factory
-    network: arbitrum-one
+    network: sepolia
     source:
       abi: UniswapV2Factory
-      address: "0xf1D7CC64Fb4452F05c498126312eBE29f30Fbcf9"
-      startBlock: 285765427
+      address: "0x63b33ca4a44330791000a21F2bD187044d815524"
+      startBlock: 7258316
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -66,7 +68,7 @@ dataSources:
 templates:
   - kind: ethereum
     name: YieldPassToken
-    network: arbitrum-one
+    network: sepolia
     source:
       abi: YieldPassToken
     mapping:
