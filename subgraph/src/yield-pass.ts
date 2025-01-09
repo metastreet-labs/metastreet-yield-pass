@@ -1,4 +1,4 @@
-import { Address, dataSource } from "@graphprotocol/graph-ts";
+import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts";
 import { ERC20 as ERC20Contract } from "../generated/YieldPass/ERC20";
 import { ERC721 as ERC721Contract } from "../generated/YieldPass/ERC721";
 import { YieldAdapter as YieldAdapterContract } from "../generated/YieldPass/YieldAdapter";
@@ -72,17 +72,48 @@ export function handleYieldPassDeployed(event: YieldPassDeployedEvent): void {
   yieldPassEntity.startTime = event.params.startTime;
   yieldPassEntity.expiryTime = event.params.expiryTime;
   yieldPassEntity.adapter = event.params.yieldAdapter;
+  yieldPassEntity.nodesDeposited = 0;
+  yieldPassEntity.nodesWithdrawn = 0;
+  yieldPassEntity.yieldShares = BigInt.zero();
+  yieldPassEntity.yieldHarvested = BigInt.zero();
+  yieldPassEntity.yieldClaimed = BigInt.zero();
   yieldPassEntity.save();
 
   createAdapterEntity(event.params.yieldPass, event.params.yieldAdapter);
 }
 
-export function handleClaimed(event: ClaimedEvent): void {}
+export function handleClaimed(event: ClaimedEvent): void {
+  let yieldPassEntity = YieldPassEntity.load(event.params.yieldPass);
+  if (!yieldPassEntity) return;
 
-export function handleHarvested(event: HarvestedEvent): void {}
+  yieldPassEntity.yieldShares = yieldPassEntity.yieldShares.minus(event.params.yieldPassAmount);
+  yieldPassEntity.yieldClaimed = yieldPassEntity.yieldClaimed.plus(event.params.yieldAmount);
+  yieldPassEntity.save();
+}
 
-export function handleMinted(event: MintedEvent): void {}
+export function handleHarvested(event: HarvestedEvent): void {
+  let yieldPassEntity = YieldPassEntity.load(event.params.yieldPass);
+  if (!yieldPassEntity) return;
+
+  yieldPassEntity.yieldHarvested = yieldPassEntity.yieldHarvested.plus(event.params.amount);
+  yieldPassEntity.save();
+}
+
+export function handleMinted(event: MintedEvent): void {
+  let yieldPassEntity = YieldPassEntity.load(event.params.yieldPass);
+  if (!yieldPassEntity) return;
+
+  yieldPassEntity.nodesDeposited += event.params.tokenIds.length;
+  yieldPassEntity.yieldShares = yieldPassEntity.yieldShares.plus(event.params.yieldPassAmount);
+  yieldPassEntity.save();
+}
 
 export function handleRedeemed(event: RedeemedEvent): void {}
 
-export function handleWithdrawn(event: WithdrawnEvent): void {}
+export function handleWithdrawn(event: WithdrawnEvent): void {
+  let yieldPassEntity = YieldPassEntity.load(event.params.yieldPass);
+  if (!yieldPassEntity) return;
+
+  yieldPassEntity.nodesWithdrawn += event.params.tokenIds.length;
+  yieldPassEntity.save();
+}

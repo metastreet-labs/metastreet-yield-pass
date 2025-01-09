@@ -7,6 +7,13 @@ type YieldPass @entity {
   expiryTime: BigInt! # uint64
   adapter: YieldAdapter!
   pair: UniswapV2Pair
+
+  # Statistics
+  nodesDeposited: Int!
+  nodesWithdrawn: Int!
+  yieldShares: BigInt! # uint256
+  yieldHarvested: BigInt! # uint256
+  yieldClaimed: BigInt! # uint256
 }
 
 type YieldAdapter @entity {
