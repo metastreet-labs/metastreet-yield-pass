@@ -59,7 +59,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /**
      * @notice Implementation version
      */
-    string public constant IMPLEMENTATION_VERSION = "1.0";
+    string public constant IMPLEMENTATION_VERSION = "1.1";
 
     /**
      * @notice Signing domain version
@@ -663,5 +663,30 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      */
     function unpause() public onlyRole(PAUSE_ADMIN_ROLE) {
         _unpause();
+    }
+
+    /**
+     * @notice Redelegation
+     * @param tokenIds Token IDs
+     * @param burnerWallets Burner wallet addresses
+     * @param subscriptionExpiries Subscription expiry timestamps
+     */
+    function redelegation(
+        uint256[] calldata tokenIds,
+        address[] calldata burnerWallets,
+        uint64[] calldata subscriptionExpiries
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        /* Validate lengths */
+        if (tokenIds.length != burnerWallets.length || tokenIds.length != subscriptionExpiries.length) {
+            revert InvalidLength();
+        }
+
+        for (uint256 i; i < tokenIds.length; i++) {
+            /* Validate token ID is owned by yield adapter */
+            if (IERC721(_aethirCheckerNodeLicense).ownerOf(tokenIds[i]) != address(this)) revert InvalidTokenId();
+
+            /* Set user on license NFT */
+            IERC4907(_aethirCheckerNodeLicense).setUser(tokenIds[i], burnerWallets[i], subscriptionExpiries[i]);
+        }
     }
 }
