@@ -1,3 +1,6 @@
+* XaiYieldAdapter v1.1 - 01/13/2025
+    * Update with XAI node license staking changes.
+
 * XaiYieldAdapter v1.0 - 12/17/2024
     * Initial release.
 
