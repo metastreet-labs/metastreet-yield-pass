@@ -1,3 +1,6 @@
+* AethirYieldAdapter v1.1 - 01/13/2025
+    * Add `redelegate()` admin API.
+
 * XaiYieldAdapter v1.1 - 01/13/2025
     * Update with XAI node license staking changes.
 
