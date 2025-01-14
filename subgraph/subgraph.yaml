@@ -32,16 +32,19 @@ dataSources:
           handler: handleClaimed
         - event: Harvested(indexed address,uint256)
           handler: handleHarvested
-        - event: Minted(indexed address,address,indexed address,uint256,address,indexed
+        - event:
+            Minted(indexed address,address,indexed address,uint256,address,indexed
             address,uint256[],address[])
           handler: handleMinted
         - event: Redeemed(indexed address,address,indexed address,indexed
             address,uint256[])
           handler: handleRedeemed
-        - event: Withdrawn(indexed address,address,indexed address,address,indexed
+        - event:
+            Withdrawn(indexed address,address,indexed address,address,indexed
             address,uint256[])
           handler: handleWithdrawn
-        - event: YieldPassDeployed(indexed address,address,indexed address,uint256,indexed
+        - event:
+            YieldPassDeployed(indexed address,address,indexed address,uint256,indexed
             uint256,address)
           handler: handleYieldPassDeployed
       file: ./src/yield-pass.ts

@@ -42,3 +42,65 @@ type UniswapV2Pair @entity(immutable: true) {
   token0: Bytes! # address
   token1: Bytes! # address
 }
+
+type YieldPassEvent @entity(immutable: true) {
+  id: Bytes! # <pool><tx hash><log index>
+  transactionHash: Bytes!
+  timestamp: BigInt! # uint64
+  from: Bytes! # address
+  type: YieldPassEventType!
+  yieldPass: YieldPass!
+
+  minted: MintedEvent
+  harvested: HarvestedEvent
+  claimed: ClaimedEvent
+  redeemed: RedeemedEvent
+  withdrawn: WithdrawnEvent
+}
+
+enum YieldPassEventType {
+  Minted
+  Harvested
+  Claimed
+  Redeemed
+  Withdrawn
+}
+
+type MintedEvent @entity(immutable: true) {
+  id: Bytes! # <pool><tx hash><log index>
+  yieldPassRecipient: Bytes! # address
+  nodePassRecipient: Bytes! # address
+  yieldPassAmount: BigInt! # uint256
+  token: Bytes! # address
+  tokenIds: [BigInt!]! # uint256[]
+  operators: [Bytes!]! # address[]
+}
+
+type HarvestedEvent @entity(immutable: true) {
+  id: Bytes! # <pool><tx hash><log index>
+  yieldAmount: BigInt! # uint256
+}
+
+type ClaimedEvent @entity(immutable: true) {
+  id: Bytes! # <pool><tx hash><log index>
+  account: Bytes! # address
+  recipient: Bytes! # address
+  yieldPassAmount: BigInt! # uint256
+  yieldToken: Bytes! # address
+  yieldAmount: BigInt! # uint256
+}
+
+type RedeemedEvent @entity(immutable: true) {
+  id: Bytes! # <pool><tx hash><log index>
+  account: Bytes! # address
+  token: Bytes! # address
+  tokenIds: [BigInt!]! # uint256[]
+}
+
+type WithdrawnEvent @entity(immutable: true) {
+  id: Bytes! # <pool><tx hash><log index>
+  account: Bytes! # address
+  recipient: Bytes! # address
+  token: Bytes! # address
+  tokenIds: [BigInt!]! # uint256[]
+}
