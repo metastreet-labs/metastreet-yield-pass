@@ -59,7 +59,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /**
      * @notice Implementation version
      */
-    string public constant IMPLEMENTATION_VERSION = "1.0";
+    string public constant IMPLEMENTATION_VERSION = "1.1";
 
     /**
      * @notice Signing domain version
