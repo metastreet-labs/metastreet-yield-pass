@@ -17,6 +17,8 @@ contract Deployer is BaseScript {
 
     error AlreadyDeployed();
 
+    error InvalidParameter();
+
     /*--------------------------------------------------------------------------*/
     /* Structures                                                               */
     /*--------------------------------------------------------------------------*/
