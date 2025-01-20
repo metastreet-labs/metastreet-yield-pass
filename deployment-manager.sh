@@ -51,6 +51,8 @@ usage() {
     echo ""
     echo "  deploy-xai-yield-adapter <xai pool factory>"
     echo "  upgrade-xai-yield-adapter <proxy> <xai pool factory>"
+    echo "  add-pools-to-xai-yield-adapter <xai yield adapter> <pools>"
+    echo "  remove-pools-from-xai-yield-adapter <xai yield adapter> <pools>"
     echo ""
     echo "  show"
     echo ""
@@ -158,6 +160,26 @@ case $1 in
 
         echo "Upgrading XAI Yield Adapter"
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/UpgradeXaiYieldAdapter.s.sol:UpgradeXaiYieldAdapter" --sig "run(address,address)" $2 $3
+        ;;
+
+    "add-pools-to-xai-yield-adapter")
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid param count; Usage: $0 add-pools-to-xai-yield-adapter <xai yield adapter> <pools>"
+            exit 1
+        fi
+
+        echo "Adding pools to XAI Yield Adapter"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/AddPoolsToXaiYieldAdapter.s.sol:AddPoolsToXaiYieldAdapter" --sig "run(address,address[])" $2 $3
+        ;;
+
+    "remove-pools-from-xai-yield-adapter")
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid param count; Usage: $0 remove-pools-from-xai-yield-adapter <xai yield adapter> <pools>"
+            exit 1
+        fi
+
+        echo "Removing pools from XAI Yield Adapter"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/RemovePoolsFromXaiYieldAdapter.s.sol:RemovePoolsFromXaiYieldAdapter" --sig "run(address,address[])" $2 $3
         ;;
 
     "show")
