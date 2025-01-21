@@ -37,6 +37,11 @@ contract NodePassToken is ERC721 {
     bool internal _isUserLocked;
 
     /**
+     * @notice Total supply
+     */
+    uint256 internal _totalSupply;
+
+    /**
      * @notice Token ID to account mapping
      */
     mapping(uint256 => address) internal _tokenIdLocks;
@@ -77,6 +82,14 @@ contract NodePassToken is ERC721 {
         return _isUserLocked ? _tokenIdLocks[tokenId] : address(0);
     }
 
+    /**
+     * @notice Get total supply
+     * @return Total supply
+     */
+    function totalSupply() external view returns (uint256) {
+        return _totalSupply;
+    }
+
     /*------------------------------------------------------------------------*/
     /* Node Pass Token API */
     /*------------------------------------------------------------------------*/
@@ -94,6 +107,8 @@ contract NodePassToken is ERC721 {
 
             _mint(to, tokenIds[i]);
         }
+
+        _totalSupply += tokenIds.length;
     }
 
     /**
@@ -108,6 +123,8 @@ contract NodePassToken is ERC721 {
         delete _tokenIdLocks[tokenId];
 
         _burn(tokenId);
+
+        _totalSupply -= 1;
     }
 
     /*------------------------------------------------------------------------*/
