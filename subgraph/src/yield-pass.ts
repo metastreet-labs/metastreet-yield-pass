@@ -132,12 +132,12 @@ export function handleHarvested(event: HarvestedEvent): void {
   let yieldPassEntity = YieldPassEntity.load(event.params.yieldPass);
   if (!yieldPassEntity) return;
 
-  yieldPassEntity.yieldHarvested = yieldPassEntity.yieldHarvested.plus(event.params.amount);
+  yieldPassEntity.yieldHarvested = yieldPassEntity.yieldHarvested.plus(event.params.yieldAmount);
   yieldPassEntity.save();
 
   const eventId = createYieldPassEventEntity(event.params.yieldPass, event, "Harvested");
   const harvestedEvent = new HarvestedEventEntity(eventId);
-  harvestedEvent.yieldAmount = event.params.amount;
+  harvestedEvent.yieldAmount = event.params.yieldAmount;
   harvestedEvent.save();
 }
 

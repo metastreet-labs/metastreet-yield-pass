@@ -365,16 +365,16 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
 
         /* Harvest yield */
-        uint256 amount = IYieldAdapter(yieldPassInfo_.yieldAdapter).harvest(yieldPassInfo_.expiryTime, harvestData);
+        uint256 yieldAmount = IYieldAdapter(yieldPassInfo_.yieldAdapter).harvest(yieldPassInfo_.expiryTime, harvestData);
 
         /* Update yield claim state */
-        _yieldPassStates[yieldPass].claimState.balance += amount;
-        _yieldPassStates[yieldPass].claimState.total += amount;
+        _yieldPassStates[yieldPass].claimState.balance += yieldAmount;
+        _yieldPassStates[yieldPass].claimState.total += yieldAmount;
 
         /* Emit Harvested */
-        emit Harvested(yieldPass, amount);
+        emit Harvested(yieldPass, yieldAmount);
 
-        return amount;
+        return yieldAmount;
     }
 
     /**

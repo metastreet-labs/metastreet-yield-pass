@@ -120,9 +120,9 @@ interface IYieldPass is IERC721Receiver {
     /**
      * @notice Emitted when yield is harvested
      * @param yieldPass Yield pass token
-     * @param amount Yield token amount harvested
+     * @param yieldAmount Yield token amount harvested
      */
-    event Harvested(address indexed yieldPass, uint256 amount);
+    event Harvested(address indexed yieldPass, uint256 yieldAmount);
 
     /**
      * @notice Emitted when yield is claimed
@@ -307,10 +307,10 @@ interface IYieldPass is IERC721Receiver {
      * @notice Claim yield
      * @param yieldPass Yield pass token
      * @param recipient Recipient
-     * @param amount Yield pass amount
+     * @param yieldPassAmount Yield pass amount
      * @return Yield token amount
      */
-    function claim(address yieldPass, address recipient, uint256 amount) external returns (uint256);
+    function claim(address yieldPass, address recipient, uint256 yieldPassAmount) external returns (uint256);
 
     /**
      * @notice Redeem node passes
