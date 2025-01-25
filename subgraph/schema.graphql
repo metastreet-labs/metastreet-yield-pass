@@ -2,7 +2,7 @@ type YieldPass @entity {
   id: Bytes! # address (yield pass token)
   yieldPassToken: ERC20!
   nodePassToken: ERC721!
-  nftToken: ERC721!
+  nodeToken: ERC721!
   startTime: BigInt! # uint64
   expiryTime: BigInt! # uint64
   adapter: YieldAdapter!
@@ -71,8 +71,8 @@ type MintedEvent @entity(immutable: true) {
   yieldPassRecipient: Bytes! # address
   nodePassRecipient: Bytes! # address
   yieldPassAmount: BigInt! # uint256
-  token: Bytes! # address
-  tokenIds: [BigInt!]! # uint256[]
+  nodeToken: Bytes! # address
+  nodeTokenIds: [BigInt!]! # uint256[]
   operators: [Bytes!]! # address[]
 }
 
@@ -93,14 +93,14 @@ type ClaimedEvent @entity(immutable: true) {
 type RedeemedEvent @entity(immutable: true) {
   id: Bytes! # <pool><tx hash><log index>
   account: Bytes! # address
-  token: Bytes! # address
-  tokenIds: [BigInt!]! # uint256[]
+  nodeToken: Bytes! # address
+  nodeTokenIds: [BigInt!]! # uint256[]
 }
 
 type WithdrawnEvent @entity(immutable: true) {
   id: Bytes! # <pool><tx hash><log index>
   account: Bytes! # address
   recipient: Bytes! # address
-  token: Bytes! # address
-  tokenIds: [BigInt!]! # uint256[]
+  nodeToken: Bytes! # address
+  nodeTokenIds: [BigInt!]! # uint256[]
 }

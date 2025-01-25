@@ -38,14 +38,14 @@ interface IYieldAdapter is IERC721Receiver {
      * @notice Setup token IDs for yield
      * @param expiryTime Expiry timestamp
      * @param account Account
-     * @param tokenIds Token IDs
+     * @param nodeTokenIds Node token IDs
      * @param setupData Setup data
      * @return Operators
      */
     function setup(
         uint64 expiryTime,
         address account,
-        uint256[] calldata tokenIds,
+        uint256[] calldata nodeTokenIds,
         bytes calldata setupData
     ) external returns (address[] memory);
 
@@ -67,14 +67,14 @@ interface IYieldAdapter is IERC721Receiver {
     /**
      * @notice Initiate withdraw of token IDs
      * @param expiryTime Expiry timestamp
-     * @param tokenIds Token IDs
+     * @param nodeTokenIds Node token IDs
      */
-    function initiateWithdraw(uint64 expiryTime, uint256[] calldata tokenIds) external;
+    function initiateWithdraw(uint64 expiryTime, uint256[] calldata nodeTokenIds) external;
 
     /**
      * @notice Withdraw token IDs
      * @param recipient Recipient
-     * @param tokenIds Token IDs
+     * @param nodeTokenIds Node token IDs
      */
-    function withdraw(address recipient, uint256[] calldata tokenIds) external;
+    function withdraw(address recipient, uint256[] calldata nodeTokenIds) external;
 }

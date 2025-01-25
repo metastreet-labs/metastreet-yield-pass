@@ -74,7 +74,7 @@ export function handleYieldPassDeployed(event: YieldPassDeployedEvent): void {
   const yieldPassEntity = new YieldPassEntity(event.params.yieldPass);
   yieldPassEntity.yieldPassToken = createERC20Entity(event.params.yieldPass).id;
   yieldPassEntity.nodePassToken = createERC721Entity(event.params.nodePass).id;
-  yieldPassEntity.nftToken = createERC721Entity(event.params.token).id;
+  yieldPassEntity.nodeToken = createERC721Entity(event.params.nodeToken).id;
   yieldPassEntity.startTime = event.params.startTime;
   yieldPassEntity.expiryTime = event.params.expiryTime;
   yieldPassEntity.adapter = event.params.yieldAdapter;
@@ -113,7 +113,7 @@ export function handleMinted(event: MintedEvent): void {
   let yieldPassEntity = YieldPassEntity.load(event.params.yieldPass);
   if (!yieldPassEntity) return;
 
-  yieldPassEntity.nodesDeposited += event.params.tokenIds.length;
+  yieldPassEntity.nodesDeposited += event.params.nodeTokenIds.length;
   yieldPassEntity.yieldShares = yieldPassEntity.yieldShares.plus(event.params.yieldPassAmount);
   yieldPassEntity.save();
 
@@ -122,8 +122,8 @@ export function handleMinted(event: MintedEvent): void {
   mintedEvent.yieldPassRecipient = event.params.yieldPassRecipient;
   mintedEvent.nodePassRecipient = event.params.nodePassRecipient;
   mintedEvent.yieldPassAmount = event.params.yieldPassAmount;
-  mintedEvent.token = event.params.token;
-  mintedEvent.tokenIds = event.params.tokenIds;
+  mintedEvent.nodeToken = event.params.nodeToken;
+  mintedEvent.nodeTokenIds = event.params.nodeTokenIds;
   mintedEvent.operators = changetype<Bytes[]>(event.params.operators);
   mintedEvent.save();
 }
@@ -163,8 +163,8 @@ export function handleRedeemed(event: RedeemedEvent): void {
   const eventId = createYieldPassEventEntity(event.params.yieldPass, event, "Redeemed");
   const redeemedEvent = new RedeemedEventEntity(eventId);
   redeemedEvent.account = event.params.account;
-  redeemedEvent.token = event.params.token;
-  redeemedEvent.tokenIds = event.params.tokenIds;
+  redeemedEvent.nodeToken = event.params.nodeToken;
+  redeemedEvent.nodeTokenIds = event.params.nodeTokenIds;
   redeemedEvent.save();
 }
 
@@ -172,14 +172,14 @@ export function handleWithdrawn(event: WithdrawnEvent): void {
   let yieldPassEntity = YieldPassEntity.load(event.params.yieldPass);
   if (!yieldPassEntity) return;
 
-  yieldPassEntity.nodesWithdrawn += event.params.tokenIds.length;
+  yieldPassEntity.nodesWithdrawn += event.params.nodeTokenIds.length;
   yieldPassEntity.save();
 
   const eventId = createYieldPassEventEntity(event.params.yieldPass, event, "Withdrawn");
   const withdrawnEvent = new WithdrawnEventEntity(eventId);
   withdrawnEvent.account = event.params.account;
   withdrawnEvent.recipient = event.params.recipient;
-  withdrawnEvent.token = event.params.token;
-  withdrawnEvent.tokenIds = event.params.tokenIds;
+  withdrawnEvent.nodeToken = event.params.nodeToken;
+  withdrawnEvent.nodeTokenIds = event.params.nodeTokenIds;
   withdrawnEvent.save();
 }
