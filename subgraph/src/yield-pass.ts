@@ -15,7 +15,7 @@ import {
   ERC20 as ERC20Entity,
   ERC721 as ERC721Entity,
   YieldAdapter as YieldAdapterEntity,
-  YieldPass as YieldPassEntity,
+  YieldPassMarket as YieldPassMarketEntity,
   YieldPassEvent as YieldPassEventEntity,
   MintedEvent as MintedEventEntity,
   HarvestedEvent as HarvestedEventEntity,
@@ -66,24 +66,24 @@ function createAdapterEntity(yieldPass: Address, adapter: Address): void {
   const adapterEntity = new YieldAdapterEntity(adapter);
   adapterEntity.name = adapterContract.name();
   adapterEntity.yieldToken = createERC20Entity(adapterContract.token()).id;
-  adapterEntity.yieldPass = yieldPass;
+  adapterEntity.yieldPassMarket = yieldPass;
   adapterEntity.save();
 }
 
 export function handleYieldPassDeployed(event: YieldPassDeployedEvent): void {
-  const yieldPassEntity = new YieldPassEntity(event.params.yieldPass);
-  yieldPassEntity.yieldPassToken = createERC20Entity(event.params.yieldPass).id;
-  yieldPassEntity.nodePassToken = createERC721Entity(event.params.nodePass).id;
-  yieldPassEntity.nodeToken = createERC721Entity(event.params.nodeToken).id;
-  yieldPassEntity.startTime = event.params.startTime;
-  yieldPassEntity.expiryTime = event.params.expiryTime;
-  yieldPassEntity.adapter = event.params.yieldAdapter;
-  yieldPassEntity.nodesDeposited = 0;
-  yieldPassEntity.nodesWithdrawn = 0;
-  yieldPassEntity.yieldShares = BigInt.zero();
-  yieldPassEntity.yieldHarvested = BigInt.zero();
-  yieldPassEntity.yieldClaimed = BigInt.zero();
-  yieldPassEntity.save();
+  const yieldPassMarketEntity = new YieldPassMarketEntity(event.params.yieldPass);
+  yieldPassMarketEntity.yieldPassToken = createERC20Entity(event.params.yieldPass).id;
+  yieldPassMarketEntity.nodePassToken = createERC721Entity(event.params.nodePass).id;
+  yieldPassMarketEntity.nodeToken = createERC721Entity(event.params.nodeToken).id;
+  yieldPassMarketEntity.startTime = event.params.startTime;
+  yieldPassMarketEntity.expiryTime = event.params.expiryTime;
+  yieldPassMarketEntity.adapter = event.params.yieldAdapter;
+  yieldPassMarketEntity.nodesDeposited = 0;
+  yieldPassMarketEntity.nodesWithdrawn = 0;
+  yieldPassMarketEntity.yieldShares = BigInt.zero();
+  yieldPassMarketEntity.yieldHarvested = BigInt.zero();
+  yieldPassMarketEntity.yieldClaimed = BigInt.zero();
+  yieldPassMarketEntity.save();
 
   createAdapterEntity(event.params.yieldPass, event.params.yieldAdapter);
 }
@@ -92,7 +92,7 @@ function createYieldPassEventEntity(yieldPass: Address, event: ethereum.Event, t
   const id = yieldPass.concat(event.transaction.hash).concat(Bytes.fromByteArray(Bytes.fromBigInt(event.logIndex)));
 
   const eventEntity = new YieldPassEventEntity(id);
-  eventEntity.yieldPass = yieldPass;
+  eventEntity.yieldPassMarket = yieldPass;
   eventEntity.transactionHash = event.transaction.hash;
   eventEntity.timestamp = event.block.timestamp;
   eventEntity.from = event.transaction.from;
@@ -110,12 +110,12 @@ function createYieldPassEventEntity(yieldPass: Address, event: ethereum.Event, t
 }
 
 export function handleMinted(event: MintedEvent): void {
-  let yieldPassEntity = YieldPassEntity.load(event.params.yieldPass);
-  if (!yieldPassEntity) return;
+  let yieldPassMarketEntity = YieldPassMarketEntity.load(event.params.yieldPass);
+  if (!yieldPassMarketEntity) return;
 
-  yieldPassEntity.nodesDeposited += event.params.nodeTokenIds.length;
-  yieldPassEntity.yieldShares = yieldPassEntity.yieldShares.plus(event.params.yieldPassAmount);
-  yieldPassEntity.save();
+  yieldPassMarketEntity.nodesDeposited += event.params.nodeTokenIds.length;
+  yieldPassMarketEntity.yieldShares = yieldPassMarketEntity.yieldShares.plus(event.params.yieldPassAmount);
+  yieldPassMarketEntity.save();
 
   const eventId = createYieldPassEventEntity(event.params.yieldPass, event, "Minted");
   const mintedEvent = new MintedEventEntity(eventId);
@@ -129,11 +129,11 @@ export function handleMinted(event: MintedEvent): void {
 }
 
 export function handleHarvested(event: HarvestedEvent): void {
-  let yieldPassEntity = YieldPassEntity.load(event.params.yieldPass);
-  if (!yieldPassEntity) return;
+  let yieldPassMarketEntity = YieldPassMarketEntity.load(event.params.yieldPass);
+  if (!yieldPassMarketEntity) return;
 
-  yieldPassEntity.yieldHarvested = yieldPassEntity.yieldHarvested.plus(event.params.yieldAmount);
-  yieldPassEntity.save();
+  yieldPassMarketEntity.yieldHarvested = yieldPassMarketEntity.yieldHarvested.plus(event.params.yieldAmount);
+  yieldPassMarketEntity.save();
 
   const eventId = createYieldPassEventEntity(event.params.yieldPass, event, "Harvested");
   const harvestedEvent = new HarvestedEventEntity(eventId);
@@ -142,12 +142,12 @@ export function handleHarvested(event: HarvestedEvent): void {
 }
 
 export function handleClaimed(event: ClaimedEvent): void {
-  let yieldPassEntity = YieldPassEntity.load(event.params.yieldPass);
-  if (!yieldPassEntity) return;
+  let yieldPassMarketEntity = YieldPassMarketEntity.load(event.params.yieldPass);
+  if (!yieldPassMarketEntity) return;
 
-  yieldPassEntity.yieldShares = yieldPassEntity.yieldShares.minus(event.params.yieldPassAmount);
-  yieldPassEntity.yieldClaimed = yieldPassEntity.yieldClaimed.plus(event.params.yieldAmount);
-  yieldPassEntity.save();
+  yieldPassMarketEntity.yieldShares = yieldPassMarketEntity.yieldShares.minus(event.params.yieldPassAmount);
+  yieldPassMarketEntity.yieldClaimed = yieldPassMarketEntity.yieldClaimed.plus(event.params.yieldAmount);
+  yieldPassMarketEntity.save();
 
   const eventId = createYieldPassEventEntity(event.params.yieldPass, event, "Claimed");
   const claimedEvent = new ClaimedEventEntity(eventId);
@@ -169,11 +169,11 @@ export function handleRedeemed(event: RedeemedEvent): void {
 }
 
 export function handleWithdrawn(event: WithdrawnEvent): void {
-  let yieldPassEntity = YieldPassEntity.load(event.params.yieldPass);
-  if (!yieldPassEntity) return;
+  let yieldPassMarketEntity = YieldPassMarketEntity.load(event.params.yieldPass);
+  if (!yieldPassMarketEntity) return;
 
-  yieldPassEntity.nodesWithdrawn += event.params.nodeTokenIds.length;
-  yieldPassEntity.save();
+  yieldPassMarketEntity.nodesWithdrawn += event.params.nodeTokenIds.length;
+  yieldPassMarketEntity.save();
 
   const eventId = createYieldPassEventEntity(event.params.yieldPass, event, "Withdrawn");
   const withdrawnEvent = new WithdrawnEventEntity(eventId);

@@ -1,4 +1,4 @@
-type YieldPass @entity {
+type YieldPassMarket @entity {
   id: Bytes! # address (yield pass token)
   yieldPassToken: ERC20!
   nodePassToken: ERC721!
@@ -20,7 +20,7 @@ type YieldAdapter @entity {
   id: Bytes! # address
   name: String!
   yieldToken: ERC20!
-  yieldPass: YieldPass!
+  yieldPassMarket: YieldPassMarket!
 }
 
 type ERC20 @entity(immutable: true) {
@@ -38,7 +38,7 @@ type ERC721 @entity(immutable: true) {
 
 type UniswapV2Pair @entity(immutable: true) {
   id: Bytes! # pair address
-  yieldPass: YieldPass!
+  yieldPassMarket: YieldPassMarket!
   token0: Bytes! # address
   token1: Bytes! # address
 }
@@ -49,7 +49,7 @@ type YieldPassEvent @entity(immutable: true) {
   timestamp: BigInt! # uint64
   from: Bytes! # address
   type: YieldPassEventType!
-  yieldPass: YieldPass!
+  yieldPassMarket: YieldPassMarket!
 
   minted: MintedEvent
   harvested: HarvestedEvent
