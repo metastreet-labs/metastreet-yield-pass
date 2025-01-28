@@ -1,3 +1,8 @@
+* YieldPass v1.1 - 01/28/2025
+    * Rename amount to yieldAmount and nftToken to nodeToken in IYieldPass.
+    * Add `totalSupply()` getter to NodePassToken.
+    * Add `account` parameter to Minted event.
+
 * AethirYieldAdapter v1.1 - 01/13/2025
     * Add `redelegate()` admin API.
 
