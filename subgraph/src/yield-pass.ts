@@ -6,6 +6,7 @@ import {
   Claimed as ClaimedEvent,
   Harvested as HarvestedEvent,
   Minted as MintedEvent,
+  Minted1 as MintedEventV1,
   Redeemed as RedeemedEvent,
   Withdrawn as WithdrawnEvent,
   YieldPass as YieldPassContract,
@@ -109,7 +110,7 @@ function createYieldPassEventEntity(yieldPass: Address, event: ethereum.Event, t
   return id;
 }
 
-export function handleMinted(event: MintedEvent): void {
+function _handleMinted<T>(event: T): void {
   let yieldPassMarketEntity = YieldPassMarketEntity.load(event.params.yieldPass);
   if (!yieldPassMarketEntity) return;
 
@@ -119,6 +120,7 @@ export function handleMinted(event: MintedEvent): void {
 
   const eventId = createYieldPassEventEntity(event.params.yieldPass, event, "Minted");
   const mintedEvent = new MintedEventEntity(eventId);
+  mintedEvent.account = event instanceof MintedEventV1 ? event.transaction.from : event.params.account;
   mintedEvent.yieldPassRecipient = event.params.yieldPassRecipient;
   mintedEvent.nodePassRecipient = event.params.nodePassRecipient;
   mintedEvent.yieldPassAmount = event.params.yieldPassAmount;
@@ -126,6 +128,14 @@ export function handleMinted(event: MintedEvent): void {
   mintedEvent.nodeTokenIds = event.params.nodeTokenIds;
   mintedEvent.operators = changetype<Bytes[]>(event.params.operators);
   mintedEvent.save();
+}
+
+export function handleMintedV1(event: MintedEventV1): void {
+  _handleMinted<MintedEventV1>(event);
+}
+
+export function handleMinted(event: MintedEvent): void {
+  _handleMinted<MintedEvent>(event);
 }
 
 export function handleHarvested(event: HarvestedEvent): void {

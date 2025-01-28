@@ -99,6 +99,30 @@ interface IYieldPass is IERC721Receiver {
      * @notice Emitted when yield pass and node pass are minted
      * @param yieldPass Yield pass token
      * @param nodePass Node pass token
+     * @param account Account holding nodes
+     * @param yieldPassRecipient Yield pass recipient
+     * @param yieldPassAmount Yield pass amount
+     * @param nodePassRecipient Node pass recipient
+     * @param nodeToken Node token
+     * @param nodeTokenIds Node (and node pass) token IDs
+     * @param operators Operators
+     */
+    event Minted(
+        address indexed yieldPass,
+        address nodePass,
+        address account,
+        address indexed yieldPassRecipient,
+        uint256 yieldPassAmount,
+        address nodePassRecipient,
+        address indexed nodeToken,
+        uint256[] nodeTokenIds,
+        address[] operators
+    );
+
+    /**
+     * @notice Emitted when yield pass and node pass are minted (deprecated)
+     * @param yieldPass Yield pass token
+     * @param nodePass Node pass token
      * @param yieldPassRecipient Yield pass recipient
      * @param yieldPassAmount Yield pass amount
      * @param nodePassRecipient Node pass recipient

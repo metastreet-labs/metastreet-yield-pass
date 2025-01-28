@@ -351,6 +351,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         emit Minted(
             yieldPass,
             yieldPassInfo_.nodePass,
+            account,
             yieldPassRecipient,
             yieldPassAmount,
             nodePassRecipient,

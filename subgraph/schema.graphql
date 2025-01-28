@@ -68,6 +68,7 @@ enum YieldPassEventType {
 
 type MintedEvent @entity(immutable: true) {
   id: Bytes! # <pool><tx hash><log index>
+  account: Bytes! # address
   yieldPassRecipient: Bytes! # address
   nodePassRecipient: Bytes! # address
   yieldPassAmount: BigInt! # uint256
