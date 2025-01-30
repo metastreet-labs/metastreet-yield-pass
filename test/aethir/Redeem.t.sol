@@ -10,6 +10,7 @@ import {AethirBaseTest} from "./Base.t.sol";
 
 import {AethirYieldAdapter, IERC4907} from "src/yieldAdapters/aethir/AethirYieldAdapter.sol";
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
+import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 
 import {NodePassToken} from "src/NodePassToken.sol";
 
@@ -50,7 +51,7 @@ contract RedeemTest is AethirBaseTest {
 
         /* Redeem */
         vm.startPrank(cnlOwner);
-        yieldPass.redeem(yp, tokenIds);
+        yieldPass.redeem(yp, cnlOwner, tokenIds);
         vm.stopPrank();
 
         /* Check that the node pass is burned */
@@ -80,7 +81,7 @@ contract RedeemTest is AethirBaseTest {
         /* Redeem */
         vm.startPrank(cnlOwner);
         vm.expectRevert(IYieldPass.InvalidRedemption.selector);
-        yieldPass.redeem(yp, tokenIds);
+        yieldPass.redeem(yp, cnlOwner, tokenIds);
         vm.stopPrank();
     }
 
@@ -105,11 +106,11 @@ contract RedeemTest is AethirBaseTest {
         /* Redeem */
         vm.startPrank(cnlOwner);
         vm.expectRevert(abi.encodeWithSelector(AethirYieldAdapter.InvalidWindow.selector));
-        yieldPass.redeem(yp, tokenIds);
+        yieldPass.redeem(yp, cnlOwner, tokenIds);
         vm.stopPrank();
     }
 
-    function test__Redeem_RevertWhen_UserLocked() external {
+    function test__Redeem_RevertWhen_TransferLocked() external {
         /* Mint */
         vm.startPrank(cnlOwner);
         yieldPass.mint(
@@ -129,12 +130,8 @@ contract RedeemTest is AethirBaseTest {
 
         /* Redeem */
         vm.startPrank(cnlOwner);
-        IERC721(np).transferFrom(cnlOwner, altCnlOwner, 91521);
-        vm.stopPrank();
-
-        vm.startPrank(altCnlOwner);
-        vm.expectRevert("Invalid burn");
-        yieldPass.redeem(yp, tokenIds);
+        vm.expectRevert(IYieldAdapter.InvalidRecipient.selector);
+        yieldPass.redeem(yp, altCnlOwner, tokenIds);
         vm.stopPrank();
     }
 }

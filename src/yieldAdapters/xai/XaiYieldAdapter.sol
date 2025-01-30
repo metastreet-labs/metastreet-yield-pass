@@ -133,6 +133,12 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      */
     event PoolRemoved(address indexed pool);
 
+    /**
+     * @notice Transfer unlocked
+     * @param isTransferUnlocked New transfer unlocked
+     */
+    event TransferUnlocked(bool isTransferUnlocked);
+
     /*------------------------------------------------------------------------*/
     /* Immutable State */
     /*------------------------------------------------------------------------*/
@@ -170,6 +176,20 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      * @notice Initialized
      */
     bool internal _initialized;
+
+    /**
+     * @notice Transfer unlocked
+     */
+    bool internal _isTransferUnlocked;
+
+    /**
+     * @notice Original owners (token ID to owner)
+     */
+    mapping(uint256 => address) internal _originalOwners;
+    /**
+     * @notice Withdrawal recipients (redemption hash to recipient)
+     */
+    mapping(bytes32 => address) internal _withdrawalRecipients;
 
     /**
      * @notice Assigned pools (token ID to pool)
@@ -210,10 +230,10 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
 
     /**
      * @notice XaiYieldAdapter initializer
+     * @param pools_ Pools to add
+     * @param isTransferUnlocked_ Transfer unlocked
      */
-    function initialize(
-        address[] memory pools_
-    ) external {
+    function initialize(address[] memory pools_, bool isTransferUnlocked_) external {
         require(!_initialized, "Already initialized");
 
         _initialized = true;
@@ -225,6 +245,9 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
             /* Add pool to all pools */
             _allPools.add(pools_[i]);
         }
+
+        /* Set transfer unlocked */
+        _isTransferUnlocked = isTransferUnlocked_;
 
         _grantRole(YIELD_PASS_ROLE, _yieldPass);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -346,9 +369,10 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
             /* Get pool token ids */
             uint256[] memory poolTokenIds = tokenIds[index:index + quantities[i]];
 
-            /* Assign pools */
+            /* Assign pools and set original owners */
             for (uint256 j; j < poolTokenIds.length; j++) {
                 _assignedPools[poolTokenIds[j]] = pools[i];
+                _originalOwners[poolTokenIds[j]] = account;
             }
 
             /* Transfer licenses */
@@ -394,24 +418,42 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /**
      * @inheritdoc IYieldAdapter
      */
-    function initiateWithdraw(
+    function redeem(
         uint64 expiryTime,
-        uint256[] calldata
-    ) external view onlyRole(YIELD_PASS_ROLE) whenNotPaused {
+        address recipient,
+        uint256[] calldata tokenIds,
+        bytes32 redemptionHash
+    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
         /* Validate yield pass is expired */
         if (block.timestamp <= expiryTime) revert InvalidWindow();
+
+        /* Validate recipient if transfer is not unlocked */
+        if (!_isTransferUnlocked) {
+            for (uint256 i; i < tokenIds.length; i++) {
+                if (_originalOwners[tokenIds[i]] != recipient) revert InvalidRecipient();
+            }
+        }
+
+        /* Set withdrawal recipients */
+        _withdrawalRecipients[redemptionHash] = recipient;
     }
 
     /**
      * @inheritdoc IYieldAdapter
-     * @dev Pass tokenIds sorted by pool for gas optimization
+     * @dev Transfer keys by pool for gas optimization.
      */
     function withdraw(
-        address recipient,
-        uint256[] calldata tokenIds
-    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
-        /* Validate token ids */
-        if (tokenIds.length == 0) revert InvalidTokenIds();
+        uint256[] calldata tokenIds,
+        bytes32 redemptionHash
+    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address) {
+        /* Get recipient */
+        address recipient = _withdrawalRecipients[redemptionHash];
+
+        /* Validate recipient is set */
+        if (recipient == address(0)) revert InvalidRecipient();
+
+        /* Delete withdrawal recipient */
+        delete _withdrawalRecipients[redemptionHash];
 
         uint256 index;
         uint256 lastIndex = tokenIds.length - 1;
@@ -422,6 +464,9 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
             /* Delete assigned pool mapping */
             delete _assignedPools[tokenIds[i]];
 
+            /* Delete original owner mapping */
+            delete _originalOwners[tokenIds[i]];
+
             /* Batch transfer keys by pool */
             if ((i != lastIndex && _assignedPools[tokenIds[i + 1]] != pool) || i == lastIndex) {
                 /* Transfer keys to recipient */
@@ -431,6 +476,8 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
                 index = i + 1;
             }
         }
+
+        return recipient;
     }
 
     /*------------------------------------------------------------------------*/
@@ -468,6 +515,18 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
 
             emit PoolRemoved(pools[i]);
         }
+    }
+
+    /**
+     * @notice Unlock transfer
+     * @param isTransferUnlocked_ Transfer unlocked
+     */
+    function unlockTransfer(
+        bool isTransferUnlocked_
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _isTransferUnlocked = isTransferUnlocked_;
+
+        emit TransferUnlocked(isTransferUnlocked_);
     }
 
     /**

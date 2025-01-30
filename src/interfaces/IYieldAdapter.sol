@@ -9,6 +9,15 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
  */
 interface IYieldAdapter is IERC721Receiver {
     /*------------------------------------------------------------------------*/
+    /* Invalid Recipient */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Invalid recipient
+     */
+    error InvalidRecipient();
+
+    /*------------------------------------------------------------------------*/
     /* Getters */
     /*------------------------------------------------------------------------*/
 
@@ -65,16 +74,24 @@ interface IYieldAdapter is IERC721Receiver {
     function claim(address recipient, uint256 amount) external;
 
     /**
-     * @notice Initiate withdraw of token IDs
+     * @notice Redeem token IDs
      * @param expiryTime Expiry timestamp
+     * @param recipient Recipient
      * @param nodeTokenIds Node token IDs
+     * @param redemptionHash Redemption hash
      */
-    function initiateWithdraw(uint64 expiryTime, uint256[] calldata nodeTokenIds) external;
+    function redeem(
+        uint64 expiryTime,
+        address recipient,
+        uint256[] calldata nodeTokenIds,
+        bytes32 redemptionHash
+    ) external;
 
     /**
      * @notice Withdraw token IDs
-     * @param recipient Recipient
      * @param nodeTokenIds Node token IDs
+     * @param redemptionHash Redemption hash
+     * @return Recipient
      */
-    function withdraw(address recipient, uint256[] calldata nodeTokenIds) external;
+    function withdraw(uint256[] calldata nodeTokenIds, bytes32 redemptionHash) external returns (address);
 }

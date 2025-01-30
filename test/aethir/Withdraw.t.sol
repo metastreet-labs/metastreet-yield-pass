@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {AethirBaseTest} from "./Base.t.sol";
 
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
-
+import {AethirYieldAdapter} from "src/yieldAdapters/aethir/AethirYieldAdapter.sol";
 import "forge-std/console.sol";
 
 contract WithdrawTest is AethirBaseTest {
@@ -47,12 +47,45 @@ contract WithdrawTest is AethirBaseTest {
 
         /* Redeem */
         vm.startPrank(cnlOwner);
-        yieldPass.redeem(yp, tokenIds);
-        yieldPass.withdraw(yp, cnlOwner, tokenIds);
+        yieldPass.redeem(yp, cnlOwner, tokenIds);
+        yieldPass.withdraw(yp, tokenIds);
         vm.stopPrank();
 
         /* Validate that NFT is withdrawn */
         assertEq(IERC721(checkerNodeLicense).ownerOf(91521), cnlOwner, "Invalid NFT owner");
+    }
+
+    function test__Withdraw_WhenTransferUnlocked() external {
+        /* Mint */
+        vm.startPrank(cnlOwner);
+        yieldPass.mint(
+            yp,
+            cnlOwner,
+            cnlOwner,
+            cnlOwner,
+            block.timestamp,
+            tokenIds,
+            generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            ""
+        );
+        vm.stopPrank();
+
+        /* Fast-forward to 1 seconds after expiry */
+        vm.warp(expiry + 1);
+
+        /* Unlock transfer */
+        vm.startPrank(users.deployer);
+        AethirYieldAdapter(address(yieldAdapter)).unlockTransfer(true);
+        vm.stopPrank();
+
+        /* Redeem */
+        vm.startPrank(cnlOwner);
+        yieldPass.redeem(yp, address(users.deployer), tokenIds);
+        yieldPass.withdraw(yp, tokenIds);
+        vm.stopPrank();
+
+        /* Validate that NFT is withdrawn */
+        assertEq(IERC721(checkerNodeLicense).ownerOf(91521), address(users.deployer), "Invalid NFT owner");
     }
 
     function test__Withdraw_WithSmartWallet() external {
@@ -91,11 +124,13 @@ contract WithdrawTest is AethirBaseTest {
 
         /* Redeem and withdraw */
         vm.startPrank(altCnlOwner);
-        smartAccount.execute(address(yieldPass), 0, abi.encodeWithSignature("redeem(address,uint256[])", yp, tokenIds));
         smartAccount.execute(
             address(yieldPass),
             0,
-            abi.encodeWithSignature("withdraw(address,address,uint256[])", yp, altCnlOwner, tokenIds)
+            abi.encodeWithSignature("redeem(address,address,uint256[])", yp, altCnlOwner, tokenIds)
+        );
+        smartAccount.execute(
+            address(yieldPass), 0, abi.encodeWithSignature("withdraw(address,uint256[])", yp, tokenIds)
         );
         vm.stopPrank();
 
@@ -124,7 +159,7 @@ contract WithdrawTest is AethirBaseTest {
         /* Withdraw */
         vm.startPrank(cnlOwner);
         vm.expectRevert(IYieldPass.InvalidWindow.selector);
-        yieldPass.withdraw(yp, cnlOwner, tokenIds);
+        yieldPass.withdraw(yp, tokenIds);
         vm.stopPrank();
     }
 
@@ -149,7 +184,7 @@ contract WithdrawTest is AethirBaseTest {
         /* Withdraw */
         vm.startPrank(cnlOwner);
         vm.expectRevert(IYieldPass.InvalidWithdrawal.selector);
-        yieldPass.withdraw(yp, cnlOwner, tokenIds);
+        yieldPass.withdraw(yp, tokenIds);
         vm.stopPrank();
     }
 }

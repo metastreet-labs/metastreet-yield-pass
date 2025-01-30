@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {XaiBaseTest} from "./BaseArbSepolia.t.sol";
 
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
-
+import {XaiYieldAdapter} from "src/yieldAdapters/xai/XaiYieldAdapter.sol";
 import "forge-std/console.sol";
 
 contract WithdrawTest is XaiBaseTest {
@@ -55,16 +55,53 @@ contract WithdrawTest is XaiBaseTest {
 
         /* Redeem */
         vm.startPrank(snlOwner1);
-        yieldPass.redeem(yp, tokenIds);
+        yieldPass.redeem(yp, snlOwner1, tokenIds);
         vm.stopPrank();
 
         /* Withdraw */
         vm.startPrank(snlOwner1);
-        yieldPass.withdraw(yp, snlOwner1, tokenIds);
+        yieldPass.withdraw(yp, tokenIds);
         vm.stopPrank();
 
         /* Validate that NFT is withdrawn */
         assertEq(sentryNodeLicense.ownerOf(123714), snlOwner1, "Invalid NFT owner");
+    }
+
+    function test__Withdraw_WhenTransferUnlocked() external {
+        /* Mint */
+        vm.startPrank(snlOwner1);
+        yieldPass.mint(
+            yp,
+            snlOwner1,
+            snlOwner1,
+            snlOwner1,
+            block.timestamp,
+            tokenIds,
+            generateStakingPools(stakingPools1, quantities1),
+            ""
+        );
+        vm.stopPrank();
+
+        /* Fast-forward to after expiry */
+        vm.warp(expiry + 1);
+
+        /* Unlock transfer */
+        vm.startPrank(users.deployer);
+        XaiYieldAdapter(address(yieldAdapter)).unlockTransfer(true);
+        vm.stopPrank();
+
+        /* Redeem */
+        vm.startPrank(snlOwner1);
+        yieldPass.redeem(yp, snlOwner2, tokenIds);
+        vm.stopPrank();
+
+        /* Withdraw */
+        vm.startPrank(snlOwner1);
+        yieldPass.withdraw(yp, tokenIds);
+        vm.stopPrank();
+
+        /* Validate that NFT is withdrawn */
+        assertEq(sentryNodeLicense.ownerOf(123714), snlOwner2, "Invalid NFT owner");
     }
 
     function test__Withdraw_RevertWhen_NotRedeemed() external {
@@ -88,7 +125,7 @@ contract WithdrawTest is XaiBaseTest {
         /* Withdraw */
         vm.startPrank(snlOwner1);
         vm.expectRevert(IYieldPass.InvalidWithdrawal.selector);
-        yieldPass.withdraw(yp, snlOwner1, tokenIds);
+        yieldPass.withdraw(yp, tokenIds);
         vm.stopPrank();
     }
 }

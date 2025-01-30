@@ -9,9 +9,7 @@ import {XaiYieldAdapter} from "src/yieldAdapters/xai/XaiYieldAdapter.sol";
 import {Deployer} from "../../utils/Deployer.s.sol";
 
 contract DeployXaiYieldAdapter is Deployer {
-    function run(
-        address xaiPoolFactory
-    ) public broadcast useDeployment returns (address) {
+    function run(address xaiPoolFactory, bool isTransferUnlocked) public broadcast useDeployment returns (address) {
         if (_deployment.yieldPass == address(0)) revert MissingDependency();
 
         /* XaiYieldAdapter Implementation */
@@ -27,7 +25,9 @@ contract DeployXaiYieldAdapter is Deployer {
         address[] memory pools = new address[](0);
 
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-            address(yieldAdapterImpl), msg.sender, abi.encodeWithSignature("initialize(address[])", pools)
+            address(yieldAdapterImpl),
+            msg.sender,
+            abi.encodeWithSignature("initialize(address[],bool)", pools, isTransferUnlocked)
         );
 
         console.log("XaiYieldAdapter proxy deployed at: %s\n", address(proxy));
