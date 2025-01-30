@@ -164,7 +164,7 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
         startTime = uint64(block.timestamp);
         expiry = startTime + 10 days;
 
-        deployYieldAdapter(false);
+        deployYieldAdapter(false, false);
         addWhitelist();
 
         vm.startPrank(cnlOwner);
@@ -198,7 +198,7 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
         address yieldAdapter_
     ) internal returns (address yp, address np) {
         vm.startPrank(users.deployer);
-        (yp, np) = yieldPass.deployYieldPass(nft_, startTime_, expiry_, true, yieldAdapter_);
+        (yp, np) = yieldPass.deployYieldPass(nft_, startTime_, expiry_, yieldAdapter_);
         vm.stopPrank();
     }
 
@@ -215,9 +215,7 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
         vm.stopPrank();
     }
 
-    function deployYieldAdapter(
-        bool isMock
-    ) internal {
+    function deployYieldAdapter(bool isMock, bool isTransferUnlocked) internal {
         vm.startPrank(users.deployer);
 
         /* Deploy yield adapters */
@@ -232,7 +230,7 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
             address(
                 new ERC1967Proxy(
                     address(yieldAdapterImpl),
-                    abi.encodeWithSignature("initialize(uint48,address)", 180 days, nodeSigner)
+                    abi.encodeWithSignature("initialize(uint48,address,bool)", 180 days, nodeSigner, isTransferUnlocked)
                 )
             )
         );

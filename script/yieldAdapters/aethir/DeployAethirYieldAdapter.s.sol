@@ -13,7 +13,8 @@ contract DeployAethirYieldAdapter is Deployer {
         address checkerNodeLicense,
         address checkerClaimAndWithdraw,
         uint48 cliffSeconds,
-        address signer
+        address signer,
+        bool isTransferUnlocked
     ) public broadcast useDeployment returns (address) {
         if (_deployment.yieldPass == address(0)) revert MissingDependency();
 
@@ -31,7 +32,7 @@ contract DeployAethirYieldAdapter is Deployer {
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
             address(yieldAdapterImpl),
             msg.sender,
-            abi.encodeWithSignature("initialize(uint48,address)", cliffSeconds, signer)
+            abi.encodeWithSignature("initialize(uint48,address,bool)", cliffSeconds, signer, isTransferUnlocked)
         );
 
         console.log("AethirYieldAdapter proxy deployed at: %s\n", address(proxy));

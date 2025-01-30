@@ -11,6 +11,7 @@ import {XaiBaseTest} from "./BaseArbSepolia.t.sol";
 import {XaiYieldAdapter} from "src/yieldAdapters/xai/XaiYieldAdapter.sol";
 
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
+import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 
 import "forge-std/console.sol";
 
@@ -57,7 +58,7 @@ contract RedeemTest is XaiBaseTest {
 
         /* Redeem */
         vm.startPrank(snlOwner1);
-        yieldPass.redeem(yp, tokenIds);
+        yieldPass.redeem(yp, snlOwner1, tokenIds);
         vm.stopPrank();
 
         /* Check that the node pass is burned */
@@ -66,11 +67,6 @@ contract RedeemTest is XaiBaseTest {
     }
 
     function test__Redeem_RevertWhen_TokenNotOwned() external {
-        /* Turn on transferability */
-        vm.startPrank(users.deployer);
-        yieldPass.setUserLocked(yp, true);
-        vm.stopPrank();
-
         /* Mint */
         vm.startPrank(snlOwner1);
         yieldPass.mint(
@@ -92,7 +88,7 @@ contract RedeemTest is XaiBaseTest {
         /* Redeem */
         vm.startPrank(snlOwner1);
         vm.expectRevert(IYieldPass.InvalidRedemption.selector);
-        yieldPass.redeem(yp, tokenIds);
+        yieldPass.redeem(yp, snlOwner1, tokenIds);
         vm.stopPrank();
     }
 
@@ -116,8 +112,33 @@ contract RedeemTest is XaiBaseTest {
 
         /* Redeem */
         vm.startPrank(snlOwner1);
-        vm.expectRevert(abi.encodeWithSelector(XaiYieldAdapter.InvalidWindow.selector));
-        yieldPass.redeem(yp, tokenIds);
+        vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidWindow.selector));
+        yieldPass.redeem(yp, snlOwner1, tokenIds);
+        vm.stopPrank();
+    }
+
+    function test__Redeem_RevertWhen_TransferLocked() external {
+        /* Mint */
+        vm.startPrank(snlOwner1);
+        yieldPass.mint(
+            yp,
+            snlOwner1,
+            snlOwner1,
+            snlOwner1,
+            block.timestamp,
+            tokenIds,
+            generateStakingPools(stakingPools1, quantities1),
+            ""
+        );
+        vm.stopPrank();
+
+        /* Fast-forward to after expiry */
+        vm.warp(expiry + 1);
+
+        /* Redeem */
+        vm.startPrank(snlOwner1);
+        vm.expectRevert(IYieldAdapter.InvalidRecipient.selector);
+        yieldPass.redeem(yp, snlOwner2, tokenIds);
         vm.stopPrank();
     }
 }

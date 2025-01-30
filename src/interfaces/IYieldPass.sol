@@ -91,6 +91,16 @@ interface IYieldPass is IERC721Receiver {
      */
     error InvalidAdapter();
 
+    /**
+     * @notice Invalid recipient
+     */
+    error InvalidRecipient();
+
+    /**
+     * @notice Invalid token IDs
+     */
+    error InvalidTokenIds();
+
     /*------------------------------------------------------------------------*/
     /* Events */
     /*------------------------------------------------------------------------*/
@@ -171,6 +181,7 @@ interface IYieldPass is IERC721Receiver {
      * @param yieldPass Yield pass token
      * @param nodePass Node pass token
      * @param account Account
+     * @param recipient Recipient
      * @param nodeToken Node token
      * @param nodeTokenIds Node (and node pass) token IDs
      */
@@ -178,6 +189,7 @@ interface IYieldPass is IERC721Receiver {
         address indexed yieldPass,
         address nodePass,
         address indexed account,
+        address recipient,
         address indexed nodeToken,
         uint256[] nodeTokenIds
     );
@@ -343,28 +355,27 @@ interface IYieldPass is IERC721Receiver {
     /**
      * @notice Redeem node passes
      * @param yieldPass Yield pass token
+     * @param recipient Recipient
      * @param nodeTokenIds Node (and node pass) token IDs
      */
-    function redeem(address yieldPass, uint256[] calldata nodeTokenIds) external;
+    function redeem(address yieldPass, address recipient, uint256[] calldata nodeTokenIds) external;
 
     /**
      * @notice Withdraw nodes
      * @param yieldPass Yield pass token
-     * @param recipient Recipient
      * @param nodeTokenIds Node token IDs
      */
-    function withdraw(address yieldPass, address recipient, uint256[] calldata nodeTokenIds) external;
+    function withdraw(address yieldPass, uint256[] calldata nodeTokenIds) external;
 
     /*------------------------------------------------------------------------*/
     /* Admin APIs */
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Deploy Yield Pass and Node Pass tokens for an node token
+     * @notice Deploy Yield Pass and Node Pass tokens for a node token
      * @param nodeToken Node token
      * @param startTime Start timestamp
      * @param expiryTime Expiry timestamp
-     * @param isUserLocked True if node pass token is user locked, otherwise false
      * @param adapter Yield adapter
      * @return Yield pass address, node pass address
      */
@@ -372,14 +383,6 @@ interface IYieldPass is IERC721Receiver {
         address nodeToken,
         uint64 startTime,
         uint64 expiryTime,
-        bool isUserLocked,
         address adapter
     ) external returns (address, address);
-
-    /**
-     * @notice Set user locked for node pass token
-     * @param yieldPass Yield pass token
-     * @param isUserLocked True if user token lock enabled, otherwise false
-     */
-    function setUserLocked(address yieldPass, bool isUserLocked) external;
 }

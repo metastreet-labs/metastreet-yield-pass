@@ -147,6 +147,12 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      */
     event SignerUpdated(address signer);
 
+    /**
+     * @notice License transfer unlocked
+     * @param isLicenseTransferUnlocked New license transfer unlocked status
+     */
+    event LicenseTransferUnlocked(bool isLicenseTransferUnlocked);
+
     /*------------------------------------------------------------------------*/
     /* Structures */
     /*------------------------------------------------------------------------*/
@@ -259,6 +265,21 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      */
     EnumerableSet.UintSet internal _orderIds;
 
+    /**
+     * @notice Withdrawal recipients (redemption hash to recipient)
+     */
+    mapping(bytes32 => address) internal _withdrawalRecipients;
+
+    /**
+     * @notice License transfer unlocked
+     */
+    bool internal _isLicenseTransferUnlocked;
+
+    /**
+     * @notice License original owners (token ID to owner)
+     */
+    mapping(uint256 => address) internal _licenseOriginalOwners;
+
     /*------------------------------------------------------------------------*/
     /* Constructor */
     /*------------------------------------------------------------------------*/
@@ -286,14 +307,18 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
 
     /**
      * @notice AethirYieldAdapter initializer
+     * @param cliffSeconds_ Cliff seconds
+     * @param signer_ Signer
+     * @param isLicenseTransferUnlocked_ License transfer unlocked
      */
-    function initialize(uint48 cliffSeconds_, address signer_) external {
+    function initialize(uint48 cliffSeconds_, address signer_, bool isLicenseTransferUnlocked_) external {
         require(!_initialized, "Already initialized");
 
         _initialized = true;
 
         _cliffSeconds = cliffSeconds_;
         _signer = signer_;
+        _isLicenseTransferUnlocked = isLicenseTransferUnlocked_;
 
         _grantRole(YIELD_PASS_ROLE, _yieldPass);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -554,6 +579,9 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
 
             /* Set user on license NFT */
             IERC4907(_aethirCheckerNodeLicense).setUser(tokenIds[i], burnerWallets[i], expiryTime);
+
+            /* Set original owner */
+            _licenseOriginalOwners[tokenIds[i]] = account;
         }
 
         return burnerWallets;
@@ -600,25 +628,49 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /**
      * @inheritdoc IYieldAdapter
      */
-    function initiateWithdraw(
-        uint64 expiryTime,
-        uint256[] calldata
-    ) external view onlyRole(YIELD_PASS_ROLE) whenNotPaused {
-        /* Validate yield pass is expired */
-        if (block.timestamp <= expiryTime) revert InvalidWindow();
+    function redeem(
+        uint64,
+        address recipient,
+        uint256[] calldata tokenIds,
+        bytes32 redemptionHash
+    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
+        /* Validate recipient if transfer is not unlocked */
+        if (!_isLicenseTransferUnlocked) {
+            for (uint256 i; i < tokenIds.length; i++) {
+                if (_licenseOriginalOwners[tokenIds[i]] != recipient) revert InvalidRecipient();
+            }
+        }
+
+        /* Set withdrawal recipient */
+        _withdrawalRecipients[redemptionHash] = recipient;
     }
 
     /**
      * @inheritdoc IYieldAdapter
      */
     function withdraw(
-        address recipient,
-        uint256[] calldata tokenIds
-    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
-        /* Transfer license NFT to recipient */
+        uint256[] calldata tokenIds,
+        bytes32 redemptionHash
+    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address) {
+        /* Get recipient */
+        address recipient = _withdrawalRecipients[redemptionHash];
+
+        /* Validate recipient */
+        if (recipient == address(0)) revert InvalidRecipient();
+
+        /* Delete withdrawal recipient */
+        delete _withdrawalRecipients[redemptionHash];
+
+        /* Withdraw license NFTs */
         for (uint256 i; i < tokenIds.length; i++) {
+            /* Delete original owner */
+            delete _licenseOriginalOwners[tokenIds[i]];
+
+            /* Transfer license NFT to recipient */
             IERC721(_aethirCheckerNodeLicense).transferFrom(address(this), recipient, tokenIds[i]);
         }
+
+        return recipient;
     }
 
     /*------------------------------------------------------------------------*/
@@ -649,6 +701,37 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
 
         /* Emit signer updated */
         emit SignerUpdated(signer_);
+    }
+
+    /**
+     * @notice Set license transfer unlocked
+     * @param isLicenseTransferUnlocked_ Transfer unlocked
+     */
+    function setLicenseTransferUnlocked(
+        bool isLicenseTransferUnlocked_
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _isLicenseTransferUnlocked = isLicenseTransferUnlocked_;
+
+        emit LicenseTransferUnlocked(isLicenseTransferUnlocked_);
+    }
+
+    /**
+     * @notice Set license original owners
+     * @dev Temporary admin function to facilitate v1.0 -> v1.1 upgrade
+     * @param tokenIds Token IDs
+     * @param owners Owners
+     */
+    function setLicenseOriginalOwners(
+        uint256[] calldata tokenIds,
+        address[] calldata owners
+    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        /* Validate lengths */
+        if (tokenIds.length != owners.length) revert InvalidLength();
+
+        /* Update original owners */
+        for (uint256 i; i < tokenIds.length; i++) {
+            _licenseOriginalOwners[tokenIds[i]] = owners[i];
+        }
     }
 
     /**

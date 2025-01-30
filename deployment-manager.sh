@@ -44,12 +44,12 @@ usage() {
     echo "  deploy-yield-pass-utils <uniswap v2 factory>"
     echo "  upgrade-yield-pass-utils <uniswap v2 factory>"
     echo ""
-    echo "  yield-pass-create <nft> <start time> <expiry time> <is user locked> <yield adapter>"
+    echo "  yield-pass-create <nft> <start time> <expiry time> <yield adapter>"
     echo ""
-    echo "  deploy-aethir-yield-adapter <checker node license> <checker claim and withdraw> <cliff seconds> <signer>"
+    echo "  deploy-aethir-yield-adapter <checker node license> <checker claim and withdraw> <cliff seconds> <signer> <is transfer unlocked>"
     echo "  upgrade-aethir-yield-adapter <proxy> <checker node license> <checker claim and withdraw>"
     echo ""
-    echo "  deploy-xai-yield-adapter <xai pool factory>"
+    echo "  deploy-xai-yield-adapter <xai pool factory> <is transfer unlocked>"
     echo "  upgrade-xai-yield-adapter <proxy> <xai pool factory>"
     echo "  add-pools-to-xai-yield-adapter <xai yield adapter> <pools>"
     echo "  remove-pools-from-xai-yield-adapter <xai yield adapter> <pools>"
@@ -113,23 +113,23 @@ case $1 in
         ;;
 
     "yield-pass-create")
-        if [ "$#" -ne 6 ]; then
-            echo "Invalid param count; Usage: $0 yield-pass-create <nft> <start time> <expiry time> <is user locked> <yield adapter>"
+        if [ "$#" -ne 5 ]; then
+            echo "Invalid param count; Usage: $0 yield-pass-create <nft> <start time> <expiry time> <yield adapter>"
             exit 1
         fi
 
         echo "Creating Yield Pass Token"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/YieldPassCreate.s.sol:YieldPassCreate" --sig "run(address,uint64,uint64,bool,address)" $2 $3 $4 $5 $6
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/YieldPassCreate.s.sol:YieldPassCreate" --sig "run(address,uint64,uint64,address)" $2 $3 $4 $5
         ;;
 
     "deploy-aethir-yield-adapter")
-        if [ "$#" -ne 5 ]; then
-            echo "Invalid param count; Usage: $0 deploy-aethir-yield-adapter <checker node license> <checker claim and withdraw> <cliff seconds> <signer>"
+        if [ "$#" -ne 6 ]; then
+            echo "Invalid param count; Usage: $0 deploy-aethir-yield-adapter <checker node license> <checker claim and withdraw> <cliff seconds> <signer> <is transfer unlocked>"
             exit 1
         fi
 
         echo "Deploying Aethir Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/DeployAethirYieldAdapter.s.sol:DeployAethirYieldAdapter" --sig "run(address,address,uint48,address)" $2 $3 $4 $5
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/DeployAethirYieldAdapter.s.sol:DeployAethirYieldAdapter" --sig "run(address,address,uint48,address,bool)" $2 $3 $4 $5 $6
         ;;
 
     "upgrade-aethir-yield-adapter")
@@ -143,13 +143,13 @@ case $1 in
         ;;
 
     "deploy-xai-yield-adapter")
-        if [ "$#" -ne 2 ]; then
-            echo "Invalid param count; Usage: $0 deploy-xai-yield-adapter <xai pool factory>"
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid param count; Usage: $0 deploy-xai-yield-adapter <xai pool factory> <is transfer unlocked>"
             exit 1
         fi
 
         echo "Deploying XAI Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/DeployXaiYieldAdapter.s.sol:DeployXaiYieldAdapter" --sig "run(address)" $2
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/DeployXaiYieldAdapter.s.sol:DeployXaiYieldAdapter" --sig "run(address,bool)" $2 $3
         ;;
 
     "upgrade-xai-yield-adapter")

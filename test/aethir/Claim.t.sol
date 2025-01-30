@@ -27,7 +27,7 @@ contract ClaimTest is AethirBaseTest {
 
         /* Mock set up */
         deployMockCheckerClaimAndWithdraw();
-        deployYieldAdapter(true);
+        deployYieldAdapter(true, false);
         addWhitelist();
 
         vm.prank(cnlOwner);

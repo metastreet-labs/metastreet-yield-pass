@@ -56,11 +56,11 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @notice Yield pass state
      * @param claimState Yield claim state
-     * @param tokenIdRedemptions Map of token ID to redemption address
+     * @param redemptions Map of redemption hash to withdraw account
      */
     struct YieldPassState {
         YieldClaimState claimState;
-        mapping(uint256 => address) tokenIdRedemptions;
+        mapping(bytes32 => address) redemptions;
     }
 
     /*------------------------------------------------------------------------*/
@@ -251,22 +251,17 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      * @notice Helper to get node pass token constructor parameters
      * @param nodeToken Node token
      * @param expiryTime Expiry timestamp
-     * @param isUserLocked True if token is user locked, otherwise false
      * @return Encoded constructor parameters
      */
-    function _getNodePassCtorParams(
-        address nodeToken,
-        uint256 expiryTime,
-        bool isUserLocked
-    ) internal view returns (bytes memory) {
+    function _getNodePassCtorParams(address nodeToken, uint256 expiryTime) internal view returns (bytes memory) {
         /* Construct node pass name and symbol */
         string memory tokenName = string.concat(
             IERC721Metadata(nodeToken).name(), " (Node Pass - Expiry: ", Strings.toString(expiryTime), ")"
         );
         string memory tokenSymbol =
-            string.concat(IERC721Metadata(nodeToken).symbol(), "-DP-", Strings.toString(expiryTime));
+            string.concat(IERC721Metadata(nodeToken).symbol(), "-NP-", Strings.toString(expiryTime));
 
-        return abi.encode(tokenName, tokenSymbol, isUserLocked);
+        return abi.encode(tokenName, tokenSymbol);
     }
 
     /**
@@ -430,52 +425,83 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @inheritdoc IYieldPass
      */
-    function redeem(address yieldPass, uint256[] calldata nodeTokenIds) external nonReentrant {
-        /* Get yield pass info */
-        YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
+    function redeem(address yieldPass, address recipient, uint256[] calldata nodeTokenIds) external nonReentrant {
+        /* Validate recipient */
+        if (recipient == address(0)) revert InvalidRecipient();
 
-        for (uint256 i; i < nodeTokenIds.length; i++) {
-            /* Validate caller owns node pass */
-            if (NodePassToken(yieldPassInfo_.nodePass).ownerOf(nodeTokenIds[i]) != msg.sender) {
-                revert InvalidRedemption();
-            }
+        /* Validate token IDs length */
+        if (nodeTokenIds.length == 0) revert InvalidTokenIds();
 
-            /* Store redemption address */
-            _yieldPassStates[yieldPass].tokenIdRedemptions[nodeTokenIds[i]] = msg.sender;
-
-            /* Burn node pass */
-            NodePassToken(yieldPassInfo_.nodePass).burn(msg.sender, nodeTokenIds[i]);
-        }
-
-        /* Call yield adapter initiate withdraw hook */
-        IYieldAdapter(yieldPassInfo_.yieldAdapter).initiateWithdraw(yieldPassInfo_.expiryTime, nodeTokenIds);
-
-        /* Emit Redeemed */
-        emit Redeemed(yieldPass, yieldPassInfo_.nodePass, msg.sender, yieldPassInfo_.nodeToken, nodeTokenIds);
-    }
-
-    /**
-     * @inheritdoc IYieldPass
-     */
-    function withdraw(address yieldPass, address recipient, uint256[] calldata nodeTokenIds) external nonReentrant {
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
 
         /* Validate yield pass is expired */
         if (block.timestamp <= yieldPassInfo_.expiryTime) revert InvalidWindow();
 
+        /* Create encoded token IDs */
+        bytes memory encodedTokenIds;
         for (uint256 i; i < nodeTokenIds.length; i++) {
-            /* Validate caller burned token */
-            if (_yieldPassStates[yieldPass].tokenIdRedemptions[nodeTokenIds[i]] != msg.sender) {
-                revert InvalidWithdrawal();
+            /* Validate caller owns node pass */
+            if (NodePassToken(yieldPassInfo_.nodePass).ownerOf(nodeTokenIds[i]) != msg.sender) {
+                revert InvalidRedemption();
             }
 
-            /* Delete redemption */
-            delete _yieldPassStates[yieldPass].tokenIdRedemptions[nodeTokenIds[i]];
+            /* Validate token ID is unique and sorted in ascending order */
+            if (i != nodeTokenIds.length - 1 && nodeTokenIds[i] >= nodeTokenIds[i + 1]) revert InvalidTokenIds();
+
+            /* Encode token IDs */
+            encodedTokenIds = abi.encodePacked(encodedTokenIds, nodeTokenIds[i]);
+
+            /* Burn node pass token */
+            NodePassToken(yieldPassInfo_.nodePass).burn(nodeTokenIds[i]);
         }
 
+        /* Compute redemption hash */
+        bytes32 redemptionHash = keccak256(encodedTokenIds);
+
+        /* Store redemption address */
+        _yieldPassStates[yieldPass].redemptions[redemptionHash] = msg.sender;
+
+        /* Call yield adapter redeem hook */
+        IYieldAdapter(yieldPassInfo_.yieldAdapter).redeem(
+            yieldPassInfo_.expiryTime, recipient, nodeTokenIds, redemptionHash
+        );
+
+        /* Emit Redeemed */
+        emit Redeemed(yieldPass, yieldPassInfo_.nodePass, msg.sender, recipient, yieldPassInfo_.nodeToken, nodeTokenIds);
+    }
+
+    /**
+     * @inheritdoc IYieldPass
+     */
+    function withdraw(address yieldPass, uint256[] calldata nodeTokenIds) external nonReentrant {
+        /* Validate token IDs length */
+        if (nodeTokenIds.length == 0) revert InvalidTokenIds();
+
+        /* Get yield pass info */
+        YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
+
+        /* Create encoded token IDs */
+        bytes memory encodedTokenIds;
+        for (uint256 i; i < nodeTokenIds.length; i++) {
+            /* Validate token ID is unique and sorted in ascending order */
+            if (i != nodeTokenIds.length - 1 && nodeTokenIds[i] >= nodeTokenIds[i + 1]) revert InvalidTokenIds();
+
+            /* Encode token ID */
+            encodedTokenIds = abi.encodePacked(encodedTokenIds, nodeTokenIds[i]);
+        }
+
+        /* Compute redemption hash */
+        bytes32 redemptionHash = keccak256(encodedTokenIds);
+
+        /* Validate caller is redemption address */
+        if (_yieldPassStates[yieldPass].redemptions[redemptionHash] != msg.sender) revert InvalidWithdrawal();
+
+        /* Delete redemption */
+        delete _yieldPassStates[yieldPass].redemptions[redemptionHash];
+
         /* Call yield adapter withdraw hook */
-        IYieldAdapter(yieldPassInfo_.yieldAdapter).withdraw(recipient, nodeTokenIds);
+        address recipient = IYieldAdapter(yieldPassInfo_.yieldAdapter).withdraw(nodeTokenIds, redemptionHash);
 
         /* Emit Withdrawn */
         emit Withdrawn(
@@ -494,7 +520,6 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         address nodeToken,
         uint64 startTime,
         uint64 expiryTime,
-        bool isUserLocked,
         address adapter
     ) external onlyRole(DEFAULT_ADMIN_ROLE) returns (address, address) {
         /* Validate expiry */
@@ -517,9 +542,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         address nodePass = Create2.deploy(
             0,
             deploymentHash,
-            abi.encodePacked(
-                type(NodePassToken).creationCode, _getNodePassCtorParams(nodeToken, expiryTime, isUserLocked)
-            )
+            abi.encodePacked(type(NodePassToken).creationCode, _getNodePassCtorParams(nodeToken, expiryTime))
         );
 
         /* Store yield pass info */
@@ -539,16 +562,5 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         emit YieldPassDeployed(yieldPass, nodePass, nodeToken, startTime, expiryTime, adapter);
 
         return (yieldPass, nodePass);
-    }
-
-    /**
-     * @inheritdoc IYieldPass
-     */
-    function setUserLocked(address yieldPass, bool isUserLocked) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        /* Get yield pass info */
-        YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
-
-        /* Update user locked */
-        NodePassToken(yieldPassInfo_.nodePass).setUserLocked(isUserLocked);
     }
 }

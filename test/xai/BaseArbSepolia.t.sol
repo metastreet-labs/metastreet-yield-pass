@@ -130,7 +130,7 @@ abstract contract XaiBaseTest is PoolBaseTest {
         address yieldAdapter_
     ) internal returns (address yp, address np) {
         vm.startPrank(users.deployer);
-        (yp, np) = yieldPass.deployYieldPass(nft_, startTime_, expiry_, false, yieldAdapter_);
+        (yp, np) = yieldPass.deployYieldPass(nft_, startTime_, expiry_, yieldAdapter_);
         vm.stopPrank();
     }
 
@@ -146,7 +146,9 @@ abstract contract XaiBaseTest is PoolBaseTest {
         pools[1] = stakingPool2;
         yieldAdapter = XaiYieldAdapter(
             address(
-                new ERC1967Proxy(address(yieldAdapterImpl), abi.encodeWithSignature("initialize(address[])", pools))
+                new ERC1967Proxy(
+                    address(yieldAdapterImpl), abi.encodeWithSignature("initialize(address[],bool)", pools, false)
+                )
             )
         );
         vm.label({account: address(yieldAdapter), newLabel: "XAI Yield Adapter"});
