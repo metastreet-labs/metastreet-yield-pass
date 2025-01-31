@@ -97,6 +97,9 @@ abstract contract XaiBaseTest is PoolBaseTest {
 
         PoolBaseTest.setUp();
 
+        startTime = uint64(block.timestamp);
+        expiry = startTime + 15 days;
+
         /* Unstake and stake licenses */
         vm.startPrank(snlOwner1);
         poolFactory.unstakeKeys(stakingPool1, 0);
@@ -118,9 +121,6 @@ abstract contract XaiBaseTest is PoolBaseTest {
         vm.startPrank(snlOwner2);
         sentryNodeLicense.setApprovalForAll(address(yieldAdapter), true);
         vm.stopPrank();
-
-        startTime = uint64(block.timestamp);
-        expiry = startTime + 15 days;
     }
 
     function deployYieldPass(
@@ -138,7 +138,7 @@ abstract contract XaiBaseTest is PoolBaseTest {
         vm.startPrank(users.deployer);
 
         /* Deploy yield adapter impl */
-        yieldAdapterImpl = new XaiYieldAdapter(address(yieldPass), address(poolFactory));
+        yieldAdapterImpl = new XaiYieldAdapter(address(yieldPass), expiry, address(poolFactory));
 
         /* Deploy yield adapter proxy */
         address[] memory pools = new address[](2);

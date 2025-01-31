@@ -332,9 +332,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         _yieldPassStates[yieldPass].claimState.shares += yieldPassAmount;
 
         /* Call yield adapter setup hook */
-        address[] memory operators = IYieldAdapter(yieldPassInfo_.yieldAdapter).setup(
-            yieldPassInfo_.expiryTime, account, nodeTokenIds, setupData
-        );
+        address[] memory operators = IYieldAdapter(yieldPassInfo_.yieldAdapter).setup(account, nodeTokenIds, setupData);
 
         /* Mint yield pass token */
         YieldPassToken(yieldPass).mint(yieldPassRecipient, yieldPassAmount);
@@ -366,7 +364,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
 
         /* Harvest yield */
-        uint256 yieldAmount = IYieldAdapter(yieldPassInfo_.yieldAdapter).harvest(yieldPassInfo_.expiryTime, harvestData);
+        uint256 yieldAmount = IYieldAdapter(yieldPassInfo_.yieldAdapter).harvest(harvestData);
 
         /* Update yield claim state */
         _yieldPassStates[yieldPass].claimState.balance += yieldAmount;
@@ -463,9 +461,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         _yieldPassStates[yieldPass].redemptions[redemptionHash] = msg.sender;
 
         /* Call yield adapter redeem hook */
-        IYieldAdapter(yieldPassInfo_.yieldAdapter).redeem(
-            yieldPassInfo_.expiryTime, recipient, nodeTokenIds, redemptionHash
-        );
+        IYieldAdapter(yieldPassInfo_.yieldAdapter).redeem(recipient, nodeTokenIds, redemptionHash);
 
         /* Emit Redeemed */
         emit Redeemed(yieldPass, yieldPassInfo_.nodePass, msg.sender, recipient, yieldPassInfo_.nodeToken, nodeTokenIds);

@@ -12,13 +12,13 @@ import {Deployer} from "../../utils/Deployer.s.sol";
 contract UpgradeXaiYieldAdapter is Deployer {
     function run(
         address proxy,
-        address yieldPass,
+        uint64 yieldPassExpiry,
         address xaiPoolFactory
     ) public broadcast useDeployment returns (address) {
         /* Deploy new XaiYieldAdapter Implementation */
         console.log("Deploying XaiYieldAdapter implementation...");
 
-        XaiYieldAdapter yieldAdapterImpl = new XaiYieldAdapter(yieldPass, xaiPoolFactory);
+        XaiYieldAdapter yieldAdapterImpl = new XaiYieldAdapter(_deployment.yieldPass, yieldPassExpiry, xaiPoolFactory);
 
         console.log("XaiYieldAdapter implementation deployed at: %s\n", address(yieldAdapterImpl));
 

@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 
@@ -221,6 +222,11 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     address internal immutable _yieldPass;
 
     /**
+     * @notice Expiry time
+     */
+    uint64 internal immutable _expiryTime;
+
+    /**
      * @notice Aethir Checker node license
      */
     address internal immutable _aethirCheckerNodeLicense;
@@ -286,16 +292,22 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
 
     /**
      * @notice AethirYieldAdapter constructor
+     * @param yieldPassFactory_ Yield pass factory
+     * @param expiryTime_ Expiry time
+     * @param aethirCheckerNodeLicense_ Aethir checker node license token
+     * @param aethirCheckerClaimAndWithdraw_ Aethir checker claim and withdraw address
      */
     constructor(
         address yieldPass_,
+        uint64 expiryTime_,
         address aethirCheckerNodeLicense_,
         address aethirCheckerClaimAndWithdraw_
-    ) EIP712(name(), DOMAIN_VERSION) {
+    ) EIP712("Aethir Yield Adapter", DOMAIN_VERSION) {
         /* Disable initialization of implementation contract */
         _initialized = true;
 
         _yieldPass = yieldPass_;
+        _expiryTime = expiryTime_;
         _aethirCheckerNodeLicense = aethirCheckerNodeLicense_;
         _aethirCheckerClaimAndWithdraw = ICheckerClaimAndWithdraw(aethirCheckerClaimAndWithdraw_);
         _athToken = IERC20(_aethirCheckerClaimAndWithdraw.aethirTokenAdress());
@@ -402,8 +414,8 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @return Burner wallet addresses
      */
     function _validateSignedNodes(
-        uint256[] calldata tokenIds,
         uint64 expiryTime,
+        uint256[] calldata tokenIds,
         SignedValidatedNodes memory signedValidatedNodes
     ) internal view returns (address[] memory) {
         ValidatedNodes memory nodes = signedValidatedNodes.nodes;
@@ -471,8 +483,8 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /**
      * @inheritdoc IYieldAdapter
      */
-    function name() public pure returns (string memory) {
-        return "Aethir Yield Adapter";
+    function name() public view returns (string memory) {
+        return string.concat("Aethir Yield Adapter - Expiry: ", Strings.toString(_expiryTime));
     }
 
     /**
@@ -562,7 +574,6 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @inheritdoc IYieldAdapter
      */
     function setup(
-        uint64 expiryTime,
         address account,
         uint256[] calldata tokenIds,
         bytes calldata setupData
@@ -571,14 +582,14 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         SignedValidatedNodes memory signedValidatedNodes = abi.decode(setupData, (SignedValidatedNodes));
 
         /* Validate signed nodes */
-        address[] memory burnerWallets = _validateSignedNodes(tokenIds, expiryTime, signedValidatedNodes);
+        address[] memory burnerWallets = _validateSignedNodes(_expiryTime, tokenIds, signedValidatedNodes);
 
         for (uint256 i; i < tokenIds.length; i++) {
             /* Transfer license NFT from account to yield adapter */
             IERC721(_aethirCheckerNodeLicense).safeTransferFrom(account, address(this), tokenIds[i]);
 
             /* Set user on license NFT */
-            IERC4907(_aethirCheckerNodeLicense).setUser(tokenIds[i], burnerWallets[i], expiryTime);
+            IERC4907(_aethirCheckerNodeLicense).setUser(tokenIds[i], burnerWallets[i], _expiryTime);
 
             /* Set original owner */
             _licenseOriginalOwners[tokenIds[i]] = account;
@@ -591,7 +602,6 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @inheritdoc IYieldAdapter
      */
     function harvest(
-        uint64 expiryTime,
         bytes calldata harvestData
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (uint256) {
         /* Skip if no data */
@@ -607,7 +617,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
             return 0;
         } else {
             /* Validate yield pass is expired */
-            if (block.timestamp <= expiryTime) revert InvalidWindow();
+            if (block.timestamp <= _expiryTime) revert InvalidWindow();
 
             /* Withdraw ATH */
             return _withdrawATH(data);
@@ -629,7 +639,6 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @inheritdoc IYieldAdapter
      */
     function redeem(
-        uint64,
         address recipient,
         uint256[] calldata tokenIds,
         bytes32 redemptionHash

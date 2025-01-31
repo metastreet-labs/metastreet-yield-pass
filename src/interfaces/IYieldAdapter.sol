@@ -45,14 +45,12 @@ interface IYieldAdapter is IERC721Receiver {
 
     /**
      * @notice Setup token IDs for yield
-     * @param expiryTime Expiry timestamp
      * @param account Account
      * @param nodeTokenIds Node token IDs
      * @param setupData Setup data
      * @return Operators
      */
     function setup(
-        uint64 expiryTime,
         address account,
         uint256[] calldata nodeTokenIds,
         bytes calldata setupData
@@ -60,11 +58,12 @@ interface IYieldAdapter is IERC721Receiver {
 
     /**
      * @notice Harvest yield
-     * @param expiryTime Expiry timestamp
      * @param harvestData Harvest data
      * @return Yield token amount harvested
      */
-    function harvest(uint64 expiryTime, bytes calldata harvestData) external returns (uint256);
+    function harvest(
+        bytes calldata harvestData
+    ) external returns (uint256);
 
     /**
      * @notice Claim yield
@@ -75,17 +74,11 @@ interface IYieldAdapter is IERC721Receiver {
 
     /**
      * @notice Redeem token IDs
-     * @param expiryTime Expiry timestamp
      * @param recipient Recipient
      * @param nodeTokenIds Node token IDs
      * @param redemptionHash Redemption hash
      */
-    function redeem(
-        uint64 expiryTime,
-        address recipient,
-        uint256[] calldata nodeTokenIds,
-        bytes32 redemptionHash
-    ) external;
+    function redeem(address recipient, uint256[] calldata nodeTokenIds, bytes32 redemptionHash) external;
 
     /**
      * @notice Withdraw token IDs
