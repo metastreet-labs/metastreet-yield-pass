@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 
@@ -149,6 +150,11 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     address internal immutable _yieldPass;
 
     /**
+     * @notice Yield pass expiry
+     */
+    uint64 internal immutable _yieldPassExpiry;
+
+    /**
      * @notice XAI Pool factory
      */
     IPoolFactory internal immutable _xaiPoolFactory;
@@ -213,11 +219,12 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /**
      * @notice XaiYieldAdapter constructor
      */
-    constructor(address yieldPass_, address xaiPoolFactory_) {
+    constructor(address yieldPass_, uint64 yieldPassExpiry_, address xaiPoolFactory_) {
         /* Disable initialization of implementation contract */
         _initialized = true;
 
         _yieldPass = yieldPass_;
+        _yieldPassExpiry = yieldPassExpiry_;
         _xaiPoolFactory = IPoolFactory(xaiPoolFactory_);
         _xaiSentryNodeLicense = INodeLicense(_xaiPoolFactory.nodeLicenseAddress());
         _esXaiToken = IERC20(_xaiPoolFactory.esXaiAddress());
@@ -261,8 +268,8 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /**
      * @inheritdoc IYieldAdapter
      */
-    function name() public pure returns (string memory) {
-        return "XAI Yield Adapter";
+    function name() public view returns (string memory) {
+        return string.concat("XAI Yield Adapter - Expiry: ", Strings.toString(_yieldPassExpiry));
     }
 
     /**
@@ -344,7 +351,6 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      * @inheritdoc IYieldAdapter
      */
     function setup(
-        uint64,
         address account,
         uint256[] calldata tokenIds,
         bytes calldata setupData
@@ -391,7 +397,9 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /**
      * @inheritdoc IYieldAdapter
      */
-    function harvest(uint64, bytes calldata) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (uint256) {
+    function harvest(
+        bytes calldata
+    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (uint256) {
         /* Snapshot balance before */
         uint256 balanceBefore = _esXaiToken.balanceOf(address(this));
 
@@ -419,13 +427,12 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      * @inheritdoc IYieldAdapter
      */
     function redeem(
-        uint64 expiryTime,
         address recipient,
         uint256[] calldata tokenIds,
         bytes32 redemptionHash
     ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
         /* Validate yield pass is expired */
-        if (block.timestamp <= expiryTime) revert InvalidWindow();
+        if (block.timestamp <= _yieldPassExpiry) revert InvalidWindow();
 
         /* Validate recipient if transfer is not unlocked */
         if (!_isTransferUnlocked) {

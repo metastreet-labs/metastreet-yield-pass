@@ -10,6 +10,7 @@ import {Deployer} from "../../utils/Deployer.s.sol";
 
 contract DeployAethirYieldAdapter is Deployer {
     function run(
+        uint64 yieldPassExpiry,
         address checkerNodeLicense,
         address checkerClaimAndWithdraw,
         uint48 cliffSeconds,
@@ -22,7 +23,7 @@ contract DeployAethirYieldAdapter is Deployer {
         console.log("Deploying AethirYieldAdapter implementation...");
 
         AethirYieldAdapter yieldAdapterImpl =
-            new AethirYieldAdapter(_deployment.yieldPass, checkerNodeLicense, checkerClaimAndWithdraw);
+            new AethirYieldAdapter(_deployment.yieldPass, yieldPassExpiry, checkerNodeLicense, checkerClaimAndWithdraw);
 
         console.log("AethirYieldAdapter implementation deployed at: %s\n", address(yieldAdapterImpl));
 

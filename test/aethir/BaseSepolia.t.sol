@@ -221,6 +221,7 @@ abstract contract AethirSepoliaBaseTest is PoolBaseTest {
         /* Deploy yield adapters */
         yieldAdapterImpl = new AethirYieldAdapter(
             address(yieldPass),
+            expiry,
             address(checkerNodeLicense),
             isMock ? address(mockCheckerClaimAndWithdraw) : address(checkerClaimAndWithdraw)
         );

@@ -123,43 +123,43 @@ case $1 in
         ;;
 
     "deploy-aethir-yield-adapter")
-        if [ "$#" -ne 6 ]; then
-            echo "Invalid param count; Usage: $0 deploy-aethir-yield-adapter <checker node license> <checker claim and withdraw> <cliff seconds> <signer> <is transfer unlocked>"
+        if [ "$#" -ne 7 ]; then
+            echo "Invalid param count; Usage: $0 deploy-aethir-yield-adapter <yield pass expiry> <checker node license> <checker claim and withdraw> <cliff seconds> <signer> <is transfer unlocked>"
             exit 1
         fi
 
         echo "Deploying Aethir Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/DeployAethirYieldAdapter.s.sol:DeployAethirYieldAdapter" --sig "run(address,address,uint48,address,bool)" $2 $3 $4 $5 $6
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/DeployAethirYieldAdapter.s.sol:DeployAethirYieldAdapter" --sig "run(uint64,address,address,uint48,address,bool)" $2 $3 $4 $5 $6 $7
         ;;
 
     "upgrade-aethir-yield-adapter")
-        if [ "$#" -ne 4 ]; then
-            echo "Invalid param count; Usage: $0 upgrade-aethir-yield-adapter <proxy> <checker node license> <checker claim and withdraw>"
+        if [ "$#" -ne 5 ]; then
+            echo "Invalid param count; Usage: $0 upgrade-aethir-yield-adapter <proxy> <yield pass expiry> <checker node license> <checker claim and withdraw>"
             exit 1
         fi
 
         echo "Upgrading Aethir Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/UpgradeAethirYieldAdapter.s.sol:UpgradeAethirYieldAdapter" --sig "run(address,address,address)" $2 $3 $4
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/aethir/UpgradeAethirYieldAdapter.s.sol:UpgradeAethirYieldAdapter" --sig "run(address,uint64,address,address)" $2 $3 $4 $5
         ;;
 
     "deploy-xai-yield-adapter")
-        if [ "$#" -ne 3 ]; then
-            echo "Invalid param count; Usage: $0 deploy-xai-yield-adapter <xai pool factory> <is transfer unlocked>"
+        if [ "$#" -ne 4 ]; then
+            echo "Invalid param count; Usage: $0 deploy-xai-yield-adapter <yield pass expiry> <xai pool factory> <is transfer unlocked>"
             exit 1
         fi
 
         echo "Deploying XAI Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/DeployXaiYieldAdapter.s.sol:DeployXaiYieldAdapter" --sig "run(address,bool)" $2 $3
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/DeployXaiYieldAdapter.s.sol:DeployXaiYieldAdapter" --sig "run(uint64,address,bool)" $2 $3 $4
         ;;
 
     "upgrade-xai-yield-adapter")
-        if [ "$#" -ne 3 ]; then
-            echo "Invalid param count; Usage: $0 upgrade-xai-yield-adapter <proxy> <xai pool factory>"
+        if [ "$#" -ne 4 ]; then
+            echo "Invalid param count; Usage: $0 upgrade-xai-yield-adapter <proxy> <yield pass expiry> <xai pool factory>"
             exit 1
         fi
 
         echo "Upgrading XAI Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/UpgradeXaiYieldAdapter.s.sol:UpgradeXaiYieldAdapter" --sig "run(address,address)" $2 $3
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/UpgradeXaiYieldAdapter.s.sol:UpgradeXaiYieldAdapter" --sig "run(address,uint64,address)" $2 $3 $4
         ;;
 
     "add-pools-to-xai-yield-adapter")

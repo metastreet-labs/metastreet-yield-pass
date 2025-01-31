@@ -12,6 +12,7 @@ import {Deployer} from "../../utils/Deployer.s.sol";
 contract UpgradeAethirYieldAdapter is Deployer {
     function run(
         address proxy,
+        uint64 yieldPassExpiry,
         address checkerNodeLicense,
         address checkerClaimAndWithdraw
     ) public broadcast useDeployment returns (address) {
@@ -19,7 +20,7 @@ contract UpgradeAethirYieldAdapter is Deployer {
         console.log("Deploying AethirYieldAdapter implementation...");
 
         AethirYieldAdapter yieldAdapterImpl =
-            new AethirYieldAdapter(_deployment.yieldPass, checkerNodeLicense, checkerClaimAndWithdraw);
+            new AethirYieldAdapter(_deployment.yieldPass, yieldPassExpiry, checkerNodeLicense, checkerClaimAndWithdraw);
 
         console.log("AethirYieldAdapter implementation deployed at: %s\n", address(yieldAdapterImpl));
 
