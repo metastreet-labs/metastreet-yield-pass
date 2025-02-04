@@ -317,6 +317,11 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
 
+        /* Validate mint window is open */
+        if (block.timestamp < yieldPassInfo_.startTime || block.timestamp >= yieldPassInfo_.expiryTime) {
+            revert InvalidWindow();
+        }
+
         /* Validate deadline */
         if (deadline < block.timestamp) revert InvalidDeadline();
 
