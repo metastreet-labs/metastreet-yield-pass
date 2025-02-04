@@ -6,7 +6,7 @@ import "forge-std/Script.sol";
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
 import {Deployer} from "script/utils/Deployer.s.sol";
 
-contract YieldPassCreate is Deployer {
+contract CreateYieldPass is Deployer {
     function run(
         address nft,
         uint64 startTime,

@@ -119,7 +119,7 @@ case $1 in
         fi
 
         echo "Creating Yield Pass Token"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/YieldPassCreate.s.sol:YieldPassCreate" --sig "run(address,uint64,uint64,address)" $2 $3 $4 $5
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/CreateYieldPass.s.sol:CreateYieldPass" --sig "run(address,uint64,uint64,address)" $2 $3 $4 $5
         ;;
 
     "deploy-aethir-yield-adapter")
