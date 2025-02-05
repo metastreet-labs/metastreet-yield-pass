@@ -135,9 +135,9 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Yield pass
+     * @notice Yield pass factory
      */
-    address internal immutable _yieldPass;
+    address internal immutable _yieldPassFactory;
 
     /**
      * @notice Expiry time
@@ -213,11 +213,11 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      * @param expiryTime_ Expiry time
      * @param xaiPoolFactory_ XAI pool factory
      */
-    constructor(address yieldPass_, uint64 expiryTime_, address xaiPoolFactory_) {
+    constructor(address yieldPassFactory_, uint64 expiryTime_, address xaiPoolFactory_) {
         /* Disable initialization of implementation contract */
         _initialized = true;
 
-        _yieldPass = yieldPass_;
+        _yieldPassFactory = yieldPassFactory_;
         _expiryTime = expiryTime_;
         _xaiPoolFactory = IPoolFactory(xaiPoolFactory_);
         _xaiSentryNodeLicense = INodeLicense(_xaiPoolFactory.nodeLicenseAddress());
@@ -249,7 +249,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
 
         _isLicenseTransferUnlocked = isLicenseTransferUnlocked_;
 
-        _grantRole(YIELD_PASS_ROLE, _yieldPass);
+        _grantRole(YIELD_PASS_ROLE, _yieldPassFactory);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSE_ADMIN_ROLE, msg.sender);
     }
@@ -292,8 +292,8 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      * @notice Get yield pass factory
      * @return Yield pass factory address
      */
-    function yieldPass() public view returns (address) {
-        return _yieldPass;
+    function yieldPassFactory() public view returns (address) {
+        return _yieldPassFactory;
     }
 
     /**
