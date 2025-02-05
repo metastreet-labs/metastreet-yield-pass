@@ -1,3 +1,8 @@
+* XaiYieldAdapter v1.2 - 02/04/2025
+    * Update with IYieldAdapter interface changes.
+    * Implement node transfer lock logic.
+    * Rename `yieldPass()` getter to `yieldPassFactory()`.
+
 * AethirYieldAdapter v1.2 - 02/04/2025
     * Update with IYieldAdapter interface changes.
     * Implement node transfer lock logic.
