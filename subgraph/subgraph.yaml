@@ -27,19 +27,25 @@ dataSources:
         - name: ERC721
           file: ../out/ERC721.sol/ERC721.json
       eventHandlers:
-        - event: Claimed(indexed address,indexed address,uint256,indexed address,address,uint256)
+        - event: Claimed(indexed address,indexed address,uint256,indexed
+            address,address,uint256)
           handler: handleClaimed
         - event: Harvested(indexed address,uint256)
           handler: handleHarvested
-        - event: Minted(indexed address,address,address,indexed address,uint256,address,indexed address,uint256[],address[])
+        - event: Minted(indexed address,address,address,indexed
+            address,uint256,address,indexed address,uint256[],address[])
           handler: handleMinted
-        - event: Minted(indexed address,address,indexed address,uint256,address,indexed address,uint256[],address[])
+        - event: Minted(indexed address,address,indexed address,uint256,address,indexed
+            address,uint256[],address[])
           handler: handleMintedV1
-        - event: Redeemed(indexed address,address,indexed address,indexed address,uint256[])
+        - event: Redeemed(indexed address,address,indexed address,address,indexed
+            address,uint256[])
           handler: handleRedeemed
-        - event: Withdrawn(indexed address,address,indexed address,address,indexed address,uint256[])
+        - event: Withdrawn(indexed address,address,indexed address,address,indexed
+            address,uint256[])
           handler: handleWithdrawn
-        - event: YieldPassDeployed(indexed address,address,indexed address,uint256,indexed uint256,address)
+        - event: YieldPassDeployed(indexed address,address,indexed address,uint256,indexed
+            uint256,address)
           handler: handleYieldPassDeployed
       file: ./src/yield-pass.ts
   - kind: ethereum

@@ -173,6 +173,7 @@ export function handleRedeemed(event: RedeemedEvent): void {
   const eventId = createYieldPassEventEntity(event.params.yieldPass, event, "Redeemed");
   const redeemedEvent = new RedeemedEventEntity(eventId);
   redeemedEvent.account = event.params.account;
+  redeemedEvent.recipient = event.params.recipient;
   redeemedEvent.nodeToken = event.params.nodeToken;
   redeemedEvent.nodeTokenIds = event.params.nodeTokenIds;
   redeemedEvent.save();

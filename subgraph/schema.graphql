@@ -94,6 +94,7 @@ type ClaimedEvent @entity(immutable: true) {
 type RedeemedEvent @entity(immutable: true) {
   id: Bytes! # <pool><tx hash><log index>
   account: Bytes! # address
+  recipient: Bytes! # address
   nodeToken: Bytes! # address
   nodeTokenIds: [BigInt!]! # uint256[]
 }
