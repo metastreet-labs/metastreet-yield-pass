@@ -217,9 +217,9 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Yield pass
+     * @notice Yield pass factory
      */
-    address internal immutable _yieldPass;
+    address internal immutable _yieldPassFactory;
 
     /**
      * @notice Expiry time
@@ -298,7 +298,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @param aethirCheckerClaimAndWithdraw_ Aethir checker claim and withdraw address
      */
     constructor(
-        address yieldPass_,
+        address yieldPassFactory_,
         uint64 expiryTime_,
         address aethirCheckerNodeLicense_,
         address aethirCheckerClaimAndWithdraw_
@@ -306,7 +306,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         /* Disable initialization of implementation contract */
         _initialized = true;
 
-        _yieldPass = yieldPass_;
+        _yieldPassFactory = yieldPassFactory_;
         _expiryTime = expiryTime_;
         _aethirCheckerNodeLicense = aethirCheckerNodeLicense_;
         _aethirCheckerClaimAndWithdraw = ICheckerClaimAndWithdraw(aethirCheckerClaimAndWithdraw_);
@@ -332,7 +332,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         _signer = signer_;
         _isLicenseTransferUnlocked = isLicenseTransferUnlocked_;
 
-        _grantRole(YIELD_PASS_ROLE, _yieldPass);
+        _grantRole(YIELD_PASS_ROLE, _yieldPassFactory);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSE_ADMIN_ROLE, msg.sender);
     }
@@ -506,8 +506,8 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @notice Get yield pass factory
      * @return Yield pass factory address
      */
-    function yieldPass() public view returns (address) {
-        return _yieldPass;
+    function yieldPassFactory() public view returns (address) {
+        return _yieldPassFactory;
     }
 
     /**
