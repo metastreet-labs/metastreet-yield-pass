@@ -79,11 +79,6 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Yield pass role
-     */
-    bytes32 public constant YIELD_PASS_ROLE = keccak256("YIELD_PASS_ROLE");
-
-    /**
      * @notice Pause admin role
      */
     bytes32 public constant PAUSE_ADMIN_ROLE = keccak256("PAUSE_ADMIN_ROLE");
@@ -332,7 +327,6 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         _signer = signer_;
         _isLicenseTransferUnlocked = isLicenseTransferUnlocked_;
 
-        _grantRole(YIELD_PASS_ROLE, _yieldPassFactory);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSE_ADMIN_ROLE, msg.sender);
     }
@@ -340,6 +334,14 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /*------------------------------------------------------------------------*/
     /* Internal Helpers */
     /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Modifier that throws if caller is not yield pass factory
+     */
+    modifier onlyYieldPassFactory() {
+        require(msg.sender == _yieldPassFactory, "Unauthorized caller");
+        _;
+    }
 
     /**
      * @notice Claim vATH
@@ -577,7 +579,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         address account,
         uint256[] calldata tokenIds,
         bytes calldata setupData
-    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address[] memory) {
+    ) external onlyYieldPassFactory whenNotPaused returns (address[] memory) {
         /* Decode setup data */
         SignedValidatedNodes memory signedValidatedNodes = abi.decode(setupData, (SignedValidatedNodes));
 
@@ -603,7 +605,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      */
     function harvest(
         bytes calldata harvestData
-    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (uint256) {
+    ) external onlyYieldPassFactory whenNotPaused returns (uint256) {
         /* Skip if no data */
         if (harvestData.length == 0) return 0;
 
@@ -627,7 +629,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /**
      * @inheritdoc IYieldAdapter
      */
-    function claim(address recipient, uint256 amount) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
+    function claim(address recipient, uint256 amount) external onlyYieldPassFactory whenNotPaused {
         /* Validate all claim order IDs have been processed for withdrawal */
         if (_orderIds.length() != 0) revert InvalidClaim();
 
@@ -642,7 +644,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         address recipient,
         uint256[] calldata tokenIds,
         bytes32 redemptionHash
-    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
+    ) external onlyYieldPassFactory whenNotPaused {
         /* Validate recipient if transfer is not unlocked */
         if (!_isLicenseTransferUnlocked) {
             for (uint256 i; i < tokenIds.length; i++) {
@@ -660,7 +662,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     function withdraw(
         uint256[] calldata tokenIds,
         bytes32 redemptionHash
-    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address) {
+    ) external onlyYieldPassFactory whenNotPaused returns (address) {
         /* Get recipient */
         address recipient = _withdrawalRecipients[redemptionHash];
 
