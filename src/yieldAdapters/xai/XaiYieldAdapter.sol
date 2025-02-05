@@ -80,11 +80,6 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Yield pass role
-     */
-    bytes32 public constant YIELD_PASS_ROLE = keccak256("YIELD_PASS_ROLE");
-
-    /**
      * @notice Pause admin role
      */
     bytes32 public constant PAUSE_ADMIN_ROLE = keccak256("PAUSE_ADMIN_ROLE");
@@ -249,9 +244,20 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
 
         _isLicenseTransferUnlocked = isLicenseTransferUnlocked_;
 
-        _grantRole(YIELD_PASS_ROLE, _yieldPassFactory);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSE_ADMIN_ROLE, msg.sender);
+    }
+
+    /*------------------------------------------------------------------------*/
+    /* Internal Helpers */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Modifier that throws if caller is not yield pass factory
+     */
+    modifier onlyYieldPassFactory() {
+        require(msg.sender == _yieldPassFactory, "Unauthorized caller");
+        _;
     }
 
     /*------------------------------------------------------------------------*/
@@ -347,7 +353,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         address account,
         uint256[] calldata tokenIds,
         bytes calldata setupData
-    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address[] memory) {
+    ) external onlyYieldPassFactory whenNotPaused returns (address[] memory) {
         /* Validate KYC'd */
         if (!_xaiReferee.isKycApproved(account)) revert NotKycApproved();
 
@@ -392,7 +398,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      */
     function harvest(
         bytes calldata
-    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (uint256) {
+    ) external onlyYieldPassFactory whenNotPaused returns (uint256) {
         /* Snapshot balance before */
         uint256 balanceBefore = _esXaiToken.balanceOf(address(this));
 
@@ -411,7 +417,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /**
      * @inheritdoc IYieldAdapter
      */
-    function claim(address recipient, uint256 amount) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
+    function claim(address recipient, uint256 amount) external onlyYieldPassFactory whenNotPaused {
         /* Transfer yield amount to recipient */
         if (amount > 0) _esXaiToken.safeTransfer(recipient, amount);
     }
@@ -423,7 +429,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         address recipient,
         uint256[] calldata tokenIds,
         bytes32 redemptionHash
-    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused {
+    ) external onlyYieldPassFactory whenNotPaused {
         /* Validate recipient if transfer is not unlocked */
         if (!_isLicenseTransferUnlocked) {
             for (uint256 i; i < tokenIds.length; i++) {
@@ -442,7 +448,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     function withdraw(
         uint256[] calldata tokenIds,
         bytes32 redemptionHash
-    ) external onlyRole(YIELD_PASS_ROLE) whenNotPaused returns (address) {
+    ) external onlyYieldPassFactory whenNotPaused returns (address) {
         /* Get recipient */
         address recipient = _withdrawalRecipients[redemptionHash];
 
