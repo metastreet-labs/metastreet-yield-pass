@@ -1,12 +1,12 @@
 {
   "sepolia": {
     "YieldPass": {
-      "address": "0x32c5eAe432b09Dc4e93eFab51B93A769AFB7BC92",
-      "startBlock": 7258316
+      "address": "0xBd0D5BF8E99DF863424Ae0688E5220a79f69e278",
+      "startBlock": 7643245
     },
     "UniswapV2Factory": {
       "address": "0x63b33ca4a44330791000a21F2bD187044d815524",
-      "startBlock": 7258316
+      "startBlock": 7643245
     }
   },
   "arbitrum-one": {
@@ -21,12 +21,12 @@
   },
   "arbitrum-sepolia": {
     "YieldPass": {
-      "address": "0x57808d3CabcF9f17c2BC2Fac85f0964d366916Ce",
-      "startBlock": 115125743
+      "address": "0x545b5e69a3EAf36E68109d94160B349004BC3aC3",
+      "startBlock": 121168215
     },
     "UniswapV2Factory": {
       "address": "0xead57ddf5213a9945a1cbE0133bea7d8544e20B5",
-      "startBlock": 115125743
+      "startBlock": 121168215
     }
   }
 }

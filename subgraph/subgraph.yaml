@@ -9,8 +9,8 @@ dataSources:
     network: sepolia
     source:
       abi: YieldPass
-      address: "0x32c5eAe432b09Dc4e93eFab51B93A769AFB7BC92"
-      startBlock: 7258316
+      address: "0xBd0D5BF8E99DF863424Ae0688E5220a79f69e278"
+      startBlock: 7643245
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -54,7 +54,7 @@ dataSources:
     source:
       abi: UniswapV2Factory
       address: "0x63b33ca4a44330791000a21F2bD187044d815524"
-      startBlock: 7258316
+      startBlock: 7643245
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
