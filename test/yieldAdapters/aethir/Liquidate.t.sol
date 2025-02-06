@@ -4,8 +4,7 @@ pragma solidity 0.8.26;
 import {Vm} from "forge-std/Vm.sol";
 
 import {AethirSepoliaBaseTest, ICoinbaseSmartWallet} from "./BaseSepolia.t.sol";
-import {BaseTest} from "../pool/Base.t.sol";
-import {PoolBaseTest} from "../pool/Base.t.sol";
+import {BaseTest, PoolBaseTest} from "../../pool/Base.t.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -17,7 +16,7 @@ import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 
 import {AethirYieldAdapter} from "src/yieldAdapters/aethir/AethirYieldAdapter.sol";
 
-import {Helpers} from "../pool/Helpers.sol";
+import {Helpers} from "../../pool/Helpers.sol";
 
 import "forge-std/console.sol";
 

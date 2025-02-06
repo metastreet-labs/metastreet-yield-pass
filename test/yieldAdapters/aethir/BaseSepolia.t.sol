@@ -3,7 +3,7 @@ pragma solidity 0.8.26;
 
 import "forge-std/console.sol";
 
-import {PoolBaseTest} from "../pool/Base.t.sol";
+import {PoolBaseTest} from "../../pool/Base.t.sol";
 
 import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
