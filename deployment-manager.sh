@@ -54,6 +54,7 @@ usage() {
     echo "  deploy-test-yield-adapter <expiry time>"
     echo ""
     echo "  grant-role <target> <role> <account>"
+    echo "  transfer-ownership <proxy> <account>"
     echo ""
     echo "  show"
     echo ""
@@ -181,6 +182,16 @@ case $1 in
 
         echo "Granting Role"
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/GrantRole.s.sol:GrantRole" --sig "run(address,string,address)" $2 $3 $4
+        ;;
+
+    "transfer-ownership")
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid param count; Usage: $0 transfer-ownership <proxy> <account>"
+            exit 1
+        fi
+
+        echo "Transferring Ownership"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/TransferOwnership.s.sol:TransferOwnership" --sig "run(address,address)" $2 $3
         ;;
 
     "show")
