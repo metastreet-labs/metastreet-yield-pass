@@ -25,7 +25,6 @@ contract Deployer is BaseScript {
 
     struct Deployment {
         address yieldPass;
-        address yieldPassUtils;
     }
 
     /*--------------------------------------------------------------------------*/
@@ -100,7 +99,6 @@ contract Deployer is BaseScript {
         string memory json = "";
 
         json = stdJson.serialize("", "YieldPass", _deployment.yieldPass);
-        json = stdJson.serialize("", "YieldPassUtils", _deployment.yieldPassUtils);
 
         console.log("Writing json to file: %s\n", json);
         vm.writeJson(json, _getJsonFilePath());
@@ -119,13 +117,6 @@ contract Deployer is BaseScript {
             _deployment.yieldPass = instance;
         } catch {
             console.log("Could not parse YieldPass");
-        }
-
-        /* Deserialize Yield Pass Utils */
-        try vm.parseJsonAddress(json, ".YieldPassUtils") returns (address instance) {
-            _deployment.yieldPassUtils = instance;
-        } catch {
-            console.log("Could not parse YieldPassUtils");
         }
     }
 }

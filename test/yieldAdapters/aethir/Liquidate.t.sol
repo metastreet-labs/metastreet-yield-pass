@@ -9,9 +9,11 @@ import {BaseTest, PoolBaseTest} from "../../pool/Base.t.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+
+import {IUniswapV2Pair} from "uniswap-v2-core/interfaces/IUniswapV2Pair.sol";
 
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
-import {IYieldPassUtils} from "src/interfaces/IYieldPassUtils.sol";
 import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 
 import {AethirYieldAdapter} from "src/yieldAdapters/aethir/AethirYieldAdapter.sol";
@@ -69,7 +71,6 @@ contract LiquidateTest is AethirSepoliaBaseTest {
 
         PoolBaseTest.setMetaStreetPoolFactoryAndImpl(address(metaStreetPoolFactory), metaStreetPoolImpl);
         PoolBaseTest.deployMetaStreetPool(address(np), address(ath), address(0));
-        BaseTest.deployYieldPassUtils(address(uniswapV2Factory));
 
         setUpUniswap();
         setUpMSPool();
@@ -144,9 +145,6 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         uint256 deadline = block.timestamp + 1 days;
         bytes memory transferSignature = generateTransferSignature(address(smartAccount), deadline, tokenIds2);
 
-        /* Approve NFTs */
-        IERC721(checkerNodeLicense).setApprovalForAll(address(yieldPassUtils), true);
-
         /* Pool ATH balance */
         uint256 poolAthBalance = IERC20(ath).balanceOf(address(metaStreetPool));
 
@@ -218,34 +216,21 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         uint256 yieldPassAmount = IERC20(yp).balanceOf(address(smartAccount));
 
         /* Quote borrow principal */
-        uint256 borrowPrincipal = yieldPassUtils.quoteBalancedLP(yp, address(ath), yieldPassAmount);
+        (uint256 reserveA, uint256 reserveB,) = IUniswapV2Pair(uniswapV2Factory.getPair(yp, address(ath))).getReserves();
+        uint256 borrowPrincipal = Math.mulDiv(yieldPassAmount, reserveB, reserveA);
 
         /* Calls 2 */
-        ICoinbaseSmartWallet.Call[] memory calls2 = new ICoinbaseSmartWallet.Call[](6);
-
-        /* Validate slippage */
-        calls2[0] = ICoinbaseSmartWallet.Call({
-            target: address(yieldPassUtils),
-            value: 0,
-            data: abi.encodeWithSignature(
-                "validateBalancedLP(address,address,uint256,uint256,uint64)",
-                yp,
-                address(ath),
-                yieldPassAmount,
-                borrowPrincipal,
-                uint64(block.timestamp)
-            )
-        });
+        ICoinbaseSmartWallet.Call[] memory calls2 = new ICoinbaseSmartWallet.Call[](5);
 
         /* Set approval */
-        calls2[1] = ICoinbaseSmartWallet.Call({
+        calls2[0] = ICoinbaseSmartWallet.Call({
             target: bundleCollateralWrapper,
             value: 0,
             data: abi.encodeWithSignature("setApprovalForAll(address,bool)", address(metaStreetPool), true)
         });
 
         /* Borrow */
-        calls2[2] = ICoinbaseSmartWallet.Call({
+        calls2[1] = ICoinbaseSmartWallet.Call({
             target: address(metaStreetPool),
             value: 0,
             data: abi.encodeWithSignature(
@@ -261,19 +246,19 @@ contract LiquidateTest is AethirSepoliaBaseTest {
         });
 
         /* Set approvals */
-        calls2[3] = ICoinbaseSmartWallet.Call({
+        calls2[2] = ICoinbaseSmartWallet.Call({
             target: address(ath),
             value: 0,
             data: abi.encodeWithSignature("approve(address,uint256)", address(uniswapV2Router), type(uint256).max)
         });
-        calls2[4] = ICoinbaseSmartWallet.Call({
+        calls2[3] = ICoinbaseSmartWallet.Call({
             target: yp,
             value: 0,
             data: abi.encodeWithSignature("approve(address,uint256)", address(uniswapV2Router), type(uint256).max)
         });
 
         /* Add liquidity */
-        calls2[5] = ICoinbaseSmartWallet.Call({
+        calls2[4] = ICoinbaseSmartWallet.Call({
             target: address(uniswapV2Router),
             value: 0,
             data: abi.encodeWithSignature(
@@ -301,7 +286,6 @@ contract LiquidateTest is AethirSepoliaBaseTest {
 
         /* Check Uniswap liquidity tokens balances */
         assertGt(IERC20(pair).balanceOf(address(smartAccount)), 0, "Liquidator has no liquidity tokens");
-        assertEq(IERC20(pair).balanceOf(address(yieldPassUtils)), 0, "Yield pass utils has no liquidity tokens");
 
         /* Check that pool ATH balance is lesser than before */
         assertLt(IERC20(ath).balanceOf(address(metaStreetPool)), poolAthBalance, "MetaStreetPool ATH balance wrong");

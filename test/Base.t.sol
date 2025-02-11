@@ -16,9 +16,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {TestERC721} from "./tokens/TestERC721.sol";
 import {TestERC20} from "./tokens/TestERC20.sol";
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
-import {IYieldPassUtils} from "src/interfaces/IYieldPassUtils.sol";
 import {YieldPass} from "src/YieldPass.sol";
-import {YieldPassUtils} from "src/YieldPassUtils.sol";
 
 import {IUniswapV2Router02} from "uniswap-v2-periphery/interfaces/IUniswapV2Router02.sol";
 
@@ -50,9 +48,6 @@ abstract contract BaseTest is Test {
     TransparentUpgradeableProxy internal yieldPassProxy;
     IYieldPass internal yieldPassImpl;
     IYieldPass internal yieldPass;
-    TransparentUpgradeableProxy internal yieldPassUtilsProxy;
-    IYieldPassUtils internal yieldPassUtilsImpl;
-    IYieldPassUtils internal yieldPassUtils;
 
     function setUp() public virtual {
         users = Users({
@@ -101,22 +96,6 @@ abstract contract BaseTest is Test {
 
         /* Deploy yield pass */
         yieldPass = YieldPass(address(yieldPassProxy));
-        vm.stopPrank();
-    }
-
-    function deployYieldPassUtils(
-        address uniswapV2Factory
-    ) internal {
-        vm.startPrank(users.deployer);
-
-        /* Deploy yield pass utils implementation */
-        yieldPassUtilsImpl = new YieldPassUtils(uniswapV2Factory);
-
-        /* Deploy yield pass utils proxy */
-        yieldPassUtilsProxy = new TransparentUpgradeableProxy(address(yieldPassUtilsImpl), address(users.admin), "");
-
-        /* Deploy yield pass utils */
-        yieldPassUtils = YieldPassUtils(address(yieldPassUtilsProxy));
         vm.stopPrank();
     }
 
