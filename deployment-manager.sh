@@ -53,6 +53,8 @@ usage() {
     echo ""
     echo "  deploy-test-yield-adapter <expiry time>"
     echo ""
+    echo "  grant-role <target> <role> <account>"
+    echo ""
     echo "  show"
     echo ""
     echo "Options:"
@@ -169,6 +171,16 @@ case $1 in
 
         echo "Deploying Test Yield Adapter"
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/test/DeployTestYieldAdapter.s.sol:DeployTestYieldAdapter" --sig "run(uint64)" $2
+        ;;
+
+    "grant-role")
+        if [ "$#" -ne 4 ]; then
+            echo "Invalid param count; Usage: $0 grant-role <target> <role> <account>"
+            exit 1
+        fi
+
+        echo "Granting Role"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/GrantRole.s.sol:GrantRole" --sig "run(address,string,address)" $2 $3 $4
         ;;
 
     "show")
