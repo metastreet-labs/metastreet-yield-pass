@@ -1,3 +1,8 @@
+* YieldPass v1.2 - 02/12/2025
+    * Add `yieldPassFactory()` getter to YieldPassToken and NodePassToken.
+    * Add `yieldPass()` getter to NodePassToken.
+    * Add simpler `mint()` overload.
+
 * XaiYieldAdapter v1.2 - 02/04/2025
     * Update with IYieldAdapter interface changes.
     * Implement node transfer lock logic.
