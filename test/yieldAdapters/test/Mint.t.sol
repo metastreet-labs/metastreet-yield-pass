@@ -6,6 +6,9 @@ import {Vm} from "forge-std/Vm.sol";
 
 import {TestYieldAdapterBaseTest} from "./Base.t.sol";
 
+import {YieldPassToken} from "src/YieldPassToken.sol";
+import {NodePassToken} from "src/NodePassToken.sol";
+
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
@@ -27,6 +30,11 @@ contract TestYieldAdapterMintTest is TestYieldAdapterBaseTest {
         tokenIds2[0] = 2;
         tokenIds2[1] = 3;
         tokenIds2[2] = 4;
+    }
+
+    function test__TokenGetters() external view {
+        assertEq(YieldPassToken(yp).yieldPassFactory(), address(yieldPass), "Invalid yield pass factory");
+        assertEq(NodePassToken(np).yieldPassFactory(), address(yieldPass), "Invalid yield pass factory");
     }
 
     function test__Mint() external {

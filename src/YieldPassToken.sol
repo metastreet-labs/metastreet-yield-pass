@@ -13,19 +13,33 @@ contract YieldPassToken is ERC20 {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Owner
+     * @notice Yield pass factory
      */
-    address internal immutable _owner;
+    address internal immutable _yieldPassFactory;
 
     /*------------------------------------------------------------------------*/
-    /* Contructor */
+    /* Constructor */
     /*------------------------------------------------------------------------*/
 
     /**
      * @notice YieldPassToken constructor
+     * @param name_ Name
+     * @param symbol_ Symbol
      */
     constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {
-        _owner = msg.sender;
+        _yieldPassFactory = msg.sender;
+    }
+
+    /*------------------------------------------------------------------------*/
+    /* Getter */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Get yield pass factory
+     * @return Yield pass factory address
+     */
+    function yieldPassFactory() external view returns (address) {
+        return _yieldPassFactory;
     }
 
     /*------------------------------------------------------------------------*/
@@ -38,7 +52,7 @@ contract YieldPassToken is ERC20 {
      * @param amount Amount to mint
      */
     function mint(address to, uint256 amount) external {
-        require(msg.sender == _owner, "Unauthorized caller");
+        require(msg.sender == _yieldPassFactory, "Unauthorized caller");
 
         _mint(to, amount);
     }
@@ -49,7 +63,7 @@ contract YieldPassToken is ERC20 {
      * @param amount Amount to burn
      */
     function burn(address from, uint256 amount) external {
-        require(msg.sender == _owner, "Unauthorized caller");
+        require(msg.sender == _yieldPassFactory, "Unauthorized caller");
 
         _burn(from, amount);
     }

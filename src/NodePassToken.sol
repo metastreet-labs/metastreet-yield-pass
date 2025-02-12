@@ -13,9 +13,9 @@ contract NodePassToken is ERC721 {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Owner
+     * @notice Yield pass factory
      */
-    address internal immutable _owner;
+    address internal immutable _yieldPassFactory;
 
     /*------------------------------------------------------------------------*/
     /* State */
@@ -27,19 +27,29 @@ contract NodePassToken is ERC721 {
     uint256 internal _totalSupply;
 
     /*------------------------------------------------------------------------*/
-    /* Contructor */
+    /* Constructor */
     /*------------------------------------------------------------------------*/
 
     /**
      * @notice NodePassToken constructor
+     * @param name_ Name
+     * @param symbol_ Symbol
      */
     constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {
-        _owner = msg.sender;
+        _yieldPassFactory = msg.sender;
     }
 
     /*------------------------------------------------------------------------*/
     /* Getter */
     /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Get yield pass factory
+     * @return Yield pass factory address
+     */
+    function yieldPassFactory() external view returns (address) {
+        return _yieldPassFactory;
+    }
 
     /**
      * @notice Get total supply
@@ -59,7 +69,7 @@ contract NodePassToken is ERC721 {
      * @param tokenIds Token IDs
      */
     function mint(address to, uint256[] calldata tokenIds) external {
-        require(msg.sender == _owner, "Unauthorized caller");
+        require(msg.sender == _yieldPassFactory, "Unauthorized caller");
 
         for (uint256 i; i < tokenIds.length; i++) {
             _mint(to, tokenIds[i]);
@@ -75,7 +85,7 @@ contract NodePassToken is ERC721 {
     function burn(
         uint256 tokenId
     ) external {
-        require(msg.sender == _owner, "Unauthorized caller");
+        require(msg.sender == _yieldPassFactory, "Unauthorized caller");
 
         _burn(tokenId);
 
