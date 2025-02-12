@@ -307,9 +307,9 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /*------------------------------------------------------------------------*/
 
     /**
-     * @inheritdoc IYieldPass
+     * @notice Mint helper
      */
-    function mint(
+    function _mint(
         address yieldPass,
         address account,
         address yieldPassRecipient,
@@ -318,7 +318,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         uint256[] calldata nodeTokenIds,
         bytes calldata setupData,
         bytes calldata transferSignature
-    ) external nonReentrant returns (uint256) {
+    ) internal returns (uint256) {
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
 
@@ -364,6 +364,54 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         );
 
         return yieldPassAmount;
+    }
+
+    /**
+     * @inheritdoc IYieldPass
+     */
+    function mint(
+        address yieldPass,
+        address yieldPassRecipient,
+        address nodePassRecipient,
+        uint256 deadline,
+        uint256[] calldata nodeTokenIds,
+        bytes calldata setupData
+    ) external nonReentrant returns (uint256) {
+        return _mint(
+            yieldPass,
+            msg.sender,
+            yieldPassRecipient,
+            nodePassRecipient,
+            deadline,
+            nodeTokenIds,
+            setupData,
+            msg.data[0:0]
+        );
+    }
+
+    /**
+     * @inheritdoc IYieldPass
+     */
+    function mint(
+        address yieldPass,
+        address account,
+        address yieldPassRecipient,
+        address nodePassRecipient,
+        uint256 deadline,
+        uint256[] calldata nodeTokenIds,
+        bytes calldata setupData,
+        bytes calldata transferSignature
+    ) external nonReentrant returns (uint256) {
+        return _mint(
+            yieldPass,
+            account,
+            yieldPassRecipient,
+            nodePassRecipient,
+            deadline,
+            nodeTokenIds,
+            setupData,
+            transferSignature
+        );
     }
 
     /**

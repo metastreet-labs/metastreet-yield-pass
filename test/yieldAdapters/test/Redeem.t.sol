@@ -24,7 +24,7 @@ contract RedeemTest is TestYieldAdapterBaseTest {
 
         /* Mint */
         vm.startPrank(users.normalUser1);
-        yieldPass.mint(yp, users.normalUser1, users.normalUser1, users.normalUser1, block.timestamp, tokenIds1, "", "");
+        yieldPass.mint(yp, users.normalUser1, users.normalUser1, block.timestamp, tokenIds1, "");
         vm.stopPrank();
     }
 

@@ -27,11 +27,11 @@ contract ClaimTest is TestYieldAdapterBaseTest {
 
         /* Mint */
         vm.startPrank(users.normalUser1);
-        yieldPass.mint(yp, users.normalUser1, users.normalUser1, users.normalUser1, block.timestamp, tokenIds1, "", "");
+        yieldPass.mint(yp, users.normalUser1, users.normalUser1, block.timestamp, tokenIds1, "");
         vm.stopPrank();
 
         vm.startPrank(users.normalUser2);
-        yieldPass.mint(yp, users.normalUser2, users.normalUser2, users.normalUser2, block.timestamp, tokenIds2, "", "");
+        yieldPass.mint(yp, users.normalUser2, users.normalUser2, block.timestamp, tokenIds2, "");
         vm.stopPrank();
     }
 

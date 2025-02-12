@@ -313,7 +313,26 @@ interface IYieldPass is IERC721Receiver {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Mint yield pass and a node pass for node token IDs
+     * @notice Mint yield pass and node pass for node token IDs
+     * @param yieldPass Yield pass token
+     * @param yieldPassRecipient Yield pass recipient
+     * @param nodePassRecipient Node pass recipient
+     * @param deadline Deadline
+     * @param nodeTokenIds Node token IDs
+     * @param setupData Setup data
+     * @return Yield pass amount
+     */
+    function mint(
+        address yieldPass,
+        address yieldPassRecipient,
+        address nodePassRecipient,
+        uint256 deadline,
+        uint256[] calldata nodeTokenIds,
+        bytes calldata setupData
+    ) external returns (uint256);
+
+    /**
+     * @notice Mint yield pass and node pass for node token IDs (smart account friendly version)
      * @param yieldPass Yield pass token
      * @param account Account holding nodes
      * @param yieldPassRecipient Yield pass recipient

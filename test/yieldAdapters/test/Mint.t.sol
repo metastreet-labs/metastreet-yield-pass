@@ -42,7 +42,7 @@ contract TestYieldAdapterMintTest is TestYieldAdapterBaseTest {
     function test__Mint() external {
         /* Mint */
         vm.startPrank(users.normalUser1);
-        yieldPass.mint(yp, users.normalUser1, users.normalUser1, users.normalUser1, block.timestamp, tokenIds1, "", "");
+        yieldPass.mint(yp, users.normalUser1, users.normalUser1, block.timestamp, tokenIds1, "");
         vm.stopPrank();
 
         uint256 expectedAmount1 = (2 ether * (expiryTime - block.timestamp)) / (expiryTime - startTime);
@@ -63,7 +63,7 @@ contract TestYieldAdapterMintTest is TestYieldAdapterBaseTest {
 
         /* Mint again */
         vm.startPrank(users.normalUser2);
-        yieldPass.mint(yp, users.normalUser2, users.normalUser2, users.normalUser2, block.timestamp, tokenIds2, "", "");
+        yieldPass.mint(yp, users.normalUser2, users.normalUser2, block.timestamp, tokenIds2, "");
         vm.stopPrank();
 
         uint256 expectedAmount2 = (3 ether * (expiryTime - block.timestamp)) / (expiryTime - startTime);
@@ -90,9 +90,7 @@ contract TestYieldAdapterMintTest is TestYieldAdapterBaseTest {
         address randomAddress =
             address(uint160(uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao)))));
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidYieldPass.selector));
-        yieldPass.mint(
-            randomAddress, users.normalUser1, users.normalUser1, users.normalUser1, block.timestamp, tokenIds1, "", ""
-        );
+        yieldPass.mint(randomAddress, users.normalUser1, users.normalUser1, block.timestamp, tokenIds1, "");
 
         vm.stopPrank();
     }
@@ -103,12 +101,12 @@ contract TestYieldAdapterMintTest is TestYieldAdapterBaseTest {
         /* Mint at expiry */
         vm.warp(expiryTime);
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidWindow.selector));
-        yieldPass.mint(yp, users.normalUser1, users.normalUser1, users.normalUser1, block.timestamp, tokenIds1, "", "");
+        yieldPass.mint(yp, users.normalUser1, users.normalUser1, block.timestamp, tokenIds1, "");
 
         /* Mint before start time */
         vm.warp(startTime - 1);
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidWindow.selector));
-        yieldPass.mint(yp, users.normalUser1, users.normalUser1, users.normalUser1, block.timestamp, tokenIds1, "", "");
+        yieldPass.mint(yp, users.normalUser1, users.normalUser1, block.timestamp, tokenIds1, "");
 
         vm.stopPrank();
     }
