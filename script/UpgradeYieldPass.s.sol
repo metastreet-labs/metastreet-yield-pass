@@ -23,12 +23,25 @@ contract UpgradeYieldPass is Deployer {
         /* Lookup proxy admin */
         address proxyAdmin = address(uint160(uint256(vm.load(_deployment.yieldPass, ERC1967Utils.ADMIN_SLOT))));
 
-        /* Upgrade Proxy */
-        ProxyAdmin(proxyAdmin).upgradeAndCall(
-            ITransparentUpgradeableProxy(_deployment.yieldPass), address(yieldPassImpl), ""
-        );
-
-        console.log("Upgraded proxy %s implementation to: %s\n", _deployment.yieldPass, address(yieldPassImpl));
+        if (Ownable(proxyAdmin).owner() == msg.sender) {
+            /* Upgrade Proxy */
+            ProxyAdmin(proxyAdmin).upgradeAndCall(
+                ITransparentUpgradeableProxy(_deployment.yieldPass), address(yieldPassImpl), ""
+            );
+            console.log("Upgraded proxy %s implementation to: %s\n", _deployment.yieldPass, address(yieldPassImpl));
+        } else {
+            console.log("\nUpgrade calldata");
+            console.log("Target:   %s", proxyAdmin);
+            console.log("Calldata:");
+            console.logBytes(
+                abi.encodeWithSelector(
+                    ProxyAdmin.upgradeAndCall.selector,
+                    ITransparentUpgradeableProxy(_deployment.yieldPass),
+                    address(yieldPassImpl),
+                    ""
+                )
+            );
+        }
 
         return address(yieldPassImpl);
     }

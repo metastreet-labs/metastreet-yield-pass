@@ -29,10 +29,23 @@ contract UpgradeAethirYieldAdapter is Deployer {
         /* Lookup proxy admin */
         address proxyAdmin = address(uint160(uint256(vm.load(proxy, ERC1967Utils.ADMIN_SLOT))));
 
-        /* Upgrade Proxy */
-        ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(proxy), address(yieldAdapterImpl), "");
-
-        console.log("Upgraded proxy %s implementation to: %s\n", proxy, address(yieldAdapterImpl));
+        if (Ownable(proxyAdmin).owner() == msg.sender) {
+            /* Upgrade Proxy */
+            ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(proxy), address(yieldAdapterImpl), "");
+            console.log("Upgraded proxy %s implementation to: %s\n", proxy, address(yieldAdapterImpl));
+        } else {
+            console.log("\nUpgrade calldata");
+            console.log("Target:   %s", proxyAdmin);
+            console.log("Calldata:");
+            console.logBytes(
+                abi.encodeWithSelector(
+                    ProxyAdmin.upgradeAndCall.selector,
+                    ITransparentUpgradeableProxy(proxy),
+                    address(yieldAdapterImpl),
+                    ""
+                )
+            );
+        }
 
         return address(yieldAdapterImpl);
     }
