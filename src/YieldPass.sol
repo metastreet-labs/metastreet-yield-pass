@@ -29,7 +29,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @notice Implementation version
      */
-    string public constant IMPLEMENTATION_VERSION = "1.1";
+    string public constant IMPLEMENTATION_VERSION = "1.2";
 
     /**
      * @notice Signing domain version
