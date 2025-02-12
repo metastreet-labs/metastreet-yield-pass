@@ -17,6 +17,11 @@ contract NodePassToken is ERC721 {
      */
     address internal immutable _yieldPassFactory;
 
+    /**
+     * @notice Yield pass token
+     */
+    address internal immutable _yieldPass;
+
     /*------------------------------------------------------------------------*/
     /* State */
     /*------------------------------------------------------------------------*/
@@ -34,9 +39,11 @@ contract NodePassToken is ERC721 {
      * @notice NodePassToken constructor
      * @param name_ Name
      * @param symbol_ Symbol
+     * @param yieldPass_ Yield pass token
      */
-    constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {
+    constructor(string memory name_, string memory symbol_, address yieldPass_) ERC721(name_, symbol_) {
         _yieldPassFactory = msg.sender;
+        _yieldPass = yieldPass_;
     }
 
     /*------------------------------------------------------------------------*/
@@ -49,6 +56,14 @@ contract NodePassToken is ERC721 {
      */
     function yieldPassFactory() external view returns (address) {
         return _yieldPassFactory;
+    }
+
+    /**
+     * @notice Get yield pass token
+     * @return Yield pass token
+     */
+    function yieldPass() external view returns (address) {
+        return _yieldPass;
     }
 
     /**

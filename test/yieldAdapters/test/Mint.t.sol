@@ -35,6 +35,8 @@ contract TestYieldAdapterMintTest is TestYieldAdapterBaseTest {
     function test__TokenGetters() external view {
         assertEq(YieldPassToken(yp).yieldPassFactory(), address(yieldPass), "Invalid yield pass factory");
         assertEq(NodePassToken(np).yieldPassFactory(), address(yieldPass), "Invalid yield pass factory");
+
+        assertEq(NodePassToken(np).yieldPass(), yp, "Invalid yield pass token");
     }
 
     function test__Mint() external {

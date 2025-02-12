@@ -251,9 +251,14 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
      * @notice Helper to get node pass token constructor parameters
      * @param nodeToken Node token
      * @param expiryTime Expiry timestamp
+     * @param yieldPass Yield pass token
      * @return Encoded constructor parameters
      */
-    function _getNodePassCtorParams(address nodeToken, uint256 expiryTime) internal view returns (bytes memory) {
+    function _getNodePassCtorParams(
+        address nodeToken,
+        uint256 expiryTime,
+        address yieldPass
+    ) internal view returns (bytes memory) {
         /* Construct node pass name and symbol */
         string memory tokenName = string.concat(
             IERC721Metadata(nodeToken).name(), " (Node Pass - Expiry: ", Strings.toString(expiryTime), ")"
@@ -261,7 +266,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         string memory tokenSymbol =
             string.concat(IERC721Metadata(nodeToken).symbol(), "-NP-", Strings.toString(expiryTime));
 
-        return abi.encode(tokenName, tokenSymbol);
+        return abi.encode(tokenName, tokenSymbol, yieldPass);
     }
 
     /**
@@ -543,7 +548,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         address nodePass = Create2.deploy(
             0,
             deploymentHash,
-            abi.encodePacked(type(NodePassToken).creationCode, _getNodePassCtorParams(nodeToken, expiryTime))
+            abi.encodePacked(type(NodePassToken).creationCode, _getNodePassCtorParams(nodeToken, expiryTime, yieldPass))
         );
 
         /* Store yield pass info */
