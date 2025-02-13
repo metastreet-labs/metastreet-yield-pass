@@ -151,7 +151,7 @@ case $1 in
         fi
 
         echo "Adding pools to XAI Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/AddPoolsToXaiYieldAdapter.s.sol:AddPoolsToXaiYieldAdapter" --sig "run(address,address[])" $2 $3
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/AddPoolsToXaiYieldAdapter.s.sol:AddPoolsToXaiYieldAdapter" --sig "run(address,address[])" $2 "$3"
         ;;
 
     "remove-pools-from-xai-yield-adapter")
@@ -161,7 +161,7 @@ case $1 in
         fi
 
         echo "Removing pools from XAI Yield Adapter"
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/RemovePoolsFromXaiYieldAdapter.s.sol:RemovePoolsFromXaiYieldAdapter" --sig "run(address,address[])" $2 $3
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/RemovePoolsFromXaiYieldAdapter.s.sol:RemovePoolsFromXaiYieldAdapter" --sig "run(address,address[])" $2 "$3"
         ;;
 
     "deploy-test-yield-adapter")
