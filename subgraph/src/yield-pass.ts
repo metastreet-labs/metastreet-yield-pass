@@ -84,6 +84,7 @@ export function handleYieldPassDeployed(event: YieldPassDeployedEvent): void {
   yieldPassMarketEntity.yieldShares = BigInt.zero();
   yieldPassMarketEntity.yieldHarvested = BigInt.zero();
   yieldPassMarketEntity.yieldClaimed = BigInt.zero();
+  yieldPassMarketEntity.lastHarvestedEvent = null;
   yieldPassMarketEntity.save();
 
   createAdapterEntity(event.params.yieldPass, event.params.yieldAdapter);
@@ -142,13 +143,14 @@ export function handleHarvested(event: HarvestedEvent): void {
   let yieldPassMarketEntity = YieldPassMarketEntity.load(event.params.yieldPass);
   if (!yieldPassMarketEntity) return;
 
-  yieldPassMarketEntity.yieldHarvested = yieldPassMarketEntity.yieldHarvested.plus(event.params.yieldAmount);
-  yieldPassMarketEntity.save();
-
   const eventId = createYieldPassEventEntity(event.params.yieldPass, event, "Harvested");
   const harvestedEvent = new HarvestedEventEntity(eventId);
   harvestedEvent.yieldAmount = event.params.yieldAmount;
   harvestedEvent.save();
+
+  yieldPassMarketEntity.yieldHarvested = yieldPassMarketEntity.yieldHarvested.plus(event.params.yieldAmount);
+  yieldPassMarketEntity.lastHarvestedEvent = eventId;
+  yieldPassMarketEntity.save();
 }
 
 export function handleClaimed(event: ClaimedEvent): void {

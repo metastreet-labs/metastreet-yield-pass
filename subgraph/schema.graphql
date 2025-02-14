@@ -14,6 +14,7 @@ type YieldPassMarket @entity {
   yieldShares: BigInt! # uint256
   yieldHarvested: BigInt! # uint256
   yieldClaimed: BigInt! # uint256
+  lastHarvestedEvent: YieldPassEvent
 }
 
 type YieldAdapter @entity {
