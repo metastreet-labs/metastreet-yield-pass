@@ -15,12 +15,11 @@ import {
 } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import {CheckerLicenseNFT} from "src/yieldAdapters/aethir/CheckerLicenseNFT.sol";
-
 import {YieldPass} from "src/YieldPass.sol";
 import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 import {AethirYieldAdapter, ICheckerClaimAndWithdraw, IERC4907} from "src/yieldAdapters/aethir/AethirYieldAdapter.sol";
 
+import {CheckerLicenseNFT} from "./mocks/CheckerLicenseNFT.sol";
 import {MockCheckerClaimAndWithdraw} from "./mocks/MockCheckerClaimAndWithdraw.sol";
 
 interface IProxyAdminLegacy {

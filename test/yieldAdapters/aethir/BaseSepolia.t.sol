@@ -19,12 +19,11 @@ import {IPool} from "metastreet-contracts-v2/interfaces/IPool.sol";
 
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-import {CheckerLicenseNFT} from "src/yieldAdapters/aethir/CheckerLicenseNFT.sol";
-
 import {YieldPass} from "src/YieldPass.sol";
 import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 import {AethirYieldAdapter, ICheckerClaimAndWithdraw, IERC4907} from "src/yieldAdapters/aethir/AethirYieldAdapter.sol";
 
+import {CheckerLicenseNFT} from "./mocks/CheckerLicenseNFT.sol";
 import {MockCheckerClaimAndWithdraw} from "./mocks/MockCheckerClaimAndWithdraw.sol";
 
 import "uniswap-v2-periphery/interfaces/IUniswapV2Router02.sol";
