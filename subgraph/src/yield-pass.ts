@@ -82,6 +82,7 @@ export function handleYieldPassDeployed(event: YieldPassDeployedEvent): void {
   yieldPassMarketEntity.nodesDeposited = 0;
   yieldPassMarketEntity.nodesWithdrawn = 0;
   yieldPassMarketEntity.yieldShares = BigInt.zero();
+  yieldPassMarketEntity.yieldCumulative = BigInt.zero();
   yieldPassMarketEntity.yieldHarvested = BigInt.zero();
   yieldPassMarketEntity.yieldClaimed = BigInt.zero();
   yieldPassMarketEntity.lastHarvestedEvent = null;
@@ -149,6 +150,7 @@ export function handleHarvested(event: HarvestedEvent): void {
   harvestedEvent.save();
 
   yieldPassMarketEntity.yieldHarvested = yieldPassMarketEntity.yieldHarvested.plus(event.params.yieldAmount);
+  yieldPassMarketEntity.yieldCumulative = yieldPassContract.cumulativeYield(event.params.yieldPass);
   yieldPassMarketEntity.lastHarvestedEvent = eventId;
   yieldPassMarketEntity.save();
 }
