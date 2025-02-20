@@ -12,6 +12,7 @@ type YieldPassMarket @entity {
   nodesDeposited: Int!
   nodesWithdrawn: Int!
   yieldShares: BigInt! # uint256
+  yieldCumulative: BigInt! # uint256
   yieldHarvested: BigInt! # uint256
   yieldClaimed: BigInt! # uint256
   lastHarvestedEvent: YieldPassEvent
