@@ -53,6 +53,8 @@ usage() {
     echo ""
     echo "  deploy-test-yield-adapter <expiry time>"
     echo ""
+    echo "  patch-harvest-amount <proxy> <expiry time> <xai pool factory>"
+    echo ""
     echo "  grant-role <target> <role> <account>"
     echo "  transfer-ownership <proxy> <account>"
     echo ""
@@ -174,6 +176,16 @@ case $1 in
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/test/DeployTestYieldAdapter.s.sol:DeployTestYieldAdapter" --sig "run(uint64)" $2
         ;;
 
+    "patch-harvest-amount")
+        if [ "$#" -ne 4 ]; then
+            echo "Invalid param count; Usage: $0 patch-harvest-amount <proxy> <expiry time> <xai pool factory>"
+            exit 1
+        fi
+
+        echo "Patching Harvest Amount"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/yieldAdapters/xai/PatchHarvestAmount.s.sol:PatchHarvestAmount" --sig "run(address,uint64,address)" $2 $3 $4
+        ;;
+        
     "grant-role")
         if [ "$#" -ne 4 ]; then
             echo "Invalid param count; Usage: $0 grant-role <target> <role> <account>"

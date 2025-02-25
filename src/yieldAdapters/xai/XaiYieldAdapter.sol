@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
+import {IYieldPass} from "src/interfaces/IYieldPass.sol";
 
 /**
  * @title XAI Pool Factory Interface
@@ -413,7 +414,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      * @inheritdoc IYieldAdapter
      */
     function harvest(
-        bytes calldata
+        bytes calldata yieldPass
     ) external onlyYieldPassFactory whenNotPaused returns (uint256) {
         /* Validate final harvest hasn't occurred */
         if (_harvestCompleted) revert HarvestCompleted();
@@ -432,6 +433,19 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
 
         /* Compute yield amount */
         uint256 yieldAmount = balanceAfter - balanceBefore;
+
+        /* START OF PATCH */
+        address yieldPass_ = abi.decode(yieldPass, (address));
+        require(
+            IYieldPass(_yieldPassFactory).yieldPassInfo(yieldPass_).yieldAdapter == address(this), "Invalid yield pass"
+        );
+        address[] memory pools = _allPools.values();
+        uint256 totalClaimed;
+        for (uint256 i; i < pools.length; i++) {
+            totalClaimed += IPool(pools[i]).keyBucket().accumulativeDividendOf(address(this));
+        }
+        yieldAmount = totalClaimed - IYieldPass(_yieldPassFactory).claimState(yieldPass_).total;
+        /* END OF PATCH */
 
         return yieldAmount;
     }
