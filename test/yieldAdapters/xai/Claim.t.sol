@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
+import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 
 import "forge-std/console.sol";
 
@@ -171,6 +172,41 @@ contract ClaimTest is XaiBaseTest {
         vm.startPrank(snlOwner1);
         uint256 userBalance = IERC20(yp).balanceOf(snlOwner1);
         vm.expectRevert(IYieldPass.InvalidWindow.selector);
+        yieldPass.claim(yp, snlOwner1, userBalance);
+        vm.stopPrank();
+    }
+
+    function test__Claim_RevertWhen_HarvestNotCompleted() external {
+        /* Mint */
+        vm.startPrank(snlOwner1);
+        yieldPass.mint(
+            yp,
+            snlOwner1,
+            snlOwner1,
+            snlOwner1,
+            block.timestamp,
+            tokenIds,
+            generateStakingPools(stakingPools1, quantities1),
+            ""
+        );
+        vm.stopPrank();
+
+        /* Simulate yield distribution in staking pool */
+        simulateYieldDistributionInStakingPool();
+
+        /* Harvest yield */
+        vm.startPrank(users.deployer);
+        uint256 amount = yieldPass.harvest(yp, "");
+        assertEq(amount, 2, "Invalid yield amount");
+        vm.stopPrank();
+
+        /* Fast-forward to after expiry */
+        vm.warp(expiry + 1);
+
+        /* Claim early */
+        vm.startPrank(snlOwner1);
+        uint256 userBalance = IERC20(yp).balanceOf(snlOwner1);
+        vm.expectRevert(IYieldAdapter.HarvestNotCompleted.selector);
         yieldPass.claim(yp, snlOwner1, userBalance);
         vm.stopPrank();
     }

@@ -198,6 +198,11 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      */
     mapping(uint256 => address) internal _licenseOriginalOwners;
 
+    /**
+     * @notice Final harvest completed
+     */
+    bool internal _harvestCompleted;
+
     /*------------------------------------------------------------------------*/
     /* Constructor */
     /*------------------------------------------------------------------------*/
@@ -399,6 +404,12 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     function harvest(
         bytes calldata
     ) external onlyYieldPassFactory whenNotPaused returns (uint256) {
+        /* Validate final harvest hasn't occurred */
+        if (_harvestCompleted) revert HarvestCompleted();
+
+        /* Set harvest completed for last harvest after expiry */
+        if (block.timestamp > _expiryTime) _harvestCompleted = true;
+
         /* Snapshot balance before */
         uint256 balanceBefore = _esXaiToken.balanceOf(address(this));
 
@@ -418,6 +429,9 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      * @inheritdoc IYieldAdapter
      */
     function claim(address recipient, uint256 amount) external onlyYieldPassFactory whenNotPaused {
+        /* Validate harvest is completed */
+        if (!_harvestCompleted) revert HarvestNotCompleted();
+
         /* Transfer yield amount to recipient */
         if (amount > 0) _esXaiToken.safeTransfer(recipient, amount);
     }

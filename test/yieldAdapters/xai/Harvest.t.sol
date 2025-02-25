@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
+import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 
 import "forge-std/console.sol";
 
@@ -92,6 +93,46 @@ contract HarvestTest is XaiBaseTest {
         vm.startPrank(users.deployer);
         vm.expectRevert(abi.encodeWithSelector(IYieldPass.InvalidYieldPass.selector));
         yieldPass.harvest(randomAddress, "");
+        vm.stopPrank();
+    }
+
+    function test__Harvest_RevertWhen_HarvestCompleted() external {
+        /* Mint */
+        vm.startPrank(snlOwner1);
+        yieldPass.mint(
+            yp,
+            snlOwner1,
+            snlOwner1,
+            snlOwner1,
+            block.timestamp,
+            tokenIds,
+            generateStakingPools(stakingPools1, quantities1),
+            ""
+        );
+        vm.stopPrank();
+
+        /* Simulate yield distribution in staking pool */
+        simulateYieldDistributionInStakingPool();
+
+        /* Fast-forward to 1 second before expiry */
+        vm.warp(expiry - 1);
+
+        /* Harvest yield */
+        vm.startPrank(users.deployer);
+        yieldPass.harvest(yp, "");
+
+        /* Fast-forward to 1 second after expiry */
+        vm.warp(expiry + 1);
+
+        /* Harvest yield */
+        yieldPass.harvest(yp, "");
+
+        /* Fast-forward to 10 seconds after expiry */
+        vm.warp(expiry + 10);
+
+        /* Expect revert */
+        vm.expectRevert(abi.encodeWithSelector(IYieldAdapter.HarvestCompleted.selector));
+        yieldPass.harvest(yp, "");
         vm.stopPrank();
     }
 }
