@@ -579,7 +579,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         address account,
         uint256[] calldata tokenIds,
         bytes calldata setupData
-    ) external onlyYieldPassFactory whenNotPaused returns (address[] memory) {
+    ) external onlyYieldPassFactory whenNotPaused returns (address[] memory, uint256) {
         /* Decode setup data */
         SignedValidatedNodes memory signedValidatedNodes = abi.decode(setupData, (SignedValidatedNodes));
 
@@ -597,7 +597,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
             _licenseOriginalOwners[tokenIds[i]] = account;
         }
 
-        return burnerWallets;
+        return (burnerWallets, 0);
     }
 
     /**

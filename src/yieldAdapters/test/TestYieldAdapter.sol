@@ -181,7 +181,7 @@ contract TestYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl {
         address account,
         uint256[] calldata tokenIds,
         bytes calldata
-    ) external onlyRole(YIELD_PASS_ROLE) returns (address[] memory) {
+    ) external onlyRole(YIELD_PASS_ROLE) returns (address[] memory, uint256) {
         /* Transfer node licenses from account */
         for (uint256 i; i < tokenIds.length; i++) {
             _nodeLicenseToken.safeTransferFrom(account, address(this), tokenIds[i]);
@@ -194,7 +194,7 @@ contract TestYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl {
         address[] memory operators = new address[](1);
         operators[0] = address(this);
 
-        return operators;
+        return (operators, 0);
     }
 
     /**

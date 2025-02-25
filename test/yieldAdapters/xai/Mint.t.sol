@@ -62,6 +62,17 @@ contract XaiMintTest is XaiBaseTest {
         quantities2[0] = 2;
     }
 
+    function simulateYieldDistributionInStakingPool() internal {
+        uint256 beforeBalance = esXai.balanceOf(address(stakingPool1));
+
+        vm.startPrank(esXaiOwner);
+        esXai.transfer(address(stakingPool1), 10000);
+        vm.stopPrank();
+
+        uint256 afterBalance = esXai.balanceOf(address(stakingPool1));
+        assertEq(afterBalance, beforeBalance + 10000, "Invalid balance");
+    }
+
     function test__Mint() external {
         /* Mint */
         vm.startPrank(snlOwner1);
@@ -91,9 +102,12 @@ contract XaiMintTest is XaiBaseTest {
         /* Fast-forward to half-way point */
         vm.warp(startTime + ((expiry - startTime) / 2));
 
+        /* Simulate yield distribution in staking pool */
+        simulateYieldDistributionInStakingPool();
+
         /* Mint again */
         vm.startPrank(snlOwner1);
-        yieldPass.mint(
+        (, uint256 harvestedAmount) = yieldPass.mint(
             yp,
             snlOwner1,
             snlOwner1,
@@ -114,8 +128,9 @@ contract XaiMintTest is XaiBaseTest {
         assertEq(IERC721(np).ownerOf(123712), snlOwner1, "Invalid delegate token owner");
 
         assertEq(yieldPass.cumulativeYield(yp, 0), 0, "Invalid cumulative yield");
-        assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
-        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid claim state balance");
+        assertGt(harvestedAmount, 0, "Invalid harvested amount");
+        assertEq(yieldPass.claimState(yp).total, harvestedAmount, "Invalid claim state total");
+        assertEq(yieldPass.claimState(yp).balance, harvestedAmount, "Invalid claim state balance");
         assertEq(yieldPass.claimState(yp).shares, expectedAmount1 + expectedAmount2, "Invalid claim state shares");
     }
 

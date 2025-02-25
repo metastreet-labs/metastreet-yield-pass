@@ -320,7 +320,7 @@ interface IYieldPass is IERC721Receiver {
      * @param deadline Deadline
      * @param nodeTokenIds Node token IDs
      * @param setupData Setup data
-     * @return Yield pass amount
+     * @return Yield pass amount, harvested amount
      */
     function mint(
         address yieldPass,
@@ -329,7 +329,7 @@ interface IYieldPass is IERC721Receiver {
         uint256 deadline,
         uint256[] calldata nodeTokenIds,
         bytes calldata setupData
-    ) external returns (uint256);
+    ) external returns (uint256, uint256);
 
     /**
      * @notice Mint yield pass and node pass for node token IDs (smart account friendly version)
@@ -341,7 +341,7 @@ interface IYieldPass is IERC721Receiver {
      * @param nodeTokenIds Node token IDs
      * @param setupData Setup data
      * @param transferSignature Transfer signature
-     * @return Yield pass amount
+     * @return Yield pass amount, harvested amount
      */
     function mint(
         address yieldPass,
@@ -352,7 +352,7 @@ interface IYieldPass is IERC721Receiver {
         uint256[] calldata nodeTokenIds,
         bytes calldata setupData,
         bytes calldata transferSignature
-    ) external returns (uint256);
+    ) external returns (uint256, uint256);
 
     /**
      * @notice Harvest yield

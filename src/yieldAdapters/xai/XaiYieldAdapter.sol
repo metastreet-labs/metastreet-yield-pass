@@ -363,7 +363,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         address account,
         uint256[] calldata tokenIds,
         bytes calldata setupData
-    ) external onlyYieldPassFactory whenNotPaused returns (address[] memory) {
+    ) external onlyYieldPassFactory whenNotPaused returns (address[] memory, uint256) {
         /* Validate KYC'd */
         if (!_xaiReferee.isKycApproved(account)) revert NotKycApproved();
 
@@ -372,6 +372,9 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
 
         /* Validate quantities */
         if (quantities.length != pools.length) revert InvalidSetupData();
+
+        /* Snapshot balance before */
+        uint256 balanceBefore = _esXaiToken.balanceOf(address(this));
 
         uint256 index;
         for (uint256 i; i < pools.length; i++) {
@@ -400,7 +403,10 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         /* Validate total quantities */
         if (index != tokenIds.length) revert InvalidSetupData();
 
-        return pools;
+        /* Snapshot balance after */
+        uint256 balanceAfter = _esXaiToken.balanceOf(address(this));
+
+        return (pools, balanceAfter - balanceBefore);
     }
 
     /**

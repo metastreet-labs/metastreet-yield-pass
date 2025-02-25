@@ -311,7 +311,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         uint256[] calldata nodeTokenIds,
         bytes calldata setupData,
         bytes calldata transferSignature
-    ) internal returns (uint256) {
+    ) internal returns (uint256, uint256) {
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
 
@@ -335,7 +335,18 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         _yieldPassStates[yieldPass].claimState.shares += yieldPassAmount;
 
         /* Call yield adapter setup hook */
-        address[] memory operators = IYieldAdapter(yieldPassInfo_.yieldAdapter).setup(account, nodeTokenIds, setupData);
+        (address[] memory operators, uint256 harvestedAmount) =
+            IYieldAdapter(yieldPassInfo_.yieldAdapter).setup(account, nodeTokenIds, setupData);
+
+        /* Update yield claim state if harvested amount is greater than 0 */
+        if (harvestedAmount > 0) {
+            /* Update yield claim state */
+            _yieldPassStates[yieldPass].claimState.balance += harvestedAmount;
+            _yieldPassStates[yieldPass].claimState.total += harvestedAmount;
+
+            /* Emit Harvested */
+            emit Harvested(yieldPass, harvestedAmount);
+        }
 
         /* Mint yield pass token */
         YieldPassToken(yieldPass).mint(yieldPassRecipient, yieldPassAmount);
@@ -356,7 +367,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
             operators
         );
 
-        return yieldPassAmount;
+        return (yieldPassAmount, harvestedAmount);
     }
 
     /**
@@ -369,7 +380,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         uint256 deadline,
         uint256[] calldata nodeTokenIds,
         bytes calldata setupData
-    ) external nonReentrant returns (uint256) {
+    ) external nonReentrant returns (uint256, uint256) {
         return _mint(
             yieldPass,
             msg.sender,
@@ -394,7 +405,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         uint256[] calldata nodeTokenIds,
         bytes calldata setupData,
         bytes calldata transferSignature
-    ) external nonReentrant returns (uint256) {
+    ) external nonReentrant returns (uint256, uint256) {
         return _mint(
             yieldPass,
             account,

@@ -48,13 +48,13 @@ interface IYieldAdapter is IERC721Receiver {
      * @param account Account
      * @param nodeTokenIds Node token IDs
      * @param setupData Setup data
-     * @return Operators
+     * @return Operators, harvested amount
      */
     function setup(
         address account,
         uint256[] calldata nodeTokenIds,
         bytes calldata setupData
-    ) external returns (address[] memory);
+    ) external returns (address[] memory, uint256);
 
     /**
      * @notice Harvest yield
