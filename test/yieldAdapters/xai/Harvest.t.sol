@@ -76,12 +76,9 @@ contract HarvestTest is XaiBaseTest {
 
         /* Validate state */
         assertEq(yieldPass.claimableYield(yp), 2, "Invalid claimable yield");
-        assertEq(yieldPass.claimableYield(yp, 1 ether), 2, "Invalid claimable yield");
+        assertEq(yieldPass.cumulativeYield(yp), 2, "Invalid cumulative yield");
         assertEq(IERC20(esXai).balanceOf(address(yieldAdapter)), 2, "Invalid esXAI balance");
-
-        assertEq(yieldPass.claimState(yp).total, 2, "Invalid total yield state");
-        assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");
-        assertEq(yieldPass.claimState(yp).balance, 2, "Invalid yield balance state");
+        assertEq(yieldPass.yieldPassShares(yp), 1 ether, "Invalid total shares state");
     }
 
     function test__Harvest_RevertWhen_UndeployedYieldPass() external {

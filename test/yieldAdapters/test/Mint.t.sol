@@ -53,10 +53,8 @@ contract TestYieldAdapterMintTest is TestYieldAdapterBaseTest {
         assertEq(testNodeLicense.ownerOf(1), address(yieldAdapter), "Invalid node owner");
         assertEq(IERC721(np).ownerOf(1), users.normalUser1, "Invalid node pass owner");
 
-        assertEq(yieldPass.cumulativeYield(yp, 0), 0, "Invalid cumulative yield");
-        assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
-        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid claim state balance");
-        assertEq(yieldPass.claimState(yp).shares, expectedAmount1, "Invalid claim state shares");
+        assertEq(yieldPass.cumulativeYield(yp), 0, "Invalid cumulative yield");
+        assertEq(yieldPass.yieldPassShares(yp), expectedAmount1, "Invalid claim state shares");
 
         /* Fast-forward to half-way point */
         vm.warp(startTime + ((expiryTime - startTime) / 2));
@@ -77,10 +75,8 @@ contract TestYieldAdapterMintTest is TestYieldAdapterBaseTest {
         assertEq(testNodeLicense.ownerOf(4), address(yieldAdapter), "Invalid node owner");
         assertEq(IERC721(np).ownerOf(4), users.normalUser2, "Invalid node pass owner");
 
-        assertEq(yieldPass.cumulativeYield(yp, 0), 0, "Invalid cumulative yield");
-        assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
-        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid claim state balance");
-        assertEq(yieldPass.claimState(yp).shares, expectedAmount1 + expectedAmount2, "Invalid claim state shares");
+        assertEq(yieldPass.cumulativeYield(yp), 0, "Invalid cumulative yield");
+        assertEq(yieldPass.yieldPassShares(yp), expectedAmount1 + expectedAmount2, "Invalid claim state shares");
     }
 
     function test__Mint_RevertWhen_UndeployedYieldPass() external {

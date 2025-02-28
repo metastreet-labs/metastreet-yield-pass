@@ -30,18 +30,6 @@ interface IYieldPass is IERC721Receiver {
         address yieldAdapter;
     }
 
-    /**
-     * @notice Yield claim state
-     * @param balance Yield balance in yield tokens
-     * @param shares Total claim shares in yield pass tokens
-     * @param total Total yield accrued in yield tokens
-     */
-    struct YieldClaimState {
-        uint256 balance;
-        uint256 shares;
-        uint256 total;
-    }
-
     /*------------------------------------------------------------------------*/
     /* Errors */
     /*------------------------------------------------------------------------*/
@@ -70,6 +58,11 @@ interface IYieldPass is IERC721Receiver {
      * @notice Invalid amount
      */
     error InvalidAmount();
+
+    /**
+     * @notice Insufficient claimable
+     */
+    error InsufficientClaimable();
 
     /**
      * @notice Invalid node redemption
@@ -258,13 +251,13 @@ interface IYieldPass is IERC721Receiver {
     function yieldPassInfos(uint256 offset, uint256 count) external view returns (YieldPassInfo[] memory);
 
     /**
-     * @notice Get yield claim state
+     * @notice Get yield pass shares
      * @param yieldPass Yield pass token
-     * @return Yield claim state
+     * @return Yield pass shares
      */
-    function claimState(
+    function yieldPassShares(
         address yieldPass
-    ) external view returns (YieldClaimState memory);
+    ) external view returns (uint256);
 
     /**
      * @notice Get total cumulative yield
@@ -284,7 +277,7 @@ interface IYieldPass is IERC721Receiver {
     function cumulativeYield(address yieldPass, uint256 yieldPassAmount) external view returns (uint256);
 
     /**
-     * @notice Get total claimable yield
+     * @notice Get claimable yield (at expiry)
      * @param yieldPass Yield pass token
      * @return Claimable yield in yield tokens
      */
@@ -293,15 +286,7 @@ interface IYieldPass is IERC721Receiver {
     ) external view returns (uint256);
 
     /**
-     * @notice Get claimable yield for yield pass amount
-     * @param yieldPass Yield pass token
-     * @param yieldPassAmount Yield pass amount
-     * @return Claimable yield in yield tokens
-     */
-    function claimableYield(address yieldPass, uint256 yieldPassAmount) external view returns (uint256);
-
-    /**
-     * @notice Get yield pass token amount for mint
+     * @notice Get yield pass amount for mint
      * @param yieldPass Yield pass token
      * @param count Node count
      * @return Yield pass amount

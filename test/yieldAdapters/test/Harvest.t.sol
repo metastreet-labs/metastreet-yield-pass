@@ -44,11 +44,9 @@ contract HarvestTest is TestYieldAdapterBaseTest {
 
         /* Validate state */
         assertEq(yieldPass.claimableYield(yp), yieldAmount, "Invalid claimable yield");
+        assertEq(yieldPass.cumulativeYield(yp), yieldAmount, "Invalid cumulative yield");
         assertEq(testYieldToken.balanceOf(address(yieldAdapter)), yieldAmount, "Invalid yield token balance");
-
-        assertEq(yieldPass.claimState(yp).total, yieldAmount, "Invalid total yield state");
-        assertEq(yieldPass.claimState(yp).shares, 2 ether, "Invalid total shares state");
-        assertEq(yieldPass.claimState(yp).balance, yieldAmount, "Invalid yield balance state");
+        assertEq(yieldPass.yieldPassShares(yp), 2 ether, "Invalid total shares state");
     }
 
     function test__Harvest_RevertWhen_HarvestCompleted() external {

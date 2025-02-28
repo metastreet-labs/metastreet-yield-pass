@@ -87,8 +87,7 @@ contract ClaimTest is XaiBaseTest {
         assertEq(yieldPass.cumulativeYield(yp, 1 ether), 2, "Invalid cumulative yield");
 
         /* Check claimable yield */
-        assertEq(yieldPass.claimableYield(yp), 2, "Invalid claimable yield");
-        assertEq(yieldPass.claimableYield(yp, 1 ether), 2, "Invalid claimable yield");
+        assertEq(yieldPass.claimableYield(yp), 0, "Invalid claimable yield");
 
         assertEq(IERC20(yp).balanceOf(snlOwner1), 0, "Invalid yield token balance");
         assertEq(IERC20(yp).totalSupply(), 0, "Invalid total supply");
@@ -96,9 +95,7 @@ contract ClaimTest is XaiBaseTest {
         assertEq(sentryNodeLicense.ownerOf(123714), address(yieldAdapter), "Invalid NFT owner");
         assertEq(IERC721(np).ownerOf(123714), snlOwner1, "Invalid delegate token owner");
 
-        assertEq(yieldPass.claimState(yp).total, 2, "Invalid total yield state");
-        assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");
-        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid yield balance state");
+        assertEq(yieldPass.yieldPassShares(yp), 1 ether, "Invalid total shares state");
     }
 
     function test__Claim_RevertWhen_InvalidAmount() external {

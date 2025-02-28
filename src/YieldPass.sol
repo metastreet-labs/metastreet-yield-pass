@@ -48,11 +48,15 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
 
     /**
      * @notice Yield pass state
-     * @param claimState Yield claim state
+     * @param reserved0 Reserved slot 0
+     * @param shares Total shares issued (yield pass tokens)
+     * @param reserved1 Reserved slot 1
      * @param redemptions Map of redemption hash to withdraw account
      */
     struct YieldPassState {
-        YieldClaimState claimState;
+        uint256 reserved0;
+        uint256 shares;
+        uint256 reserved1;
         mapping(bytes32 => address) redemptions;
     }
 
@@ -148,10 +152,10 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     /**
      * @inheritdoc IYieldPass
      */
-    function claimState(
+    function yieldPassShares(
         address yieldPass
-    ) public view returns (YieldClaimState memory) {
-        return _yieldPassStates[yieldPass].claimState;
+    ) public view returns (uint256) {
+        return _yieldPassStates[yieldPass].shares;
     }
 
     /**
@@ -170,7 +174,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         return Math.mulDiv(
             IYieldAdapter(yieldPassInfo(yieldPass).yieldAdapter).cumulativeYield(),
             yieldPassAmount,
-            _yieldPassStates[yieldPass].claimState.shares
+            _yieldPassStates[yieldPass].shares
         );
     }
 
@@ -180,16 +184,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
     function claimableYield(
         address yieldPass
     ) public view returns (uint256) {
-        return _yieldPassStates[yieldPass].claimState.total;
-    }
-
-    /**
-     * @inheritdoc IYieldPass
-     */
-    function claimableYield(address yieldPass, uint256 yieldPassAmount) public view returns (uint256) {
-        return Math.mulDiv(
-            _yieldPassStates[yieldPass].claimState.total, yieldPassAmount, _yieldPassStates[yieldPass].claimState.shares
-        );
+        return IYieldAdapter(yieldPassInfo(yieldPass).yieldAdapter).claimableYield();
     }
 
     /**
@@ -332,7 +327,7 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         uint256 yieldPassAmount = quoteMint(yieldPass, nodeTokenIds.length);
 
         /* Update claim state shares */
-        _yieldPassStates[yieldPass].claimState.shares += yieldPassAmount;
+        _yieldPassStates[yieldPass].shares += yieldPassAmount;
 
         /* Call yield adapter setup hook */
         address[] memory operators = IYieldAdapter(yieldPassInfo_.yieldAdapter).setup(account, nodeTokenIds, setupData);
@@ -417,10 +412,6 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         /* Harvest yield */
         uint256 yieldAmount = IYieldAdapter(yieldPassInfo_.yieldAdapter).harvest(harvestData);
 
-        /* Update yield claim state */
-        _yieldPassStates[yieldPass].claimState.balance += yieldAmount;
-        _yieldPassStates[yieldPass].claimState.total += yieldAmount;
-
         /* Emit Harvested */
         emit Harvested(yieldPass, yieldAmount);
 
@@ -447,10 +438,10 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         }
 
         /* Compute yield amount */
-        uint256 yieldAmount = claimableYield(yieldPass, yieldPassAmount);
+        uint256 yieldAmount = cumulativeYield(yieldPass, yieldPassAmount);
 
-        /* Update yield claim state */
-        _yieldPassStates[yieldPass].claimState.balance -= yieldAmount;
+        /* Validate sufficient claimable yield is available */
+        if (yieldAmount > claimableYield(yieldPass)) revert InsufficientClaimable();
 
         /* Burn yield pass amount */
         YieldPassToken(yieldPass).burn(msg.sender, yieldPassAmount);

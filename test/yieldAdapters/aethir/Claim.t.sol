@@ -112,16 +112,13 @@ contract ClaimTest is AethirBaseTest {
         assertEq(yieldPass.cumulativeYield(yp, 1 ether), 1_000_000, "Invalid cumulative yield");
 
         /* Check claimable yield */
-        assertEq(yieldPass.claimableYield(yp), 1_000_000, "Invalid claimable yield");
-        assertEq(yieldPass.claimableYield(yp, 1 ether), 1_000_000, "Invalid claimable yield");
+        assertEq(yieldPass.claimableYield(yp), 0, "Invalid claimable yield");
         assertEq(IERC20(yp).balanceOf(cnlOwner), 0, "Invalid yield token balance");
         assertEq(IERC20(yp).totalSupply(), 0, "Invalid total supply");
         assertEq(IERC20(ath).balanceOf(cnlOwner), initialBalance + 1_000_000, "Invalid ath balance");
         assertEq(IERC721(checkerNodeLicense).ownerOf(91521), address(yieldAdapter), "Invalid NFT owner");
         assertEq(IERC721(np).ownerOf(91521), cnlOwner, "Invalid delegate token owner");
-        assertEq(yieldPass.claimState(yp).total, 1_000_000, "Invalid total yield state");
-        assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");
-        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid yield balance state");
+        assertEq(yieldPass.yieldPassShares(yp), 1 ether, "Invalid total shares state");
     }
 
     function test__Claim_WithSmartWallet() external {
@@ -178,16 +175,13 @@ contract ClaimTest is AethirBaseTest {
         assertEq(yieldPass.cumulativeYield(yp, 1 ether), 1_000_000, "Invalid cumulative yield");
 
         /* Check claimable yield */
-        assertEq(yieldPass.claimableYield(yp), 1_000_000, "Invalid claimable yield");
-        assertEq(yieldPass.claimableYield(yp, 1 ether), 1_000_000, "Invalid claimable yield");
+        assertEq(yieldPass.claimableYield(yp), 0, "Invalid claimable yield");
         assertEq(IERC20(yp).balanceOf(address(smartAccount)), 0, "Invalid yield token balance");
         assertEq(IERC20(yp).totalSupply(), 0, "Invalid total supply");
         assertEq(IERC20(ath).balanceOf(address(smartAccount)), initialBalance + 1_000_000, "Invalid ath balance");
         assertEq(IERC721(checkerNodeLicense).ownerOf(91521), address(yieldAdapter), "Invalid NFT owner");
         assertEq(IERC721(np).ownerOf(91521), address(smartAccount), "Invalid delegate token owner");
-        assertEq(yieldPass.claimState(yp).total, 1_000_000, "Invalid total yield state");
-        assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");
-        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid yield balance state");
+        assertEq(yieldPass.yieldPassShares(yp), 1 ether, "Invalid total shares state");
     }
 
     function test__Claim_RevertWhen_InvalidAmount() external {
