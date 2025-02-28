@@ -56,8 +56,11 @@ contract ClaimTest is TestYieldAdapterBaseTest {
         );
 
         /* Check claimable yield */
-        assertEq(yieldPass.claimableYield(yp), yieldAmount, "Invalid claimable yield");
-        assertApproxEqAbs(yieldPass.claimableYield(yp, 2 ether), (yieldAmount * 2) / 5, 100, "Invalid claimable yield");
+        assertEq(
+            yieldPass.claimableYield(yp),
+            IERC20(yieldAdapter.token()).balanceOf(address(yieldAdapter)),
+            "Invalid claimable yield"
+        );
 
         assertEq(IERC20(yp).balanceOf(users.normalUser1), 0, "Invalid yield token balance");
         assertEq(IERC20(yp).totalSupply(), 3 ether, "Invalid total supply");
@@ -67,9 +70,7 @@ contract ClaimTest is TestYieldAdapterBaseTest {
         assertEq(testNodeLicense.ownerOf(1), address(yieldAdapter), "Invalid node owner");
         assertEq(IERC721(np).ownerOf(1), users.normalUser1, "Invalid node pass owner");
 
-        assertEq(yieldPass.claimState(yp).total, yieldAmount, "Invalid total yield state");
-        assertEq(yieldPass.claimState(yp).shares, 5 ether, "Invalid total shares state");
-        assertApproxEqAbs(yieldPass.claimState(yp).balance, (yieldAmount * 3) / 5, 100, "Invalid yield balance state");
+        assertEq(yieldPass.yieldPassShares(yp), 5 ether, "Invalid total shares state");
     }
 
     function test__Claim_RevertWhen_InvalidAmount() external {

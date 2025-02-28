@@ -39,6 +39,12 @@ interface IYieldAdapter is IERC721Receiver {
      */
     function cumulativeYield() external view returns (uint256);
 
+    /**
+     * @notice Get claimable yield
+     * @return Claimable yield token amount
+     */
+    function claimableYield() external view returns (uint256);
+
     /*------------------------------------------------------------------------*/
     /* Yield Adapter API */
     /*------------------------------------------------------------------------*/

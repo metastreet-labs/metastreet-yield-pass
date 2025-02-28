@@ -155,6 +155,13 @@ contract TestYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl {
     }
 
     /**
+     * @inheritdoc IYieldAdapter
+     */
+    function claimableYield() public view returns (uint256) {
+        return _yieldToken.balanceOf(address(this));
+    }
+
+    /**
      * @notice Get yield pass factory
      * @return Yield pass factory address
      */
@@ -222,7 +229,7 @@ contract TestYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl {
      */
     function claim(address recipient, uint256 amount) external onlyRole(YIELD_PASS_ROLE) {
         /* Transfer yield amount to recipient */
-        if (amount > 0) _yieldToken.safeTransfer(recipient, amount);
+        _yieldToken.safeTransfer(recipient, amount);
     }
 
     /**

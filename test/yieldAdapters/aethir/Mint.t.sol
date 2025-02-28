@@ -62,9 +62,7 @@ contract MintTest is AethirBaseTest {
         assertEq(IERC721(np).ownerOf(91521), cnlOwner, "Invalid node token owner");
 
         assertEq(yieldPass.cumulativeYield(yp), 0, "Invalid cumulative yield");
-        assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
-        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid claim state balance");
-        assertEq(yieldPass.claimState(yp).shares, expectedAmount1, "Invalid claim state shares");
+        assertEq(yieldPass.yieldPassShares(yp), expectedAmount1, "Invalid claim state shares");
 
         /* Fast-forward to half-way point */
         uint64 halfWayPoint = startTime + ((expiry - startTime) / 2);
@@ -90,10 +88,8 @@ contract MintTest is AethirBaseTest {
         assertEq(IERC721(checkerNodeLicense).ownerOf(91522), address(yieldAdapter), "Invalid NFT owner");
         assertEq(IERC721(np).ownerOf(91522), cnlOwner, "Invalid delegate token owner");
 
-        assertEq(yieldPass.cumulativeYield(yp, 0), 0, "Invalid cumulative yield");
-        assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
-        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid claim state balance");
-        assertEq(yieldPass.claimState(yp).shares, expectedAmount1 + expectedAmount2, "Invalid claim state shares");
+        assertEq(yieldPass.cumulativeYield(yp), 0, "Invalid cumulative yield");
+        assertEq(yieldPass.yieldPassShares(yp), expectedAmount1 + expectedAmount2, "Invalid claim state shares");
 
         /* Fast-forward to 1 second before expiry */
         uint64 oneSecondBeforeExpiry = expiry - 1;
@@ -124,11 +120,9 @@ contract MintTest is AethirBaseTest {
         assertEq(IERC721(checkerNodeLicense).ownerOf(91524), address(yieldAdapter), "Invalid NFT owner");
         assertEq(IERC721(np).ownerOf(91523), cnlOwner, "Invalid delegate token owner");
 
-        assertEq(yieldPass.cumulativeYield(yp, 0), 0, "Invalid cumulative yield");
-        assertEq(yieldPass.claimState(yp).total, 0, "Invalid claim state total");
-        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid claim state balance");
+        assertEq(yieldPass.cumulativeYield(yp), 0, "Invalid cumulative yield");
         assertEq(
-            yieldPass.claimState(yp).shares,
+            yieldPass.yieldPassShares(yp),
             expectedAmount1 + expectedAmount2 + expectedAmount3,
             "Invalid claim state shares"
         );
