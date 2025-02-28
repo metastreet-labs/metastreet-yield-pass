@@ -155,6 +155,13 @@ contract TestYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl {
     }
 
     /**
+     * @inheritdoc IYieldAdapter
+     */
+    function claimableYield() public view returns (uint256) {
+        return _yieldToken.balanceOf(address(this));
+    }
+
+    /**
      * @notice Get yield pass factory
      * @return Yield pass factory address
      */

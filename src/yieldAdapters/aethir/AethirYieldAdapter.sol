@@ -505,6 +505,13 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     }
 
     /**
+     * @inheritdoc IYieldAdapter
+     */
+    function claimableYield() public view returns (uint256) {
+        return _athToken.balanceOf(address(this));
+    }
+
+    /**
      * @notice Get yield pass factory
      * @return Yield pass factory address
      */

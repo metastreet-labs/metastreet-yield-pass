@@ -87,12 +87,8 @@ contract HarvestTest is AethirBaseTest {
 
         /* Validate state */
         assertEq(yieldPass.claimableYield(yp), 0, "Invalid claimable yield");
-        assertEq(yieldPass.claimableYield(yp, 1 ether), 0, "Invalid claimable yield");
         assertEq(IERC20(ath).balanceOf(address(yieldAdapter)), 0, "Invalid ath balance");
-
-        assertEq(yieldPass.claimState(yp).total, 0, "Invalid total yield state");
-        assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");
-        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid yield balance state");
+        assertEq(yieldPass.yieldPassShares(yp), 1 ether, "Invalid total shares state");
 
         /* Fast-forward to after cliff */
         vm.warp(block.timestamp + 180 days);
@@ -112,12 +108,8 @@ contract HarvestTest is AethirBaseTest {
 
         /* Validate state */
         assertEq(yieldPass.claimableYield(yp), 1_000_000, "Invalid claimable yield");
-        assertEq(yieldPass.claimableYield(yp, 1 ether), 1_000_000, "Invalid claimable yield");
         assertEq(IERC20(ath).balanceOf(address(yieldAdapter)), 1_000_000, "Invalid ath balance");
-
-        assertEq(yieldPass.claimState(yp).total, 1_000_000, "Invalid total yield state");
-        assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");
-        assertEq(yieldPass.claimState(yp).balance, 1_000_000, "Invalid yield balance state");
+        assertEq(yieldPass.yieldPassShares(yp), 1 ether, "Invalid total shares state");
     }
 
     function test__Harvest_RevertWhen_InvalidCliffSeconds() external {

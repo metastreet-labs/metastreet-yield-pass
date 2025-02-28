@@ -108,6 +108,11 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      */
     error HarvestCompleted();
 
+    /**
+     * @notice Harvest incompleted
+     */
+    error HarvestIncompleted();
+
     /*------------------------------------------------------------------------*/
     /* Events */
     /*------------------------------------------------------------------------*/
@@ -208,6 +213,11 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      */
     bool internal _harvestCompleted;
 
+    /**
+     * @notice Cumulative yield
+     */
+    uint256 internal _cumulativeYield;
+
     /*------------------------------------------------------------------------*/
     /* Constructor */
     /*------------------------------------------------------------------------*/
@@ -292,6 +302,9 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      * @inheritdoc IYieldAdapter
      */
     function cumulativeYield() public view returns (uint256) {
+        /* Return frozen claimable yield if harvest is completed */
+        if (_harvestCompleted) return _cumulativeYield;
+
         /* Get pools */
         address[] memory pools = _allPools.values();
 
@@ -302,6 +315,13 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         }
 
         return amount;
+    }
+
+    /**
+     * @inheritdoc IYieldAdapter
+     */
+    function claimableYield() public view returns (uint256) {
+        return _esXaiToken.balanceOf(address(this));
     }
 
     /**
@@ -412,9 +432,6 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         /* Validate final harvest hasn't occurred */
         if (_harvestCompleted) revert HarvestCompleted();
 
-        /* Set harvest completed for last harvest after expiry */
-        if (block.timestamp > _expiryTime) _harvestCompleted = true;
-
         /* Snapshot balance before */
         uint256 balanceBefore = _esXaiToken.balanceOf(address(this));
 
@@ -427,6 +444,12 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         /* Compute yield amount */
         uint256 yieldAmount = balanceAfter - balanceBefore;
 
+        /* Freeze cumulative yield and set harvest completed */
+        if (block.timestamp > _expiryTime) {
+            _cumulativeYield = cumulativeYield();
+            _harvestCompleted = true;
+        }
+
         return yieldAmount;
     }
 
@@ -434,6 +457,9 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
      * @inheritdoc IYieldAdapter
      */
     function claim(address recipient, uint256 amount) external onlyYieldPassFactory whenNotPaused {
+        /* Validate harvest is completed */
+        if (!_harvestCompleted) revert HarvestIncompleted();
+
         /* Transfer yield amount to recipient */
         if (amount > 0) _esXaiToken.safeTransfer(recipient, amount);
     }

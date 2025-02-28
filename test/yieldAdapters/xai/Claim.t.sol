@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
+import {XaiYieldAdapter} from "src/yieldAdapters/xai/XaiYieldAdapter.sol";
 
 import "forge-std/console.sol";
 
@@ -86,8 +87,7 @@ contract ClaimTest is XaiBaseTest {
         assertEq(yieldPass.cumulativeYield(yp, 1 ether), 2, "Invalid cumulative yield");
 
         /* Check claimable yield */
-        assertEq(yieldPass.claimableYield(yp), 2, "Invalid claimable yield");
-        assertEq(yieldPass.claimableYield(yp, 1 ether), 2, "Invalid claimable yield");
+        assertEq(yieldPass.claimableYield(yp), 0, "Invalid claimable yield");
 
         assertEq(IERC20(yp).balanceOf(snlOwner1), 0, "Invalid yield token balance");
         assertEq(IERC20(yp).totalSupply(), 0, "Invalid total supply");
@@ -95,9 +95,7 @@ contract ClaimTest is XaiBaseTest {
         assertEq(sentryNodeLicense.ownerOf(123714), address(yieldAdapter), "Invalid NFT owner");
         assertEq(IERC721(np).ownerOf(123714), snlOwner1, "Invalid delegate token owner");
 
-        assertEq(yieldPass.claimState(yp).total, 2, "Invalid total yield state");
-        assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");
-        assertEq(yieldPass.claimState(yp).balance, 0, "Invalid yield balance state");
+        assertEq(yieldPass.yieldPassShares(yp), 1 ether, "Invalid total shares state");
     }
 
     function test__Claim_RevertWhen_InvalidAmount() external {
@@ -171,6 +169,41 @@ contract ClaimTest is XaiBaseTest {
         vm.startPrank(snlOwner1);
         uint256 userBalance = IERC20(yp).balanceOf(snlOwner1);
         vm.expectRevert(IYieldPass.InvalidWindow.selector);
+        yieldPass.claim(yp, snlOwner1, userBalance);
+        vm.stopPrank();
+    }
+
+    function test__Claim_RevertWhen_FinalHarvestIncompleted() external {
+        /* Mint */
+        vm.startPrank(snlOwner1);
+        yieldPass.mint(
+            yp,
+            snlOwner1,
+            snlOwner1,
+            snlOwner1,
+            block.timestamp,
+            tokenIds,
+            generateStakingPools(stakingPools1, quantities1),
+            ""
+        );
+        vm.stopPrank();
+
+        /* Simulate yield distribution in staking pool */
+        simulateYieldDistributionInStakingPool();
+
+        /* Harvest yield */
+        vm.startPrank(users.deployer);
+        uint256 amount = yieldPass.harvest(yp, "");
+        assertEq(amount, 2, "Invalid yield amount");
+        vm.stopPrank();
+
+        /* Fast-forward to after expiry */
+        vm.warp(expiry + 1);
+
+        /* Claim early */
+        vm.startPrank(snlOwner1);
+        uint256 userBalance = IERC20(yp).balanceOf(snlOwner1);
+        vm.expectRevert(XaiYieldAdapter.HarvestIncompleted.selector);
         yieldPass.claim(yp, snlOwner1, userBalance);
         vm.stopPrank();
     }
