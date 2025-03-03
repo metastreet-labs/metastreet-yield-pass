@@ -13,17 +13,18 @@ import {
   YieldPassDeployed as YieldPassDeployedEvent,
 } from "../generated/YieldPass/YieldPass";
 import {
+  ClaimedEvent as ClaimedEventEntity,
   ERC20 as ERC20Entity,
   ERC721 as ERC721Entity,
-  YieldAdapter as YieldAdapterEntity,
-  YieldPassMarket as YieldPassMarketEntity,
-  YieldPassEvent as YieldPassEventEntity,
-  MintedEvent as MintedEventEntity,
   HarvestedEvent as HarvestedEventEntity,
-  ClaimedEvent as ClaimedEventEntity,
+  MintedEvent as MintedEventEntity,
   RedeemedEvent as RedeemedEventEntity,
   WithdrawnEvent as WithdrawnEventEntity,
+  YieldAdapter as YieldAdapterEntity,
+  YieldPassEvent as YieldPassEventEntity,
+  YieldPassMarket as YieldPassMarketEntity,
 } from "../generated/schema";
+import { NodePassToken as NodePassTokenTemplate } from "../generated/templates";
 
 const yieldPassContract = YieldPassContract.bind(dataSource.address());
 
@@ -89,6 +90,8 @@ export function handleYieldPassDeployed(event: YieldPassDeployedEvent): void {
   yieldPassMarketEntity.save();
 
   createAdapterEntity(event.params.yieldPass, event.params.yieldAdapter);
+
+  NodePassTokenTemplate.create(event.params.nodePass);
 }
 
 function createYieldPassEventEntity(yieldPass: Address, event: ethereum.Event, type: string): Bytes {
