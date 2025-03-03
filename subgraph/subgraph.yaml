@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: YieldPass
-    network: sepolia
+    network: arbitrum-sepolia
     source:
       abi: YieldPass
-      address: "0xBd0D5BF8E99DF863424Ae0688E5220a79f69e278"
-      startBlock: 7643245
+      address: "0x545b5e69a3EAf36E68109d94160B349004BC3aC3"
+      startBlock: 121168215
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -50,11 +50,11 @@ dataSources:
       file: ./src/yield-pass.ts
   - kind: ethereum
     name: UniswapV2Factory
-    network: sepolia
+    network: arbitrum-sepolia
     source:
       abi: UniswapV2Factory
-      address: "0x63b33ca4a44330791000a21F2bD187044d815524"
-      startBlock: 7643245
+      address: "0xead57ddf5213a9945a1cbE0133bea7d8544e20B5"
+      startBlock: 121168215
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -70,20 +70,20 @@ dataSources:
       file: ./src/uniswap-v2-factory.ts
 templates:
   - kind: ethereum
-    name: YieldPassToken
-    network: sepolia
+    name: NodePassToken
+    network: arbitrum-sepolia
     source:
-      abi: YieldPassToken
+      abi: NodePassToken
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - Transfer
+        - NodePassTokenOwnership
       abis:
-        - name: YieldPassToken
-          file: ../out/YieldPassToken.sol/YieldPassToken.json
+        - name: NodePassToken
+          file: ../out/NodePassToken.sol/NodePassToken.json
       eventHandlers:
-        - event: Approval(indexed address,indexed address,uint256)
-          handler: handleApproval
-      file: ./src/yield-pass-token.ts
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+      file: ./src/node-pass-token.ts
