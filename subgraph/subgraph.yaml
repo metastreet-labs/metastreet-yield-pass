@@ -68,22 +68,3 @@ dataSources:
         - event: PairCreated(indexed address,indexed address,address,uint256)
           handler: handlePairCreated
       file: ./src/uniswap-v2-factory.ts
-templates:
-  - kind: ethereum
-    name: YieldPassToken
-    network: sepolia
-    source:
-      abi: YieldPassToken
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.7
-      language: wasm/assemblyscript
-      entities:
-        - Transfer
-      abis:
-        - name: YieldPassToken
-          file: ../out/YieldPassToken.sol/YieldPassToken.json
-      eventHandlers:
-        - event: Approval(indexed address,indexed address,uint256)
-          handler: handleApproval
-      file: ./src/yield-pass-token.ts
