@@ -108,3 +108,10 @@ type WithdrawnEvent @entity(immutable: true) {
   nodeToken: Bytes! # address
   nodeTokenIds: [BigInt!]! # uint256[]
 }
+
+type NodePassTokenOwnership @entity {
+  id: Bytes! # <node pass token><token id>
+  tokenId: BigInt! # uint256
+  owner: Bytes! # address
+  nodePassToken: ERC721!
+}
