@@ -11,6 +11,8 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {IPoolFactory} from "metastreet-contracts-v2/interfaces/IPoolFactory.sol";
 import {IPool} from "metastreet-contracts-v2/interfaces/IPool.sol";
 
+import {MockMetaStreetPool} from "./MockMetaStreetPool.sol";
+
 import {Helpers} from "./Helpers.sol";
 
 contract PoolBaseTest is BaseTest {
@@ -38,7 +40,18 @@ contract PoolBaseTest is BaseTest {
         metaStreetPoolImpl = poolImpl_;
     }
 
-    /* Deploy WeightedRateCollection pool */
+    /* Deploy mock pool */
+    function deployMockMetaStreetPool(
+        address tok
+    ) internal {
+        vm.prank(users.deployer);
+
+        /* Deploy mock pool */
+        metaStreetPool = IPool(address(new MockMetaStreetPool(tok)));
+        vm.label({account: address(metaStreetPool), newLabel: "Mock Pool"});
+    }
+
+    /* Deploy pool */
     function deployMetaStreetPool(address nft, address tok, address priceOracle) internal {
         vm.prank(users.deployer);
 

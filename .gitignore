@@ -13,3 +13,7 @@ out/
 
 # Ignore local deployments
 deployments/local.json
+
+# Ignore foundryup-zksync
+foundryup-zksync
+/zkout/
