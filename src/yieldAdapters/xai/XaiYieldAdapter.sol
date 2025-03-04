@@ -73,7 +73,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /**
      * @notice Implementation version
      */
-    string public constant IMPLEMENTATION_VERSION = "1.2";
+    string public constant IMPLEMENTATION_VERSION = "1.3";
 
     /*------------------------------------------------------------------------*/
     /* Access Control Roles */
