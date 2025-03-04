@@ -1,3 +1,8 @@
+* YieldPass v1.3 - 03/05/2025
+    * Simplify claim state in YieldPass.
+    * Replace `claimState()` getter with `yieldPassShares()`.
+    * Add internal `claimableYield()` API to IYieldAdapter.
+
 * YieldPass v1.2 - 02/12/2025
     * Add `yieldPassFactory()` getter to YieldPassToken and NodePassToken.
     * Add `yieldPass()` getter to NodePassToken.
