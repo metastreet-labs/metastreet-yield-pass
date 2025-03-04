@@ -125,7 +125,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     /**
      * @notice Invalid claim
      */
-    error InvalidClaim();
+    error HarvestNotCompleted();
 
     /*------------------------------------------------------------------------*/
     /* Events */
@@ -631,7 +631,7 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      */
     function claim(address recipient, uint256 amount) external onlyYieldPassFactory whenNotPaused {
         /* Validate all claim order IDs have been processed for withdrawal */
-        if (_orderIds.length() != 0) revert InvalidClaim();
+        if (_orderIds.length() != 0) revert HarvestNotCompleted();
 
         /* Transfer yield amount to recipient */
         if (amount > 0) _athToken.safeTransfer(recipient, amount);
