@@ -1,3 +1,8 @@
+* AethirYieldAdapter v1.3 - 03/05/2025
+    * Update with IYieldAdapter interface changes.
+    * Add harvest completed state and validation.
+    * Add support for immediate withdrawals of vested ATH.
+
 * YieldPass v1.3 - 03/05/2025
     * Simplify claim state in YieldPass.
     * Replace `claimState()` getter with `yieldPassShares()`.
