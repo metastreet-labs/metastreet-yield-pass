@@ -10,8 +10,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
-
-import {AethirYieldAdapter} from "src/yieldAdapters/aethir/AethirYieldAdapter.sol";
+import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 
 import "forge-std/console.sol";
 
@@ -242,6 +241,45 @@ contract ClaimTest is AethirBaseTest {
         uint256 userBalance = IERC20(yp).balanceOf(cnlOwner);
         vm.expectRevert(IYieldPass.InvalidWindow.selector);
         yieldPass.claim(yp, cnlOwner, userBalance);
+        vm.stopPrank();
+    }
+
+    function test__Claim_RevertWhen_HarvestNotCompleted() external {
+        /* Mint */
+        vm.startPrank(cnlOwner);
+        yieldPass.mint(
+            yp,
+            cnlOwner,
+            cnlOwner,
+            cnlOwner,
+            block.timestamp,
+            tokenIds,
+            generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            ""
+        );
+        vm.stopPrank();
+
+        /* Simulate yield distribution in checker claim and withdraw contract */
+        simulateYieldDistributionToCheckerClaimAndWithdraw();
+
+        /* Fast-forward to before expiry */
+        vm.warp(expiry - 1);
+
+        /* Generate claim data */
+        bytes memory harvestData = generateHarvestData(true, expiryTimestamp, false);
+
+        /* Harvest yield */
+        vm.startPrank(users.deployer);
+        yieldPass.harvest(yp, harvestData);
+        vm.stopPrank();
+
+        /* Fast-forward to after expiry */
+        vm.warp(expiry + 10);
+
+        /* Try to claim before final harvest */
+        vm.startPrank(cnlOwner);
+        vm.expectRevert(IYieldAdapter.HarvestNotCompleted.selector);
+        yieldPass.claim(yp, cnlOwner, 100);
         vm.stopPrank();
     }
 }

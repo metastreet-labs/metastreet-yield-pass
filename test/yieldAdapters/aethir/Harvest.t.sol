@@ -8,11 +8,12 @@ import {AethirBaseTest} from "./Base.t.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
+import {AethirYieldAdapter} from "src/yieldAdapters/aethir/AethirYieldAdapter.sol";
+
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
+import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 
 import "forge-std/console.sol";
-
-import {AethirYieldAdapter} from "src/yieldAdapters/aethir/AethirYieldAdapter.sol";
 
 contract HarvestTest is AethirBaseTest {
     address internal yp;
@@ -118,6 +119,47 @@ contract HarvestTest is AethirBaseTest {
         assertEq(yieldPass.claimState(yp).total, 1_000_000, "Invalid total yield state");
         assertEq(yieldPass.claimState(yp).shares, 1 ether, "Invalid total shares state");
         assertEq(yieldPass.claimState(yp).balance, 1_000_000, "Invalid yield balance state");
+    }
+
+    function test__Harvest_RevertWhen_HarvestCompleted() external {
+        /* Mint */
+        vm.startPrank(cnlOwner);
+        yieldPass.mint(
+            yp,
+            cnlOwner,
+            cnlOwner,
+            cnlOwner,
+            block.timestamp,
+            tokenIds,
+            generateSignedNodes(operator, tokenIds, uint64(block.timestamp), 1, expiry),
+            ""
+        );
+        vm.stopPrank();
+
+        /* Simulate yield distribution in checker claim and withdraw contract */
+        simulateYieldDistributionToCheckerClaimAndWithdraw();
+
+        /* Fast-forward to after expiry */
+        vm.warp(expiry + 1);
+
+        /* Generate claim data */
+        bytes memory harvestData = generateHarvestData(true, expiryTimestamp, false);
+
+        /* Harvest yield */
+        vm.startPrank(users.deployer);
+        yieldPass.harvest(yp, harvestData);
+        vm.stopPrank();
+
+        /* Generate claim data */
+        harvestData = generateHarvestData(true, expiryTimestamp, false);
+
+        /* Fast-forward to 10 seconds after expiry */
+        vm.warp(expiry + 10);
+
+        /* Expect revert */
+        vm.expectRevert(abi.encodeWithSelector(IYieldAdapter.HarvestCompleted.selector));
+        yieldPass.harvest(yp, harvestData);
+        vm.stopPrank();
     }
 
     function test__Harvest_RevertWhen_InvalidCliffSeconds() external {

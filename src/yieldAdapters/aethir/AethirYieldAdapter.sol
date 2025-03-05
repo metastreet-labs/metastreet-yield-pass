@@ -281,6 +281,11 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      */
     mapping(uint256 => address) internal _licenseOriginalOwners;
 
+    /**
+     * @notice Final harvest completed
+     */
+    bool internal _harvestCompleted;
+
     /*------------------------------------------------------------------------*/
     /* Constructor */
     /*------------------------------------------------------------------------*/
@@ -613,6 +618,12 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
         (bool isClaim, bytes memory data) = abi.decode(harvestData, (bool, bytes));
 
         if (isClaim) {
+            /* Validate final harvest hasn't occurred */
+            if (_harvestCompleted) revert HarvestCompleted();
+
+            /* Set harvest completed for last claim after expiry */
+            if (block.timestamp > _expiryTime) _harvestCompleted = true;
+
             /* Claim vATH */
             _claimvATH(data);
 
@@ -630,6 +641,9 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
      * @inheritdoc IYieldAdapter
      */
     function claim(address recipient, uint256 amount) external onlyYieldPassFactory whenNotPaused {
+        /* Validate harvest is completed */
+        if (!_harvestCompleted) revert HarvestNotCompleted();
+
         /* Validate all claim order IDs have been processed for withdrawal */
         if (_orderIds.length() != 0) revert InvalidClaim();
 
