@@ -113,19 +113,9 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     error InvalidSignature();
 
     /**
-     * @notice Invalid window
-     */
-    error InvalidWindow();
-
-    /**
      * @notice Invalid cliff seconds
      */
     error InvalidCliff();
-
-    /**
-     * @notice Invalid claim
-     */
-    error InvalidClaim();
 
     /*------------------------------------------------------------------------*/
     /* Events */
@@ -636,9 +626,6 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
 
             return 0;
         } else {
-            /* Validate yield pass is expired */
-            if (block.timestamp <= _expiryTime) revert InvalidWindow();
-
             /* Withdraw ATH */
             return _withdrawATH(data);
         }
@@ -650,9 +637,6 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     function claim(address recipient, uint256 amount) external onlyYieldPassFactory whenNotPaused {
         /* Validate harvest is completed */
         if (!_harvestCompleted) revert HarvestNotCompleted();
-
-        /* Validate all claim order IDs have been processed for withdrawal */
-        if (_orderIds.length() != 0) revert InvalidClaim();
 
         /* Transfer yield amount to recipient */
         _athToken.safeTransfer(recipient, amount);
