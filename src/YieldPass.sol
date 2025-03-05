@@ -426,6 +426,9 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
         address recipient,
         uint256 yieldPassAmount
     ) external nonReentrant returns (uint256) {
+        /* Validate recipient */
+        if (recipient == address(0)) revert InvalidRecipient();
+
         /* Get yield pass info */
         YieldPassInfo memory yieldPassInfo_ = yieldPassInfo(yieldPass);
 
