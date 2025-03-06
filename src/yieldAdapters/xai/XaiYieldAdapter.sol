@@ -89,9 +89,9 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Invalid setup data
+     * @notice Invalid length
      */
-    error InvalidSetupData();
+    error InvalidLength();
 
     /**
      * @notice Unsupported pool
@@ -361,7 +361,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         (address[] memory pools, uint256[] memory quantities) = abi.decode(setupData, (address[], uint256[]));
 
         /* Validate quantities */
-        if (quantities.length != pools.length) revert InvalidSetupData();
+        if (quantities.length != pools.length) revert InvalidLength();
 
         uint256 index;
         for (uint256 i; i < pools.length; i++) {
@@ -369,7 +369,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
             if (!_allowedPools.contains(pools[i])) revert UnsupportedPool();
 
             /* Validate quantity */
-            if (index + quantities[i] > tokenIds.length) revert InvalidSetupData();
+            if (index + quantities[i] > tokenIds.length) revert InvalidLength();
 
             /* Get pool token ids */
             uint256[] memory poolTokenIds = tokenIds[index:index + quantities[i]];
@@ -388,7 +388,7 @@ contract XaiYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, Pausable
         }
 
         /* Validate total quantities */
-        if (index != tokenIds.length) revert InvalidSetupData();
+        if (index != tokenIds.length) revert InvalidLength();
 
         return pools;
     }
