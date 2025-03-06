@@ -17,6 +17,16 @@ interface IYieldAdapter is IERC721Receiver {
      */
     error InvalidRecipient();
 
+    /**
+     * @notice Harvest completed
+     */
+    error HarvestCompleted();
+
+    /**
+     * @notice Harvest not completed
+     */
+    error HarvestNotCompleted();
+
     /*------------------------------------------------------------------------*/
     /* Getters */
     /*------------------------------------------------------------------------*/
