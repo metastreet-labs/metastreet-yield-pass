@@ -10,6 +10,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
+import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 
 contract ClaimTest is TestYieldAdapterBaseTest {
     function setUp() public override {
@@ -109,6 +110,25 @@ contract ClaimTest is TestYieldAdapterBaseTest {
         uint256 ypBalance = IERC20(yp).balanceOf(users.normalUser1);
         vm.expectRevert(IYieldPass.InvalidWindow.selector);
         yieldPass.claim(yp, users.normalUser1, ypBalance);
+        vm.stopPrank();
+    }
+
+    function test__Claim_RevertWhen_HarvestNotCompleted() external {
+        /* Fast-forward to just before expiry */
+        vm.warp(expiryTime - 10);
+
+        /* Harvest yield */
+        vm.startPrank(users.normalUser2);
+        yieldPass.harvest(yp, "");
+        vm.stopPrank();
+
+        /* Fast-forward to just after expiry */
+        vm.warp(expiryTime + 1);
+
+        /* Claim */
+        vm.startPrank(users.normalUser1);
+        vm.expectRevert(IYieldAdapter.HarvestNotCompleted.selector);
+        yieldPass.claim(yp, users.normalUser1, 1);
         vm.stopPrank();
     }
 }

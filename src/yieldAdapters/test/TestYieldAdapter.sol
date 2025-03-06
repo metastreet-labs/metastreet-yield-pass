@@ -203,6 +203,9 @@ contract TestYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl {
     function harvest(
         bytes calldata
     ) external onlyRole(YIELD_PASS_ROLE) returns (uint256) {
+        /* Validate final harvest hasn't occurred */
+        if (_lastHarvestTimestamp > _expiryTime) revert HarvestCompleted();
+
         /* Compute random yield at a rate of about 1.0-1.5 ether per node license per day */
         uint256 prng = uint256(keccak256(abi.encodePacked(block.number, block.timestamp, _lastHarvestTimestamp)));
         uint256 yieldRate = ((1 ether + (prng % 0.5 ether)) * _nodeLicenseCount) / 86400;
@@ -221,6 +224,9 @@ contract TestYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl {
      * @inheritdoc IYieldAdapter
      */
     function claim(address recipient, uint256 amount) external onlyRole(YIELD_PASS_ROLE) {
+        /* Validate harvest is completed */
+        if (_lastHarvestTimestamp < _expiryTime) revert HarvestNotCompleted();
+
         /* Transfer yield amount to recipient */
         if (amount > 0) _yieldToken.safeTransfer(recipient, amount);
     }

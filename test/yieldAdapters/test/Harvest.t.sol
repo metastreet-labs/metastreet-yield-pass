@@ -10,6 +10,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import {IYieldPass} from "src/interfaces/IYieldPass.sol";
+import {IYieldAdapter} from "src/interfaces/IYieldAdapter.sol";
 
 contract HarvestTest is TestYieldAdapterBaseTest {
     uint256[] internal tokenIds1;
@@ -48,5 +49,34 @@ contract HarvestTest is TestYieldAdapterBaseTest {
         assertEq(yieldPass.claimState(yp).total, yieldAmount, "Invalid total yield state");
         assertEq(yieldPass.claimState(yp).shares, 2 ether, "Invalid total shares state");
         assertEq(yieldPass.claimState(yp).balance, yieldAmount, "Invalid yield balance state");
+    }
+
+    function test__Harvest_RevertWhen_HarvestCompleted() external {
+        /* Mint */
+        vm.startPrank(users.normalUser1);
+        yieldPass.mint(yp, users.normalUser1, users.normalUser1, block.timestamp, tokenIds1, "");
+        vm.stopPrank();
+
+        vm.startPrank(users.normalUser2);
+
+        /* Fast-forward to 10 seconds before expiry */
+        vm.warp(expiryTime - 10);
+
+        /* Harvest yield */
+        yieldPass.harvest(yp, "");
+
+        /* Fast-forward to 1 second after expiry */
+        vm.warp(expiryTime + 1);
+
+        /* Harvest yield */
+        yieldPass.harvest(yp, "");
+
+        /* Fast-forward to 10 seconds after expiry */
+        vm.warp(expiryTime + 10);
+
+        /* Expect revert */
+        vm.expectRevert(abi.encodeWithSelector(IYieldAdapter.HarvestCompleted.selector));
+        yieldPass.harvest(yp, "");
+        vm.stopPrank();
     }
 }
