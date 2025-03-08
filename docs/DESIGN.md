@@ -15,26 +15,22 @@ See [`IYieldPass`](../src/interfaces/IYieldPass.sol) for the main factory contra
 
 ```solidity
 /**
- * @notice Mint yield pass and a node pass for node token IDs
+ * @notice Mint yield pass and node pass for node token IDs
  * @param yieldPass Yield pass token
- * @param account Account holding nodes
  * @param yieldPassRecipient Yield pass recipient
  * @param nodePassRecipient Node pass recipient
  * @param deadline Deadline
  * @param nodeTokenIds Node token IDs
  * @param setupData Setup data
- * @param transferSignature Transfer signature
  * @return Yield pass amount
  */
 function mint(
     address yieldPass,
-    address account,
     address yieldPassRecipient,
     address nodePassRecipient,
     uint256 deadline,
     uint256[] calldata nodeTokenIds,
-    bytes calldata setupData,
-    bytes calldata transferSignature
+    bytes calldata setupData
 ) external returns (uint256);
 ```
 
@@ -67,7 +63,7 @@ sequenceDiagram
 function harvest(address yieldPass, bytes calldata harvestData) external returns (uint256);
 ```
 
-`harvest()` is called periodically to harvest the yield tokens for productive
+`harvest()` is called periodically to harvest the yield tokens from productive
 node NFTs in escrow with the yield adapter, making the yield available for
 claiming by yield pass token holders at expiry.
 
@@ -77,7 +73,7 @@ sequenceDiagram
     User->>+Yield Pass: Harvest
     Yield Pass->>+Yield Adapter: Harvest
     Node Network->>+Yield Adapter: Yield Tokens
-    Note right of Yield Pass: Yield token balance incremented
+    Note right of Yield Adapter: Yield token balance incremented
 ```
 
 ```solidity
@@ -99,16 +95,15 @@ burned.
 sequenceDiagram
     actor User
     User->>+Yield Pass: Burn Yield Pass Tokens (ERC20)
-    Note right of Yield Pass: Yield shares and token balance decremented
     Yield Pass->>+Yield Adapter: Claim Yield Tokens
     Yield Adapter->>+User: Yield Tokens (ERC20)
 ```
 
 ## Redeeming and Withdrawing NFTs
 
-Exchanging the node pass for the underlying node NFT at yield market expiry is
-done in two phases: `redeem()` and `withdraw()`, to accommodate the withdrawal
-delay for some node NFTs.
+Node pass tokens are exchanged for the underlying node NFTs at yield market
+expiry in two phases: `redeem()` and `withdraw()`, to accommodate the
+withdrawal delay for some node NFTs.
 
 ```solidity
 /**
