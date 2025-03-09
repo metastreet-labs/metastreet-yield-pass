@@ -115,3 +115,11 @@ type NodePassTokenOwnership @entity {
   owner: Bytes! # address
   nodePassToken: ERC721!
 }
+
+type AethirClaimEvent @entity(immutable: true) {
+  id: Bytes! # <tx hash><log index>
+  orderId: BigInt! # uint256
+  wallet: Bytes! # address
+  cliffTimestamp: BigInt! # uint48
+  amount: BigInt! # uint256
+}

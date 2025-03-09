@@ -68,6 +68,26 @@ dataSources:
         - event: PairCreated(indexed address,indexed address,address,uint256)
           handler: handlePairCreated
       file: ./src/uniswap-v2-factory.ts
+  - kind: ethereum
+    name: AethirCheckerClaimAndWithdraw
+    network: sepolia
+    source:
+      abi: CheckerClaimAndWithdraw
+      address: "0x0000000000000000000000000000000000000000"
+      startBlock: 7643245
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AethirClaimEvent
+      abis:
+        - name: CheckerClaimAndWithdraw
+          file: ./abis/CheckerClaimAndWithdraw.json
+      eventHandlers:
+        - event: EventClaim(uint256,address,uint48,uint256)
+          handler: handleEventClaim
+      file: ./src/aethir-checker-claim-and-withdraw.ts
 templates:
   - kind: ethereum
     name: NodePassToken
