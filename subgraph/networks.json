@@ -7,6 +7,10 @@
     "UniswapV2Factory": {
       "address": "0x63b33ca4a44330791000a21F2bD187044d815524",
       "startBlock": 7643245
+    },
+    "AethirCheckerClaimAndWithdraw": {
+      "address": "0x91F5F7468e053c83Aa027C36585ea44Af81BA2f5",
+      "startBlock": 7643245
     }
   },
   "arbitrum-one": {
@@ -17,6 +21,10 @@
     "UniswapV2Factory": {
       "address": "0xf1D7CC64Fb4452F05c498126312eBE29f30Fbcf9",
       "startBlock": 285765427
+    },
+    "AethirCheckerClaimAndWithdraw": {
+      "address": "0xEf90d0B328dC5896d10c54ECa93F1AB764F64367",
+      "startBlock": 285765427
     }
   },
   "arbitrum-sepolia": {
@@ -26,6 +34,10 @@
     },
     "UniswapV2Factory": {
       "address": "0xead57ddf5213a9945a1cbE0133bea7d8544e20B5",
+      "startBlock": 121168215
+    },
+    "AethirCheckerClaimAndWithdraw": {
+      "address": "0x0000000000000000000000000000000000000000",
       "startBlock": 121168215
     }
   }
