@@ -732,25 +732,6 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
     }
 
     /**
-     * @notice Set license original owners
-     * @dev Temporary admin function to facilitate v1.0 -> v1.1 upgrade
-     * @param tokenIds Token IDs
-     * @param owners Owners
-     */
-    function setLicenseOriginalOwners(
-        uint256[] calldata tokenIds,
-        address[] calldata owners
-    ) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        /* Validate lengths */
-        if (tokenIds.length != owners.length) revert InvalidLength();
-
-        /* Update original owners */
-        for (uint256 i; i < tokenIds.length; i++) {
-            _licenseOriginalOwners[tokenIds[i]] = owners[i];
-        }
-    }
-
-    /**
      * @notice Pause the contract
      */
     function pause() public onlyRole(PAUSE_ADMIN_ROLE) {
