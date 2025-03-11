@@ -1,3 +1,7 @@
+* AethirYieldAdapter v1.4 - 03/11/2025
+    * Return claimed vATH amount from `harvest()` for Harvested event.
+    * Remove `setLicenseOriginalOwners()` migration function.
+
 * XaiYieldAdapter v1.3 - 03/05/2025
     * Update with IYieldAdapter interface changes.
     * Add harvest completed state and validation.
