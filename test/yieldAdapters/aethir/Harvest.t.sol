@@ -79,7 +79,7 @@ contract HarvestTest is AethirBaseTest {
         /* Harvest yield */
         vm.startPrank(users.deployer);
         uint256 amount = yieldPass.harvest(yp, harvestData);
-        assertEq(amount, 0, "Invalid yield amount");
+        assertEq(amount, 1_000_000, "Invalid yield amount");
         vm.stopPrank();
 
         /* Check cumulative yield */
@@ -100,7 +100,7 @@ contract HarvestTest is AethirBaseTest {
         /* Harvest yield */
         vm.startPrank(users.deployer);
         amount = yieldPass.harvest(yp, harvestData);
-        assertEq(amount, 1_000_000, "Invalid yield amount");
+        assertEq(amount, 0, "Invalid yield amount");
         vm.stopPrank();
 
         /* Check cumulative yield */

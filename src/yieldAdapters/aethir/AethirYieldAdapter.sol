@@ -622,12 +622,12 @@ contract AethirYieldAdapter is IYieldAdapter, ERC721Holder, AccessControl, EIP71
             if (block.timestamp > _expiryTime) _harvestCompleted = true;
 
             /* Claim vATH */
-            _claimvATH(data);
-
-            return 0;
+            return _claimvATH(data);
         } else {
             /* Withdraw ATH */
-            return _withdrawATH(data);
+            _withdrawATH(data);
+
+            return 0;
         }
     }
 
