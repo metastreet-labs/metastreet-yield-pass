@@ -9,8 +9,6 @@ dataSources:
     network: sepolia
     source:
       abi: YieldPass
-      address: "0xBd0D5BF8E99DF863424Ae0688E5220a79f69e278"
-      startBlock: 7643245
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -53,8 +51,6 @@ dataSources:
     network: sepolia
     source:
       abi: UniswapV2Factory
-      address: "0x63b33ca4a44330791000a21F2bD187044d815524"
-      startBlock: 7643245
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -73,8 +69,6 @@ dataSources:
     network: sepolia
     source:
       abi: CheckerClaimAndWithdraw
-      address: "0x91F5F7468e053c83Aa027C36585ea44Af81BA2f5"
-      startBlock: 7643245
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
