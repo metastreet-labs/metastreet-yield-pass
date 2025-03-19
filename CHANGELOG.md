@@ -1,3 +1,7 @@
+* YieldPass v1.4 - 03/19/2025
+    * Add hotfix to handle deprecated NodePassToken `burn()` API with older
+      yield pass market.
+
 * AethirYieldAdapter v1.4 - 03/11/2025
     * Return claimed vATH amount from `harvest()` for Harvested event.
     * Remove `setLicenseOriginalOwners()` migration function.
