@@ -496,7 +496,18 @@ contract YieldPass is IYieldPass, ReentrancyGuard, AccessControl, Multicall, ERC
             encodedTokenIds = abi.encodePacked(encodedTokenIds, nodeTokenIds[i]);
 
             /* Burn node pass token */
-            NodePassToken(yieldPassInfo_.nodePass).burn(nodeTokenIds[i]);
+            if (yieldPass == 0x70c5aD55c1A3f94D62cF9c81ad065377175Beca2) {
+                /* Legacy node pass token interface */
+                (bool success,) = yieldPassInfo_.nodePass.call(
+                    abi.encodeWithSignature("burn(address,uint256)", msg.sender, nodeTokenIds[i])
+                );
+
+                /* Validate burn call succeeded */
+                if (!success) revert InvalidRedemption();
+            } else {
+                /* Node pass token interface */
+                NodePassToken(yieldPassInfo_.nodePass).burn(nodeTokenIds[i]);
+            }
         }
 
         /* Compute redemption hash */
