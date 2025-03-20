@@ -22,6 +22,7 @@ type YieldAdapter @entity {
   id: Bytes! # address
   name: String!
   yieldToken: ERC20!
+  eip712Domain: EIP712Domain
   yieldPassMarket: YieldPassMarket!
 }
 
@@ -36,6 +37,15 @@ type ERC721 @entity(immutable: true) {
   id: Bytes! # address
   name: String!
   symbol: String!
+}
+
+type EIP712Domain @entity {
+  id: Bytes! # yield adapter address
+  name: String!
+  version: String!
+  chainId: BigInt! # uint256
+  verifyingContract: Bytes! # address
+  salt: Bytes! # bytes32
 }
 
 type UniswapV2Pair @entity(immutable: true) {

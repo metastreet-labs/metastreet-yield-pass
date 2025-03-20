@@ -24,6 +24,8 @@ dataSources:
           file: ../out/ERC20.sol/ERC20.json
         - name: ERC721
           file: ../out/ERC721.sol/ERC721.json
+        - name: IERC5267
+          file: ../out/IERC5267.sol/IERC5267.json
       eventHandlers:
         - event: Claimed(indexed address,indexed address,uint256,indexed
             address,address,uint256)

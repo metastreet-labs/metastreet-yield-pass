@@ -1,6 +1,7 @@
 import { Address, BigInt, Bytes, dataSource, ethereum } from "@graphprotocol/graph-ts";
 import { ERC20 as ERC20Contract } from "../generated/YieldPass/ERC20";
 import { ERC721 as ERC721Contract } from "../generated/YieldPass/ERC721";
+import { IERC5267 as IERC5267Contract } from "../generated/YieldPass/IERC5267";
 import { YieldAdapter as YieldAdapterContract } from "../generated/YieldPass/YieldAdapter";
 import {
   Claimed as ClaimedEvent,
@@ -16,6 +17,7 @@ import {
   ClaimedEvent as ClaimedEventEntity,
   ERC20 as ERC20Entity,
   ERC721 as ERC721Entity,
+  EIP712Domain as EIP712DomainEntity,
   HarvestedEvent as HarvestedEventEntity,
   MintedEvent as MintedEventEntity,
   RedeemedEvent as RedeemedEventEntity,
@@ -69,6 +71,20 @@ function createAdapterEntity(yieldPass: Address, adapter: Address): void {
   adapterEntity.name = adapterContract.name();
   adapterEntity.yieldToken = createERC20Entity(adapterContract.token()).id;
   adapterEntity.yieldPassMarket = yieldPass;
+
+  const erc5267Contract = IERC5267Contract.bind(adapter);
+  const eip712Domain = erc5267Contract.try_eip712Domain();
+  if (!eip712Domain.reverted) {
+    const eip712DomainEntity = new EIP712DomainEntity(adapter);
+    eip712DomainEntity.name = eip712Domain.value.getName();
+    eip712DomainEntity.version = eip712Domain.value.getVersion();
+    eip712DomainEntity.chainId = eip712Domain.value.getChainId();
+    eip712DomainEntity.verifyingContract = eip712Domain.value.getVerifyingContract();
+    eip712DomainEntity.salt = eip712Domain.value.getSalt();
+    eip712DomainEntity.save();
+    adapterEntity.eip712Domain = eip712DomainEntity.id;
+  }
+
   adapterEntity.save();
 }
 
